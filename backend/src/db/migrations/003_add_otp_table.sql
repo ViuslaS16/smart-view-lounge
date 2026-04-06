@@ -1,0 +1,6 @@
+CREATE TABLE IF NOT EXISTS otp_verifications (
+  mobile TEXT PRIMARY KEY,
+  otp_code TEXT NOT NULL,
+  expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);

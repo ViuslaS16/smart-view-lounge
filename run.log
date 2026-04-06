@@ -1,0 +1,1359 @@
+🚀 Starting SmartView Lounge Development Servers...
+===================================================
+🟢 Starting Backend NodeAPI...
+🟢 Starting Frontend Next.js...
+
+> smartview-backend@1.0.0 dev
+> nodemon --exec tsx src/server.ts
+
+
+> smart-view-lounge@0.1.0 dev
+> next dev
+
+[33m[nodemon] 3.1.14[39m
+[33m[nodemon] to restart at any time, enter `rs`[39m
+[33m[nodemon] watching path(s): *.*[39m
+[33m[nodemon] watching extensions: ts,json[39m
+[32m[nodemon] starting `tsx src/server.ts`[39m
+▲ Next.js 16.2.2 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://192.168.1.252:3000
+- Environments: .env.local
+✓ Ready in 225ms
+
+[Server] Running on http://localhost:4000
+[Scheduler] Starting SMS cron jobs...
+[Scheduler] Cron running — checks every minute.
+[DB] PostgreSQL connected
+⚠ metadataBase property in metadata export is not set for resolving social open graph or twitter images, using "http://localhost:3000". See https://nextjs.org/docs/app/api-reference/functions/generate-metadata#metadatabase
+ GET /login 200 in 1292ms (next.js: 1210ms, application-code: 82ms)
+ GET /admin 200 in 252ms (next.js: 224ms, application-code: 29ms)
+[API] /health hit
+[API] /health db successful
+ GET /login?redirect=%2Fadmin 200 in 36ms (next.js: 7ms, application-code: 29ms)
+ GET /admin 200 in 11ms (next.js: 1941µs, application-code: 9ms)
+[browser] Detected `scroll-behavior: smooth` on the `<html>` element. To disable smooth scrolling during route transitions, add `data-scroll-behavior="smooth"` to your <html> element. Learn more: https://nextjs.org/docs/messages/missing-data-scroll-behavior
+ GET /admin/verifications 200 in 161ms (next.js: 154ms, application-code: 8ms)
+ GET /admin/verifications 200 in 42ms (next.js: 4ms, application-code: 38ms)
+ GET /admin/verifications 200 in 11ms (next.js: 4ms, application-code: 8ms)
+ GET /admin/verifications 200 in 20ms (next.js: 4ms, application-code: 17ms)
+ GET /admin/verifications 200 in 12ms (next.js: 4ms, application-code: 8ms)
+ GET /admin/verifications 200 in 18ms (next.js: 2ms, application-code: 15ms)
+ GET /admin 200 in 25ms (next.js: 4ms, application-code: 20ms)
+[browser] Detected `scroll-behavior: smooth` on the `<html>` element. To disable smooth scrolling during route transitions, add `data-scroll-behavior="smooth"` to your <html> element. Learn more: https://nextjs.org/docs/messages/missing-data-scroll-behavior
+ GET /admin/customers 200 in 150ms (next.js: 143ms, application-code: 7ms)
+ GET /admin/verifications 200 in 23ms (next.js: 3ms, application-code: 20ms)
+ GET /admin/customers 200 in 22ms (next.js: 4ms, application-code: 17ms)
+ GET /admin/verifications 200 in 27ms (next.js: 6ms, application-code: 21ms)
+ GET /admin 200 in 24ms (next.js: 5ms, application-code: 19ms)
+ GET /login 200 in 37ms (next.js: 5ms, application-code: 32ms)
+ GET /dashboard 200 in 141ms (next.js: 131ms, application-code: 10ms)
+[browser] Detected `scroll-behavior: smooth` on the `<html>` element. To disable smooth scrolling during route transitions, add `data-scroll-behavior="smooth"` to your <html> element. Learn more: https://nextjs.org/docs/messages/missing-data-scroll-behavior
+ GET /dashboard/book?date=2026-04-03&time=16%3A30 200 in 202ms (next.js: 185ms, application-code: 17ms)
+ GET /dashboard/book?date=2026-04-03&time=16%3A30 200 in 9ms (next.js: 741µs, application-code: 8ms)
+ GET /dashboard/book?date=2026-04-03&time=15%3A30 200 in 24ms (next.js: 4ms, application-code: 21ms)
+ GET /dashboard/book/success?ref=30dcac0e-fc04-4cd3-a019-f5976bc83f48&amount=5000&date=2026-04-03&time=15%3A30&duration=120 200 in 227ms (next.js: 219ms, application-code: 8ms)
+ GET /dashboard/bookings 200 in 154ms (next.js: 147ms, application-code: 8ms)
+ GET /dashboard/session 200 in 140ms (next.js: 133ms, application-code: 7ms)
+[browser] Uncaught TypeError: Cannot read properties of undefined (reading 'end_time')
+    at SessionPage (app/dashboard/session/page.tsx:42:15)
+  40 |       progress,
+  41 |     };
+> 42 |   }, [booking.end_time, booking.start_time, totalDurationMs]);
+     |               ^
+  43 |
+  44 |   const [timeLeft, setTimeLeft] = useState<TimeLeft>(calcTimeLeft());
+  45 |   const [showExtend, setShowExtend] = useState(false);
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `tsx src/server.ts`[39m
+[Server] Running on http://localhost:4000
+[Scheduler] Starting SMS cron jobs...
+[Scheduler] Cron running — checks every minute.
+[DB] PostgreSQL connected
+ GET /admin/customers 200 in 20ms (next.js: 5ms, application-code: 15ms)
+ GET /admin/verifications 200 in 20ms (next.js: 6ms, application-code: 15ms)
+ GET /admin/bookings 200 in 196ms (next.js: 187ms, application-code: 9ms)
+ GET /admin/analytics 200 in 561ms (next.js: 552ms, application-code: 9ms)
+ GET /admin/customers 200 in 25ms (next.js: 5ms, application-code: 20ms)
+ GET /admin/bookings 200 in 28ms (next.js: 5ms, application-code: 23ms)
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `tsx src/server.ts`[39m
+[Server] Running on http://localhost:4000
+[Scheduler] Starting SMS cron jobs...
+[Scheduler] Cron running — checks every minute.
+[DB] PostgreSQL connected
+ GET /login? 200 in 50ms (next.js: 8ms, application-code: 42ms)
+ GET /dashboard 200 in 10ms (next.js: 1765µs, application-code: 8ms)
+[browser] Detected `scroll-behavior: smooth` on the `<html>` element. To disable smooth scrolling during route transitions, add `data-scroll-behavior="smooth"` to your <html> element. Learn more: https://nextjs.org/docs/messages/missing-data-scroll-behavior
+ GET /dashboard/book?date=2026-04-03&time=18%3A30 200 in 26ms (next.js: 6ms, application-code: 21ms)
+ GET /dashboard/book/success?ref=87253b4b-285a-4fb6-857b-5c49ef7ed216&amount=2500&date=2026-04-03&time=18%3A30&duration=60 200 in 32ms (next.js: 5ms, application-code: 27ms)
+ GET /dashboard/bookings 200 in 24ms (next.js: 4ms, application-code: 20ms)
+ GET /admin/bookings 200 in 46ms (next.js: 4ms, application-code: 42ms)
+ GET /admin/bookings 200 in 43ms (next.js: 5ms, application-code: 38ms)
+ GET /admin/bookings 200 in 38ms (next.js: 3ms, application-code: 34ms)
+ GET /admin/bookings 200 in 39ms (next.js: 2ms, application-code: 37ms)
+ GET /admin/bookings 200 in 27ms (next.js: 2ms, application-code: 25ms)
+ GET /admin/bookings 200 in 33ms (next.js: 1948µs, application-code: 31ms)
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `tsx src/server.ts`[39m
+ GET /admin/verifications 200 in 9ms (next.js: 2ms, application-code: 7ms)
+[browser] Detected `scroll-behavior: smooth` on the `<html>` element. To disable smooth scrolling during route transitions, add `data-scroll-behavior="smooth"` to your <html> element. Learn more: https://nextjs.org/docs/messages/missing-data-scroll-behavior
+[Server] Running on http://localhost:4000
+[Scheduler] Starting SMS cron jobs...
+[Scheduler] Cron running — checks every minute.
+[DB] PostgreSQL connected
+ GET /admin 200 in 26ms (next.js: 5ms, application-code: 21ms)
+✓ Compiled in 20ms
+ GET /admin/customers 200 in 14ms (next.js: 4ms, application-code: 11ms)
+ GET /admin 200 in 23ms (next.js: 5ms, application-code: 18ms)
+⚠ metadataBase property in metadata export is not set for resolving social open graph or twitter images, using "http://localhost:3000". See https://nextjs.org/docs/app/api-reference/functions/generate-metadata#metadatabase
+✓ Compiled in 76ms
+⚠ metadataBase property in metadata export is not set for resolving social open graph or twitter images, using "http://localhost:3000". See https://nextjs.org/docs/app/api-reference/functions/generate-metadata#metadatabase
+ GET /admin 200 in 223ms (next.js: 89ms, application-code: 134ms)
+ GET /admin 200 in 10ms (next.js: 1785µs, application-code: 8ms)
+ GET /dashboard/bookings 200 in 232ms (next.js: 62ms, application-code: 169ms)
+ GET /dashboard/bookings 200 in 143ms (next.js: 90ms, application-code: 54ms)
+ GET /admin 200 in 217ms (next.js: 28ms, application-code: 189ms)
+ GET /dashboard/bookings 200 in 114ms (next.js: 1012µs, application-code: 113ms)
+ GET /dashboard/bookings 200 in 131ms (next.js: 8ms, application-code: 124ms)
+ GET /dashboard/bookings 200 in 130ms (next.js: 5ms, application-code: 125ms)
+ GET /dashboard/bookings 200 in 65ms (next.js: 3ms, application-code: 62ms)
+ GET /dashboard/bookings 200 in 51ms (next.js: 3ms, application-code: 48ms)
+ GET /dashboard/bookings 200 in 52ms (next.js: 3ms, application-code: 49ms)
+ GET /dashboard/bookings 200 in 47ms (next.js: 2ms, application-code: 45ms)
+ GET /dashboard/bookings 200 in 34ms (next.js: 2ms, application-code: 32ms)
+ GET /dashboard/bookings 200 in 17ms (next.js: 2ms, application-code: 15ms)
+ GET /admin/verifications 200 in 41ms (next.js: 24ms, application-code: 17ms)
+[browser] Detected `scroll-behavior: smooth` on the `<html>` element. To disable smooth scrolling during route transitions, add `data-scroll-behavior="smooth"` to your <html> element. Learn more: https://nextjs.org/docs/messages/missing-data-scroll-behavior
+ GET /admin/verifications 200 in 33ms (next.js: 11ms, application-code: 22ms)
+ GET /admin/bookings 200 in 55ms (next.js: 24ms, application-code: 32ms)
+ GET /admin/bookings 200 in 15ms (next.js: 2ms, application-code: 13ms)
+ GET /admin/customers 200 in 50ms (next.js: 30ms, application-code: 20ms)
+ GET /admin/analytics 200 in 42ms (next.js: 24ms, application-code: 18ms)
+ GET /admin/settings 200 in 184ms (next.js: 175ms, application-code: 9ms)
+✓ Compiled in 21ms
+[browser] The final argument passed to useEffect changed size between renders. The order and size of this array must remain constant.
+
+Previous: [/admin/dashboard]
+Incoming: [/admin/dashboard, 0, async (silent = false)=>{
+            if (!endpoint) return;
+            if (!silent) setIsLoading(true);
+            try {
+                const res = await (0, __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$api$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["fetcher"])(endpoint);
+                setData(res);
+                setError(null);
+            } catch (err) {
+                setError(err instanceof Error ? err : new Error(String(err)));
+            } finally{
+                if (!silent) setIsLoading(false);
+            }
+        }] 
+    at useApi (lib/hooks.ts:23:12)
+    at AdminLayout (app/admin/layout.tsx:62:62)
+    at Set.forEach (<anonymous>)
+  21 |   }, [endpoint]);
+  22 |
+> 23 |   useEffect(() => {
+     |            ^
+  24 |     if (!endpoint) {
+  25 |       setData(null);
+  26 |       setIsLoading(false); (lib/hooks.ts:23:12)
+[browser] The final argument passed to useEffect changed size between renders. The order and size of this array must remain constant.
+
+Previous: [/admin/settings]
+Incoming: [/admin/settings, 0, async (silent = false)=>{
+            if (!endpoint) return;
+            if (!silent) setIsLoading(true);
+            try {
+                const res = await (0, __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$api$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["fetcher"])(endpoint);
+                setData(res);
+                setError(null);
+            } catch (err) {
+                setError(err instanceof Error ? err : new Error(String(err)));
+            } finally{
+                if (!silent) setIsLoading(false);
+            }
+        }] 
+    at useApi (lib/hooks.ts:23:12)
+    at AdminSettingsPage (app/admin/settings/page.tsx:8:45)
+    at Set.forEach (<anonymous>)
+  21 |   }, [endpoint]);
+  22 |
+> 23 |   useEffect(() => {
+     |            ^
+  24 |     if (!endpoint) {
+  25 |       setData(null);
+  26 |       setIsLoading(false); (lib/hooks.ts:23:12)
+✓ Compiled in 41ms
+✓ Compiled in 23ms
+✓ Compiled in 15ms
+✓ Compiled in 13ms
+✓ Compiled in 14ms
+✓ Compiled in 12ms
+[browser] The final argument passed to useEffect changed size between renders. The order and size of this array must remain constant.
+
+Previous: [/users/bookings]
+Incoming: [/users/bookings, 0, async (silent = false)=>{
+            if (!endpoint) return;
+            if (!silent) setIsLoading(true);
+            try {
+                const res = await (0, __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$api$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["fetcher"])(endpoint);
+                setData(res);
+                setError(null);
+            } catch (err) {
+                setError(err instanceof Error ? err : new Error(String(err)));
+            } finally{
+                if (!silent) setIsLoading(false);
+            }
+        }] 
+    at useApi (lib/hooks.ts:23:12)
+    at BookingsPage (app/dashboard/bookings/page.tsx:32:49)
+    at Set.forEach (<anonymous>)
+  21 |   }, [endpoint]);
+  22 |
+> 23 |   useEffect(() => {
+     |            ^
+  24 |     if (!endpoint) {
+  25 |       setData(null);
+  26 |       setIsLoading(false); (lib/hooks.ts:23:12)
+ GET /admin/settings 200 in 70ms (next.js: 20ms, application-code: 50ms)
+ GET /admin 200 in 29ms (next.js: 8ms, application-code: 20ms)
+[browser] Detected `scroll-behavior: smooth` on the `<html>` element. To disable smooth scrolling during route transitions, add `data-scroll-behavior="smooth"` to your <html> element. Learn more: https://nextjs.org/docs/messages/missing-data-scroll-behavior
+ GET /admin/verifications 200 in 21ms (next.js: 8ms, application-code: 13ms)
+ GET /admin/bookings 200 in 19ms (next.js: 7ms, application-code: 13ms)
+ GET /admin/customers 200 in 29ms (next.js: 9ms, application-code: 20ms)
+ GET /admin/analytics 200 in 33ms (next.js: 13ms, application-code: 20ms)
+ GET /admin/settings 200 in 23ms (next.js: 3ms, application-code: 20ms)
+ GET /admin/settings 200 in 35ms (next.js: 5ms, application-code: 29ms)
+ GET /admin/settings 200 in 22ms (next.js: 1153µs, application-code: 21ms)
+ GET /admin/settings 200 in 42ms (next.js: 3ms, application-code: 38ms)
+ GET /admin/settings 200 in 28ms (next.js: 1962µs, application-code: 26ms)
+ GET /admin/settings 200 in 29ms (next.js: 2ms, application-code: 27ms)
+ GET /admin/settings 200 in 37ms (next.js: 3ms, application-code: 34ms)
+ GET /admin/settings 200 in 29ms (next.js: 1871µs, application-code: 27ms)
+ GET /admin/settings 200 in 28ms (next.js: 2ms, application-code: 25ms)
+ GET /admin/settings 200 in 32ms (next.js: 3ms, application-code: 29ms)
+ GET /admin/settings 200 in 26ms (next.js: 1718µs, application-code: 24ms)
+ GET /admin/settings 200 in 30ms (next.js: 2ms, application-code: 28ms)
+ GET /admin/settings 200 in 35ms (next.js: 3ms, application-code: 32ms)
+ GET / 200 in 390ms (next.js: 352ms, application-code: 37ms)
+ GET /login 200 in 32ms (next.js: 18ms, application-code: 14ms)
+[browser] Detected `scroll-behavior: smooth` on the `<html>` element. To disable smooth scrolling during route transitions, add `data-scroll-behavior="smooth"` to your <html> element. Learn more: https://nextjs.org/docs/messages/missing-data-scroll-behavior
+ GET /admin 200 in 11ms (next.js: 2ms, application-code: 9ms)
+[Error] column "nic_front_key" does not exist
+error: column "nic_front_key" does not exist
+    at /Users/visula_s/Projects/smart-view-lounge/backend/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async Promise.all (index 2)
+    at async getDashboardStats (/Users/visula_s/Projects/smart-view-lounge/backend/src/controllers/admin.controller.ts:8:96)
+[Error] column "nic_front_key" does not exist
+error: column "nic_front_key" does not exist
+    at /Users/visula_s/Projects/smart-view-lounge/backend/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async Promise.all (index 2)
+    at async getDashboardStats (/Users/visula_s/Projects/smart-view-lounge/backend/src/controllers/admin.controller.ts:8:96)
+[Error] column "nic_front_key" does not exist
+error: column "nic_front_key" does not exist
+    at /Users/visula_s/Projects/smart-view-lounge/backend/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async getUsers (/Users/visula_s/Projects/smart-view-lounge/backend/src/controllers/admin.controller.ts:49:20)
+[Error] column "nic_front_key" does not exist
+error: column "nic_front_key" does not exist
+    at /Users/visula_s/Projects/smart-view-lounge/backend/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async Promise.all (index 2)
+    at async getDashboardStats (/Users/visula_s/Projects/smart-view-lounge/backend/src/controllers/admin.controller.ts:8:96)
+[Error] column "nic_front_key" does not exist
+error: column "nic_front_key" does not exist
+    at /Users/visula_s/Projects/smart-view-lounge/backend/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async getUsers (/Users/visula_s/Projects/smart-view-lounge/backend/src/controllers/admin.controller.ts:49:20)
+[Error] column "nic_front_key" does not exist
+error: column "nic_front_key" does not exist
+    at /Users/visula_s/Projects/smart-view-lounge/backend/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async Promise.all (index 2)
+    at async getDashboardStats (/Users/visula_s/Projects/smart-view-lounge/backend/src/controllers/admin.controller.ts:8:96)
+ GET /admin/customers 200 in 28ms (next.js: 5ms, application-code: 23ms)
+[Error] column "nic_front_key" does not exist
+error: column "nic_front_key" does not exist
+    at /Users/visula_s/Projects/smart-view-lounge/backend/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async getUsers (/Users/visula_s/Projects/smart-view-lounge/backend/src/controllers/admin.controller.ts:49:20)
+[Error] column "nic_front_key" does not exist
+error: column "nic_front_key" does not exist
+    at /Users/visula_s/Projects/smart-view-lounge/backend/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async getUsers (/Users/visula_s/Projects/smart-view-lounge/backend/src/controllers/admin.controller.ts:49:20)
+ GET /admin/bookings 200 in 25ms (next.js: 4ms, application-code: 21ms)
+[Error] column "nic_front_key" does not exist
+error: column "nic_front_key" does not exist
+    at /Users/visula_s/Projects/smart-view-lounge/backend/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async getUsers (/Users/visula_s/Projects/smart-view-lounge/backend/src/controllers/admin.controller.ts:49:20)
+[Error] column "nic_front_key" does not exist
+error: column "nic_front_key" does not exist
+    at /Users/visula_s/Projects/smart-view-lounge/backend/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async getUsers (/Users/visula_s/Projects/smart-view-lounge/backend/src/controllers/admin.controller.ts:49:20)
+[Error] column "nic_front_key" does not exist
+error: column "nic_front_key" does not exist
+    at /Users/visula_s/Projects/smart-view-lounge/backend/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async Promise.all (index 2)
+    at async getDashboardStats (/Users/visula_s/Projects/smart-view-lounge/backend/src/controllers/admin.controller.ts:8:96)
+ GET /admin/customers 200 in 25ms (next.js: 4ms, application-code: 22ms)
+[Error] column "nic_front_key" does not exist
+error: column "nic_front_key" does not exist
+    at /Users/visula_s/Projects/smart-view-lounge/backend/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async getUsers (/Users/visula_s/Projects/smart-view-lounge/backend/src/controllers/admin.controller.ts:49:20)
+[Error] column "nic_front_key" does not exist
+error: column "nic_front_key" does not exist
+    at /Users/visula_s/Projects/smart-view-lounge/backend/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async getUsers (/Users/visula_s/Projects/smart-view-lounge/backend/src/controllers/admin.controller.ts:49:20)
+ GET /admin/verifications 200 in 26ms (next.js: 6ms, application-code: 20ms)
+[Error] column "nic_front_key" does not exist
+error: column "nic_front_key" does not exist
+    at /Users/visula_s/Projects/smart-view-lounge/backend/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async getUsers (/Users/visula_s/Projects/smart-view-lounge/backend/src/controllers/admin.controller.ts:49:20)
+[Error] column "nic_front_key" does not exist
+error: column "nic_front_key" does not exist
+    at /Users/visula_s/Projects/smart-view-lounge/backend/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async getUsers (/Users/visula_s/Projects/smart-view-lounge/backend/src/controllers/admin.controller.ts:49:20)
+ GET /admin 200 in 23ms (next.js: 4ms, application-code: 20ms)
+[Error] column "nic_front_key" does not exist
+error: column "nic_front_key" does not exist
+    at /Users/visula_s/Projects/smart-view-lounge/backend/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async getUsers (/Users/visula_s/Projects/smart-view-lounge/backend/src/controllers/admin.controller.ts:49:20)
+[Error] column "nic_front_key" does not exist
+error: column "nic_front_key" does not exist
+    at /Users/visula_s/Projects/smart-view-lounge/backend/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async getUsers (/Users/visula_s/Projects/smart-view-lounge/backend/src/controllers/admin.controller.ts:49:20)
+[Error] column "nic_front_key" does not exist
+error: column "nic_front_key" does not exist
+    at /Users/visula_s/Projects/smart-view-lounge/backend/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async Promise.all (index 2)
+    at async getDashboardStats (/Users/visula_s/Projects/smart-view-lounge/backend/src/controllers/admin.controller.ts:8:96)
+[Error] column "nic_front_key" does not exist
+error: column "nic_front_key" does not exist
+    at /Users/visula_s/Projects/smart-view-lounge/backend/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async Promise.all (index 2)
+    at async getDashboardStats (/Users/visula_s/Projects/smart-view-lounge/backend/src/controllers/admin.controller.ts:8:96)
+ GET /admin/verifications 200 in 24ms (next.js: 3ms, application-code: 20ms)
+[Error] column "nic_front_key" does not exist
+error: column "nic_front_key" does not exist
+    at /Users/visula_s/Projects/smart-view-lounge/backend/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async getUsers (/Users/visula_s/Projects/smart-view-lounge/backend/src/controllers/admin.controller.ts:49:20)
+[Error] column "nic_front_key" does not exist
+error: column "nic_front_key" does not exist
+    at /Users/visula_s/Projects/smart-view-lounge/backend/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async getUsers (/Users/visula_s/Projects/smart-view-lounge/backend/src/controllers/admin.controller.ts:49:20)
+ GET /admin/bookings 200 in 23ms (next.js: 3ms, application-code: 20ms)
+[Error] column "nic_front_key" does not exist
+error: column "nic_front_key" does not exist
+    at /Users/visula_s/Projects/smart-view-lounge/backend/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async getUsers (/Users/visula_s/Projects/smart-view-lounge/backend/src/controllers/admin.controller.ts:49:20)
+[Error] column "nic_front_key" does not exist
+error: column "nic_front_key" does not exist
+    at /Users/visula_s/Projects/smart-view-lounge/backend/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async getUsers (/Users/visula_s/Projects/smart-view-lounge/backend/src/controllers/admin.controller.ts:49:20)
+[Error] column "nic_front_key" does not exist
+error: column "nic_front_key" does not exist
+    at /Users/visula_s/Projects/smart-view-lounge/backend/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async Promise.all (index 2)
+    at async getDashboardStats (/Users/visula_s/Projects/smart-view-lounge/backend/src/controllers/admin.controller.ts:8:96)
+ GET /admin/settings 200 in 26ms (next.js: 5ms, application-code: 21ms)
+ GET /admin 200 in 22ms (next.js: 3ms, application-code: 19ms)
+[Error] column "nic_front_key" does not exist
+error: column "nic_front_key" does not exist
+    at /Users/visula_s/Projects/smart-view-lounge/backend/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async getUsers (/Users/visula_s/Projects/smart-view-lounge/backend/src/controllers/admin.controller.ts:49:20)
+[Error] column "nic_front_key" does not exist
+error: column "nic_front_key" does not exist
+    at /Users/visula_s/Projects/smart-view-lounge/backend/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async Promise.all (index 2)
+    at async getDashboardStats (/Users/visula_s/Projects/smart-view-lounge/backend/src/controllers/admin.controller.ts:8:96)
+[Error] column "nic_front_key" does not exist
+error: column "nic_front_key" does not exist
+    at /Users/visula_s/Projects/smart-view-lounge/backend/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async getUsers (/Users/visula_s/Projects/smart-view-lounge/backend/src/controllers/admin.controller.ts:49:20)
+[Error] column "nic_front_key" does not exist
+error: column "nic_front_key" does not exist
+    at /Users/visula_s/Projects/smart-view-lounge/backend/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async Promise.all (index 2)
+    at async getDashboardStats (/Users/visula_s/Projects/smart-view-lounge/backend/src/controllers/admin.controller.ts:8:96)
+ GET /admin/bookings 200 in 25ms (next.js: 3ms, application-code: 22ms)
+[Error] column "nic_front_key" does not exist
+error: column "nic_front_key" does not exist
+    at /Users/visula_s/Projects/smart-view-lounge/backend/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async getUsers (/Users/visula_s/Projects/smart-view-lounge/backend/src/controllers/admin.controller.ts:49:20)
+[Error] column "nic_front_key" does not exist
+error: column "nic_front_key" does not exist
+    at /Users/visula_s/Projects/smart-view-lounge/backend/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async getUsers (/Users/visula_s/Projects/smart-view-lounge/backend/src/controllers/admin.controller.ts:49:20)
+[Error] column "nic_front_key" does not exist
+error: column "nic_front_key" does not exist
+    at /Users/visula_s/Projects/smart-view-lounge/backend/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async Promise.all (index 2)
+    at async getDashboardStats (/Users/visula_s/Projects/smart-view-lounge/backend/src/controllers/admin.controller.ts:8:96)
+ GET /admin 200 in 23ms (next.js: 3ms, application-code: 20ms)
+[Error] column "nic_front_key" does not exist
+error: column "nic_front_key" does not exist
+    at /Users/visula_s/Projects/smart-view-lounge/backend/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async getUsers (/Users/visula_s/Projects/smart-view-lounge/backend/src/controllers/admin.controller.ts:49:20)
+[Error] column "nic_front_key" does not exist
+error: column "nic_front_key" does not exist
+    at /Users/visula_s/Projects/smart-view-lounge/backend/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async Promise.all (index 2)
+    at async getDashboardStats (/Users/visula_s/Projects/smart-view-lounge/backend/src/controllers/admin.controller.ts:8:96)
+[Error] column "nic_front_key" does not exist
+error: column "nic_front_key" does not exist
+    at /Users/visula_s/Projects/smart-view-lounge/backend/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async Promise.all (index 2)
+    at async getDashboardStats (/Users/visula_s/Projects/smart-view-lounge/backend/src/controllers/admin.controller.ts:8:96)
+[Error] column "nic_front_key" does not exist
+error: column "nic_front_key" does not exist
+    at /Users/visula_s/Projects/smart-view-lounge/backend/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async getUsers (/Users/visula_s/Projects/smart-view-lounge/backend/src/controllers/admin.controller.ts:49:20)
+[Error] column "nic_front_key" does not exist
+error: column "nic_front_key" does not exist
+    at /Users/visula_s/Projects/smart-view-lounge/backend/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async Promise.all (index 2)
+    at async getDashboardStats (/Users/visula_s/Projects/smart-view-lounge/backend/src/controllers/admin.controller.ts:8:96)
+ GET / 200 in 40ms (next.js: 5ms, application-code: 35ms)
+[Error] column "nic_front_key" does not exist
+error: column "nic_front_key" does not exist
+    at /Users/visula_s/Projects/smart-view-lounge/backend/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async Promise.all (index 2)
+    at async getDashboardStats (/Users/visula_s/Projects/smart-view-lounge/backend/src/controllers/admin.controller.ts:8:96)
+[Error] column "nic_front_key" does not exist
+error: column "nic_front_key" does not exist
+    at /Users/visula_s/Projects/smart-view-lounge/backend/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async getUsers (/Users/visula_s/Projects/smart-view-lounge/backend/src/controllers/admin.controller.ts:49:20)
+ GET /login 200 in 19ms (next.js: 5ms, application-code: 15ms)
+[browser] Detected `scroll-behavior: smooth` on the `<html>` element. To disable smooth scrolling during route transitions, add `data-scroll-behavior="smooth"` to your <html> element. Learn more: https://nextjs.org/docs/messages/missing-data-scroll-behavior
+ GET /register 200 in 162ms (next.js: 155ms, application-code: 6ms)
+[Error] column "nic_front_key" does not exist
+error: column "nic_front_key" does not exist
+    at /Users/visula_s/Projects/smart-view-lounge/backend/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async Promise.all (index 2)
+    at async getDashboardStats (/Users/visula_s/Projects/smart-view-lounge/backend/src/controllers/admin.controller.ts:8:96)
+[Error] column "nic_front_key" does not exist
+error: column "nic_front_key" does not exist
+    at /Users/visula_s/Projects/smart-view-lounge/backend/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async Promise.all (index 2)
+    at async getDashboardStats (/Users/visula_s/Projects/smart-view-lounge/backend/src/controllers/admin.controller.ts:8:96)
+[Error] column "nic_front_key" does not exist
+error: column "nic_front_key" does not exist
+    at /Users/visula_s/Projects/smart-view-lounge/backend/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async getUsers (/Users/visula_s/Projects/smart-view-lounge/backend/src/controllers/admin.controller.ts:49:20)
+[Error] column "nic_front_key" does not exist
+error: column "nic_front_key" does not exist
+    at /Users/visula_s/Projects/smart-view-lounge/backend/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async Promise.all (index 2)
+    at async getDashboardStats (/Users/visula_s/Projects/smart-view-lounge/backend/src/controllers/admin.controller.ts:8:96)
+[Error] column "nic_front_key" does not exist
+error: column "nic_front_key" does not exist
+    at /Users/visula_s/Projects/smart-view-lounge/backend/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async Promise.all (index 2)
+    at async getDashboardStats (/Users/visula_s/Projects/smart-view-lounge/backend/src/controllers/admin.controller.ts:8:96)
+[Error] column "nic_front_key" does not exist
+error: column "nic_front_key" does not exist
+    at /Users/visula_s/Projects/smart-view-lounge/backend/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async getUsers (/Users/visula_s/Projects/smart-view-lounge/backend/src/controllers/admin.controller.ts:49:20)
+[Error] column "nic_front_key" does not exist
+error: column "nic_front_key" does not exist
+    at /Users/visula_s/Projects/smart-view-lounge/backend/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async Promise.all (index 2)
+    at async getDashboardStats (/Users/visula_s/Projects/smart-view-lounge/backend/src/controllers/admin.controller.ts:8:96)
+[Error] column "nic_front_key" does not exist
+error: column "nic_front_key" does not exist
+    at /Users/visula_s/Projects/smart-view-lounge/backend/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async Promise.all (index 2)
+    at async getDashboardStats (/Users/visula_s/Projects/smart-view-lounge/backend/src/controllers/admin.controller.ts:8:96)
+[Error] column "nic_front_key" does not exist
+error: column "nic_front_key" does not exist
+    at /Users/visula_s/Projects/smart-view-lounge/backend/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async getUsers (/Users/visula_s/Projects/smart-view-lounge/backend/src/controllers/admin.controller.ts:49:20)
+[Error] column "nic_front_key" does not exist
+error: column "nic_front_key" does not exist
+    at /Users/visula_s/Projects/smart-view-lounge/backend/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async Promise.all (index 2)
+    at async getDashboardStats (/Users/visula_s/Projects/smart-view-lounge/backend/src/controllers/admin.controller.ts:8:96)
+[Error] column "nic_front_key" does not exist
+error: column "nic_front_key" does not exist
+    at /Users/visula_s/Projects/smart-view-lounge/backend/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async Promise.all (index 2)
+    at async getDashboardStats (/Users/visula_s/Projects/smart-view-lounge/backend/src/controllers/admin.controller.ts:8:96)
+[Error] column "nic_front_key" does not exist
+error: column "nic_front_key" does not exist
+    at /Users/visula_s/Projects/smart-view-lounge/backend/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async getUsers (/Users/visula_s/Projects/smart-view-lounge/backend/src/controllers/admin.controller.ts:49:20)
+[Error] column "nic_front_key" does not exist
+error: column "nic_front_key" does not exist
+    at /Users/visula_s/Projects/smart-view-lounge/backend/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async Promise.all (index 2)
+    at async getDashboardStats (/Users/visula_s/Projects/smart-view-lounge/backend/src/controllers/admin.controller.ts:8:96)
+[Error] column "nic_front_key" does not exist
+error: column "nic_front_key" does not exist
+    at /Users/visula_s/Projects/smart-view-lounge/backend/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async Promise.all (index 2)
+    at async getDashboardStats (/Users/visula_s/Projects/smart-view-lounge/backend/src/controllers/admin.controller.ts:8:96)
+[Error] column "nic_front_key" does not exist
+error: column "nic_front_key" does not exist
+    at /Users/visula_s/Projects/smart-view-lounge/backend/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async getUsers (/Users/visula_s/Projects/smart-view-lounge/backend/src/controllers/admin.controller.ts:49:20)
+ GET /admin 200 in 41ms (next.js: 5ms, application-code: 36ms)
+ GET /admin 200 in 38ms (next.js: 4ms, application-code: 34ms)
+ GET /admin 200 in 49ms (next.js: 1649µs, application-code: 47ms)
+ GET /admin 200 in 37ms (next.js: 2ms, application-code: 35ms)
+ GET /admin 200 in 37ms (next.js: 1881µs, application-code: 35ms)
+ GET /admin/verifications 200 in 27ms (next.js: 6ms, application-code: 21ms)
+[browser] Detected `scroll-behavior: smooth` on the `<html>` element. To disable smooth scrolling during route transitions, add `data-scroll-behavior="smooth"` to your <html> element. Learn more: https://nextjs.org/docs/messages/missing-data-scroll-behavior
+ GET /admin/bookings 200 in 24ms (next.js: 5ms, application-code: 19ms)
+ GET /admin/customers 200 in 25ms (next.js: 5ms, application-code: 20ms)
+ GET /admin/bookings 200 in 22ms (next.js: 3ms, application-code: 19ms)
+ GET /admin/bookings 200 in 50ms (next.js: 3ms, application-code: 47ms)
+ GET /admin/bookings 200 in 39ms (next.js: 4ms, application-code: 35ms)
+ GET /admin/bookings 200 in 31ms (next.js: 1603µs, application-code: 29ms)
+ GET /admin/bookings 200 in 39ms (next.js: 3ms, application-code: 36ms)
+ GET /admin/bookings 200 in 35ms (next.js: 2ms, application-code: 33ms)
+ GET /admin/bookings 200 in 39ms (next.js: 3ms, application-code: 36ms)
+ GET /admin/bookings 200 in 33ms (next.js: 1979µs, application-code: 31ms)
+ GET /admin/bookings 200 in 39ms (next.js: 3ms, application-code: 36ms)
+ GET /admin/bookings 200 in 35ms (next.js: 1715µs, application-code: 34ms)
+ GET /admin/bookings 200 in 41ms (next.js: 2ms, application-code: 39ms)
+ GET /admin/bookings 200 in 36ms (next.js: 1634µs, application-code: 34ms)
+ GET /admin 200 in 24ms (next.js: 5ms, application-code: 19ms)
+[browser] Detected `scroll-behavior: smooth` on the `<html>` element. To disable smooth scrolling during route transitions, add `data-scroll-behavior="smooth"` to your <html> element. Learn more: https://nextjs.org/docs/messages/missing-data-scroll-behavior
+ GET /admin/verifications 200 in 31ms (next.js: 7ms, application-code: 24ms)
+ GET /admin/customers 200 in 20ms (next.js: 6ms, application-code: 14ms)
+ GET /admin/analytics 200 in 28ms (next.js: 6ms, application-code: 22ms)
+ GET /admin/settings 200 in 17ms (next.js: 5ms, application-code: 12ms)
+ GET /admin/analytics 200 in 24ms (next.js: 4ms, application-code: 21ms)
+ GET /admin/settings 200 in 21ms (next.js: 3ms, application-code: 17ms)
+ GET /admin 200 in 26ms (next.js: 7ms, application-code: 19ms)
+✓ Compiled in 38ms
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `tsx src/server.ts`[39m
+[Server] Running on http://localhost:4000
+[Scheduler] Starting SMS cron jobs...
+[Scheduler] Cron running — checks every minute.
+[DB] PostgreSQL connected
+ GET /login 200 in 49ms (next.js: 24ms, application-code: 25ms)
+ GET /dashboard 200 in 33ms (next.js: 22ms, application-code: 11ms)
+ GET /dashboard/book?date=2026-04-04&time=10%3A30 200 in 41ms (next.js: 23ms, application-code: 18ms)
+ GET /dashboard/book/success?ref=f1fe0463-7630-4794-8a48-6070099de9e5&amount=2500&date=2026-04-04&time=10%3A30&duration=60 200 in 42ms (next.js: 23ms, application-code: 19ms)
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `tsx src/server.ts`[39m
+[Server] Running on http://localhost:4000
+[Scheduler] Starting SMS cron jobs...
+[Scheduler] Cron running — checks every minute.
+[DB] PostgreSQL connected
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `tsx src/server.ts`[39m
+/Users/visula_s/Projects/smart-view-lounge/backend/node_modules/express/lib/router/route.js:216
+        throw new Error(msg);
+              ^
+
+Error: Route.post() requires a callback function but got a [object Undefined]
+    at Route.<computed> [as post] (/Users/visula_s/Projects/smart-view-lounge/backend/node_modules/express/lib/router/route.js:216:15)
+    at proto.<computed> [as post] (/Users/visula_s/Projects/smart-view-lounge/backend/node_modules/express/lib/router/index.js:521:19)
+    at <anonymous> (/Users/visula_s/Projects/smart-view-lounge/backend/src/routes/auth.routes.ts:42:8)
+    at Object.<anonymous> (/Users/visula_s/Projects/smart-view-lounge/backend/src/routes/auth.routes.ts:52:16)
+    at Module._compile (node:internal/modules/cjs/loader:1761:14)
+    at Object.transformer (/Users/visula_s/Projects/smart-view-lounge/backend/node_modules/tsx/dist/register-D46fvsV_.cjs:3:1104)
+    at Module.load (node:internal/modules/cjs/loader:1481:32)
+    at Module._load (node:internal/modules/cjs/loader:1300:12)
+    at TracingChannel.traceSync (node:diagnostics_channel:328:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:245:24)
+
+Node.js v24.12.0
+[31m[nodemon] app crashed - waiting for file changes before starting...[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `tsx src/server.ts`[39m
+node:events:486
+      throw er; // Unhandled 'error' event
+      ^
+
+Error: listen EADDRINUSE: address already in use :::4000
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at Server.listen (node:net:2102:7)
+    at app.listen (/Users/visula_s/Projects/smart-view-lounge/backend/node_modules/express/lib/application.js:635:24)
+    at adminRoutes (/Users/visula_s/Projects/smart-view-lounge/backend/src/server.ts:56:5)
+    at Object.<anonymous> (/Users/visula_s/Projects/smart-view-lounge/backend/src/server.ts:59:2)
+    at Module._compile (node:internal/modules/cjs/loader:1761:14)
+    at Object.transformer (/Users/visula_s/Projects/smart-view-lounge/backend/node_modules/tsx/dist/register-D46fvsV_.cjs:3:1104)
+    at Module.load (node:internal/modules/cjs/loader:1481:32)
+    at Module._load (node:internal/modules/cjs/loader:1300:12)
+Emitted 'error' event on Server instance at:
+    at emitErrorNT (node:net:1976:8)
+    at process.processTicksAndRejections (node:internal/process/task_queues:89:21) {
+  code: 'EADDRINUSE',
+  errno: -48,
+  syscall: 'listen',
+  address: '::',
+  port: 4000
+}
+
+Node.js v24.12.0
+[31m[nodemon] app crashed - waiting for file changes before starting...[39m
+✓ Compiled in 72ms
+✓ Compiled in 14ms
+ GET /dashboard/book/success?ref=f1fe0463-7630-4794-8a48-6070099de9e5&amount=2500&date=2026-04-04&time=10:30&duration=60 200 in 112ms (next.js: 11ms, application-code: 101ms)
+ GET /dashboard/book/success?ref=f1fe0463-7630-4794-8a48-6070099de9e5&amount=2500&date=2026-04-04&time=10:30&duration=60 200 in 25ms (next.js: 1070µs, application-code: 24ms)
+ GET /dashboard/book/success?ref=f1fe0463-7630-4794-8a48-6070099de9e5&amount=2500&date=2026-04-04&time=10:30&duration=60 200 in 22ms (next.js: 975µs, application-code: 21ms)
+ GET /dashboard/book/success?ref=f1fe0463-7630-4794-8a48-6070099de9e5&amount=2500&date=2026-04-04&time=10:30&duration=60 200 in 39ms (next.js: 2ms, application-code: 37ms)
+ GET /dashboard/book/success?ref=f1fe0463-7630-4794-8a48-6070099de9e5&amount=2500&date=2026-04-04&time=10:30&duration=60 200 in 31ms (next.js: 1685µs, application-code: 29ms)
+ GET /dashboard/book/success?ref=f1fe0463-7630-4794-8a48-6070099de9e5&amount=2500&date=2026-04-04&time=10:30&duration=60 200 in 31ms (next.js: 1983µs, application-code: 29ms)
+ GET /dashboard/book/success?ref=f1fe0463-7630-4794-8a48-6070099de9e5&amount=2500&date=2026-04-04&time=10:30&duration=60 200 in 26ms (next.js: 1596µs, application-code: 25ms)
+ GET /dashboard/book/success?ref=f1fe0463-7630-4794-8a48-6070099de9e5&amount=2500&date=2026-04-04&time=10:30&duration=60 200 in 34ms (next.js: 2ms, application-code: 31ms)
+ GET /dashboard/book/success?ref=f1fe0463-7630-4794-8a48-6070099de9e5&amount=2500&date=2026-04-04&time=10:30&duration=60 200 in 28ms (next.js: 1197µs, application-code: 27ms)
+ GET /dashboard/book/success?ref=f1fe0463-7630-4794-8a48-6070099de9e5&amount=2500&date=2026-04-04&time=10:30&duration=60 200 in 25ms (next.js: 1341µs, application-code: 24ms)
+ GET /dashboard/book/success?ref=f1fe0463-7630-4794-8a48-6070099de9e5&amount=2500&date=2026-04-04&time=10:30&duration=60 200 in 34ms (next.js: 2ms, application-code: 32ms)
+ GET /dashboard/book/success?ref=f1fe0463-7630-4794-8a48-6070099de9e5&amount=2500&date=2026-04-04&time=10:30&duration=60 200 in 24ms (next.js: 972µs, application-code: 23ms)
+ GET /dashboard/book/success?ref=f1fe0463-7630-4794-8a48-6070099de9e5&amount=2500&date=2026-04-04&time=10:30&duration=60 200 in 31ms (next.js: 1952µs, application-code: 29ms)
+ GET /dashboard/book/success?ref=f1fe0463-7630-4794-8a48-6070099de9e5&amount=2500&date=2026-04-04&time=10:30&duration=60 200 in 31ms (next.js: 1767µs, application-code: 29ms)
+ GET /dashboard/book/success?ref=f1fe0463-7630-4794-8a48-6070099de9e5&amount=2500&date=2026-04-04&time=10:30&duration=60 200 in 27ms (next.js: 1760µs, application-code: 25ms)
+ GET /dashboard/book/success?ref=f1fe0463-7630-4794-8a48-6070099de9e5&amount=2500&date=2026-04-04&time=10:30&duration=60 200 in 34ms (next.js: 2ms, application-code: 32ms)
+ GET /dashboard/book/success?ref=f1fe0463-7630-4794-8a48-6070099de9e5&amount=2500&date=2026-04-04&time=10:30&duration=60 200 in 30ms (next.js: 1889µs, application-code: 28ms)
+ GET /login 200 in 41ms (next.js: 9ms, application-code: 31ms)
+ GET /login 200 in 30ms (next.js: 2ms, application-code: 28ms)
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `tsx src/server.ts`[39m
+node:events:486
+      throw er; // Unhandled 'error' event
+      ^
+
+Error: listen EADDRINUSE: address already in use :::4000
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at Server.listen (node:net:2102:7)
+    at app.listen (/Users/visula_s/Projects/smart-view-lounge/backend/node_modules/express/lib/application.js:635:24)
+    at adminRoutes (/Users/visula_s/Projects/smart-view-lounge/backend/src/server.ts:56:5)
+    at Object.<anonymous> (/Users/visula_s/Projects/smart-view-lounge/backend/src/server.ts:59:2)
+    at Module._compile (node:internal/modules/cjs/loader:1761:14)
+    at Object.transformer (/Users/visula_s/Projects/smart-view-lounge/backend/node_modules/tsx/dist/register-D46fvsV_.cjs:3:1104)
+    at Module.load (node:internal/modules/cjs/loader:1481:32)
+    at Module._load (node:internal/modules/cjs/loader:1300:12)
+Emitted 'error' event on Server instance at:
+    at emitErrorNT (node:net:1976:8)
+    at process.processTicksAndRejections (node:internal/process/task_queues:89:21) {
+  code: 'EADDRINUSE',
+  errno: -48,
+  syscall: 'listen',
+  address: '::',
+  port: 4000
+}
+
+Node.js v24.12.0
+[31m[nodemon] app crashed - waiting for file changes before starting...[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `tsx src/server.ts`[39m
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+Error: Transform failed with 1 error:
+/Users/visula_s/Projects/smart-view-lounge/backend/src/controllers/webhooks.controller.ts:160:0: ERROR: Expected "finally" but found "}"
+    at failureErrorWithLog (/Users/visula_s/Projects/smart-view-lounge/backend/node_modules/esbuild/lib/main.js:1748:15)
+    at /Users/visula_s/Projects/smart-view-lounge/backend/node_modules/esbuild/lib/main.js:1017:50
+    at responseCallbacks.<computed> (/Users/visula_s/Projects/smart-view-lounge/backend/node_modules/esbuild/lib/main.js:884:9)
+    at handleIncomingPacket (/Users/visula_s/Projects/smart-view-lounge/backend/node_modules/esbuild/lib/main.js:939:12)
+    at Socket.readFromStdout (/Users/visula_s/Projects/smart-view-lounge/backend/node_modules/esbuild/lib/main.js:862:7)
+    at Socket.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushByteMode (node:internal/streams/readable:510:3)
+    at Readable.push (node:internal/streams/readable:390:5)
+    at Pipe.onStreamRead (node:internal/stream_base_commons:189:23) {
+  name: 'TransformError'
+}
+
+Node.js v24.12.0
+[31m[nodemon] app crashed - waiting for file changes before starting...[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `tsx src/server.ts`[39m
+[Server] Running on http://localhost:4000
+[Scheduler] Starting SMS cron jobs...
+[Scheduler] Cron running — checks every minute.
+[DB] PostgreSQL connected
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `tsx src/server.ts`[39m
+node:events:486
+      throw er; // Unhandled 'error' event
+      ^
+
+Error: listen EADDRINUSE: address already in use :::4000
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at Server.listen (node:net:2102:7)
+    at app.listen (/Users/visula_s/Projects/smart-view-lounge/backend/node_modules/express/lib/application.js:635:24)
+    at adminRoutes (/Users/visula_s/Projects/smart-view-lounge/backend/src/server.ts:56:5)
+    at Object.<anonymous> (/Users/visula_s/Projects/smart-view-lounge/backend/src/server.ts:59:2)
+    at Module._compile (node:internal/modules/cjs/loader:1761:14)
+    at Object.transformer (/Users/visula_s/Projects/smart-view-lounge/backend/node_modules/tsx/dist/register-D46fvsV_.cjs:3:1104)
+    at Module.load (node:internal/modules/cjs/loader:1481:32)
+    at Module._load (node:internal/modules/cjs/loader:1300:12)
+Emitted 'error' event on Server instance at:
+    at emitErrorNT (node:net:1976:8)
+    at process.processTicksAndRejections (node:internal/process/task_queues:89:21) {
+  code: 'EADDRINUSE',
+  errno: -48,
+  syscall: 'listen',
+  address: '::',
+  port: 4000
+}
+
+Node.js v24.12.0
+[31m[nodemon] app crashed - waiting for file changes before starting...[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `tsx src/server.ts`[39m
+node:events:486
+      throw er; // Unhandled 'error' event
+      ^
+
+Error: listen EADDRINUSE: address already in use :::4000
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at Server.listen (node:net:2102:7)
+    at app.listen (/Users/visula_s/Projects/smart-view-lounge/backend/node_modules/express/lib/application.js:635:24)
+    at adminRoutes (/Users/visula_s/Projects/smart-view-lounge/backend/src/server.ts:56:5)
+    at Object.<anonymous> (/Users/visula_s/Projects/smart-view-lounge/backend/src/server.ts:59:2)
+    at Module._compile (node:internal/modules/cjs/loader:1761:14)
+    at Object.transformer (/Users/visula_s/Projects/smart-view-lounge/backend/node_modules/tsx/dist/register-D46fvsV_.cjs:3:1104)
+    at Module.load (node:internal/modules/cjs/loader:1481:32)
+    at Module._load (node:internal/modules/cjs/loader:1300:12)
+Emitted 'error' event on Server instance at:
+    at emitErrorNT (node:net:1976:8)
+    at process.processTicksAndRejections (node:internal/process/task_queues:89:21) {
+  code: 'EADDRINUSE',
+  errno: -48,
+  syscall: 'listen',
+  address: '::',
+  port: 4000
+}
+
+Node.js v24.12.0
+[31m[nodemon] app crashed - waiting for file changes before starting...[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `tsx src/server.ts`[39m
+[Server] Running on http://localhost:4000
+[Scheduler] Starting SMS + Tuya cron jobs...
+[Scheduler] Cron running — checks every minute.
+[DB] PostgreSQL connected
+[Error] column "nic_front_key" does not exist
+error: column "nic_front_key" does not exist
+    at /Users/visula_s/Projects/smart-view-lounge/backend/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async getUsers (/Users/visula_s/Projects/smart-view-lounge/backend/src/controllers/admin.controller.ts:49:20)
+[Error] column "nic_front_key" does not exist
+error: column "nic_front_key" does not exist
+    at /Users/visula_s/Projects/smart-view-lounge/backend/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async Promise.all (index 2)
+    at async getDashboardStats (/Users/visula_s/Projects/smart-view-lounge/backend/src/controllers/admin.controller.ts:8:96)
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `tsx src/server.ts`[39m
+[Server] Running on http://localhost:4000
+[Scheduler] Starting SMS + Tuya cron jobs...
+[Scheduler] Cron running — checks every minute.
+[DB] PostgreSQL connected
+[Tuya] ❌ Health check failed: [Tuya] Token fetch failed: sign invalid (code 1004)
+[Error] column "nic_front_key" does not exist
+error: column "nic_front_key" does not exist
+    at /Users/visula_s/Projects/smart-view-lounge/backend/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async getUsers (/Users/visula_s/Projects/smart-view-lounge/backend/src/controllers/admin.controller.ts:49:20)
+[Error] column "nic_front_key" does not exist
+error: column "nic_front_key" does not exist
+    at /Users/visula_s/Projects/smart-view-lounge/backend/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async Promise.all (index 2)
+    at async getDashboardStats (/Users/visula_s/Projects/smart-view-lounge/backend/src/controllers/admin.controller.ts:8:96)
+[Error] column "nic_front_key" does not exist
+error: column "nic_front_key" does not exist
+    at /Users/visula_s/Projects/smart-view-lounge/backend/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async getUsers (/Users/visula_s/Projects/smart-view-lounge/backend/src/controllers/admin.controller.ts:49:20)
+[Error] column "nic_front_key" does not exist
+error: column "nic_front_key" does not exist
+    at /Users/visula_s/Projects/smart-view-lounge/backend/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async Promise.all (index 2)
+    at async getDashboardStats (/Users/visula_s/Projects/smart-view-lounge/backend/src/controllers/admin.controller.ts:8:96)
+[Error] column "nic_front_key" does not exist
+error: column "nic_front_key" does not exist
+    at /Users/visula_s/Projects/smart-view-lounge/backend/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async getUsers (/Users/visula_s/Projects/smart-view-lounge/backend/src/controllers/admin.controller.ts:49:20)
+[Error] column "nic_front_key" does not exist
+error: column "nic_front_key" does not exist
+    at /Users/visula_s/Projects/smart-view-lounge/backend/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async Promise.all (index 2)
+    at async getDashboardStats (/Users/visula_s/Projects/smart-view-lounge/backend/src/controllers/admin.controller.ts:8:96)
+[Error] column "nic_front_key" does not exist
+error: column "nic_front_key" does not exist
+    at /Users/visula_s/Projects/smart-view-lounge/backend/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async getUsers (/Users/visula_s/Projects/smart-view-lounge/backend/src/controllers/admin.controller.ts:49:20)
+[Error] column "nic_front_key" does not exist
+error: column "nic_front_key" does not exist
+    at /Users/visula_s/Projects/smart-view-lounge/backend/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async Promise.all (index 2)
+    at async getDashboardStats (/Users/visula_s/Projects/smart-view-lounge/backend/src/controllers/admin.controller.ts:8:96)
+[Error] column "nic_front_key" does not exist
+error: column "nic_front_key" does not exist
+    at /Users/visula_s/Projects/smart-view-lounge/backend/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async getUsers (/Users/visula_s/Projects/smart-view-lounge/backend/src/controllers/admin.controller.ts:49:20)
+[Error] column "nic_front_key" does not exist
+error: column "nic_front_key" does not exist
+    at /Users/visula_s/Projects/smart-view-lounge/backend/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async Promise.all (index 2)
+    at async getDashboardStats (/Users/visula_s/Projects/smart-view-lounge/backend/src/controllers/admin.controller.ts:8:96)
+[Error] column "nic_front_key" does not exist
+error: column "nic_front_key" does not exist
+    at /Users/visula_s/Projects/smart-view-lounge/backend/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async getUsers (/Users/visula_s/Projects/smart-view-lounge/backend/src/controllers/admin.controller.ts:49:20)
+[Error] column "nic_front_key" does not exist
+error: column "nic_front_key" does not exist
+    at /Users/visula_s/Projects/smart-view-lounge/backend/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async Promise.all (index 2)
+    at async getDashboardStats (/Users/visula_s/Projects/smart-view-lounge/backend/src/controllers/admin.controller.ts:8:96)
+[Error] column "nic_front_key" does not exist
+error: column "nic_front_key" does not exist
+    at /Users/visula_s/Projects/smart-view-lounge/backend/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async getUsers (/Users/visula_s/Projects/smart-view-lounge/backend/src/controllers/admin.controller.ts:49:20)
+[Error] column "nic_front_key" does not exist
+error: column "nic_front_key" does not exist
+    at /Users/visula_s/Projects/smart-view-lounge/backend/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async Promise.all (index 2)
+    at async getDashboardStats (/Users/visula_s/Projects/smart-view-lounge/backend/src/controllers/admin.controller.ts:8:96)
+[Error] column "nic_front_key" does not exist
+error: column "nic_front_key" does not exist
+    at /Users/visula_s/Projects/smart-view-lounge/backend/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async getUsers (/Users/visula_s/Projects/smart-view-lounge/backend/src/controllers/admin.controller.ts:49:20)
+[Error] column "nic_front_key" does not exist
+error: column "nic_front_key" does not exist
+    at /Users/visula_s/Projects/smart-view-lounge/backend/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async Promise.all (index 2)
+    at async getDashboardStats (/Users/visula_s/Projects/smart-view-lounge/backend/src/controllers/admin.controller.ts:8:96)
+[Error] column "nic_front_key" does not exist
+error: column "nic_front_key" does not exist
+    at /Users/visula_s/Projects/smart-view-lounge/backend/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async getUsers (/Users/visula_s/Projects/smart-view-lounge/backend/src/controllers/admin.controller.ts:49:20)
+[Error] column "nic_front_key" does not exist
+error: column "nic_front_key" does not exist
+    at /Users/visula_s/Projects/smart-view-lounge/backend/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async Promise.all (index 2)
+    at async getDashboardStats (/Users/visula_s/Projects/smart-view-lounge/backend/src/controllers/admin.controller.ts:8:96)
+[Error] column "nic_front_key" does not exist
+error: column "nic_front_key" does not exist
+    at /Users/visula_s/Projects/smart-view-lounge/backend/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async getUsers (/Users/visula_s/Projects/smart-view-lounge/backend/src/controllers/admin.controller.ts:49:20)
+[Error] column "nic_front_key" does not exist
+error: column "nic_front_key" does not exist
+    at /Users/visula_s/Projects/smart-view-lounge/backend/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async Promise.all (index 2)
+    at async getDashboardStats (/Users/visula_s/Projects/smart-view-lounge/backend/src/controllers/admin.controller.ts:8:96)
+[Error] column "nic_front_key" does not exist
+error: column "nic_front_key" does not exist
+    at /Users/visula_s/Projects/smart-view-lounge/backend/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async getUsers (/Users/visula_s/Projects/smart-view-lounge/backend/src/controllers/admin.controller.ts:49:20)
+[Error] column "nic_front_key" does not exist
+error: column "nic_front_key" does not exist
+    at /Users/visula_s/Projects/smart-view-lounge/backend/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async Promise.all (index 2)
+    at async getDashboardStats (/Users/visula_s/Projects/smart-view-lounge/backend/src/controllers/admin.controller.ts:8:96)
+[Error] column "nic_front_key" does not exist
+error: column "nic_front_key" does not exist
+    at /Users/visula_s/Projects/smart-view-lounge/backend/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async getUsers (/Users/visula_s/Projects/smart-view-lounge/backend/src/controllers/admin.controller.ts:49:20)
+[Error] column "nic_front_key" does not exist
+error: column "nic_front_key" does not exist
+    at /Users/visula_s/Projects/smart-view-lounge/backend/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async Promise.all (index 2)
+    at async getDashboardStats (/Users/visula_s/Projects/smart-view-lounge/backend/src/controllers/admin.controller.ts:8:96)
+[Error] column "nic_front_key" does not exist
+error: column "nic_front_key" does not exist
+    at /Users/visula_s/Projects/smart-view-lounge/backend/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async getUsers (/Users/visula_s/Projects/smart-view-lounge/backend/src/controllers/admin.controller.ts:49:20)
+[Error] column "nic_front_key" does not exist
+error: column "nic_front_key" does not exist
+    at /Users/visula_s/Projects/smart-view-lounge/backend/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async Promise.all (index 2)
+    at async getDashboardStats (/Users/visula_s/Projects/smart-view-lounge/backend/src/controllers/admin.controller.ts:8:96)
+[Error] column "nic_front_key" does not exist
+error: column "nic_front_key" does not exist
+    at /Users/visula_s/Projects/smart-view-lounge/backend/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async getUsers (/Users/visula_s/Projects/smart-view-lounge/backend/src/controllers/admin.controller.ts:49:20)
+[Error] column "nic_front_key" does not exist
+error: column "nic_front_key" does not exist
+    at /Users/visula_s/Projects/smart-view-lounge/backend/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async Promise.all (index 2)
+    at async getDashboardStats (/Users/visula_s/Projects/smart-view-lounge/backend/src/controllers/admin.controller.ts:8:96)
+[Error] column "nic_front_key" does not exist
+error: column "nic_front_key" does not exist
+    at /Users/visula_s/Projects/smart-view-lounge/backend/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async getUsers (/Users/visula_s/Projects/smart-view-lounge/backend/src/controllers/admin.controller.ts:49:20)
+[Error] column "nic_front_key" does not exist
+error: column "nic_front_key" does not exist
+    at /Users/visula_s/Projects/smart-view-lounge/backend/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async Promise.all (index 2)
+    at async getDashboardStats (/Users/visula_s/Projects/smart-view-lounge/backend/src/controllers/admin.controller.ts:8:96)
+[Error] column "nic_front_key" does not exist
+error: column "nic_front_key" does not exist
+    at /Users/visula_s/Projects/smart-view-lounge/backend/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async getUsers (/Users/visula_s/Projects/smart-view-lounge/backend/src/controllers/admin.controller.ts:49:20)
+[Error] column "nic_front_key" does not exist
+error: column "nic_front_key" does not exist
+    at /Users/visula_s/Projects/smart-view-lounge/backend/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async Promise.all (index 2)
+    at async getDashboardStats (/Users/visula_s/Projects/smart-view-lounge/backend/src/controllers/admin.controller.ts:8:96)
+[Error] column "nic_front_key" does not exist
+error: column "nic_front_key" does not exist
+    at /Users/visula_s/Projects/smart-view-lounge/backend/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async getUsers (/Users/visula_s/Projects/smart-view-lounge/backend/src/controllers/admin.controller.ts:49:20)
+[Error] column "nic_front_key" does not exist
+error: column "nic_front_key" does not exist
+    at /Users/visula_s/Projects/smart-view-lounge/backend/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async Promise.all (index 2)
+    at async getDashboardStats (/Users/visula_s/Projects/smart-view-lounge/backend/src/controllers/admin.controller.ts:8:96)
+[Error] column "nic_front_key" does not exist
+error: column "nic_front_key" does not exist
+    at /Users/visula_s/Projects/smart-view-lounge/backend/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async getUsers (/Users/visula_s/Projects/smart-view-lounge/backend/src/controllers/admin.controller.ts:49:20)
+[Error] column "nic_front_key" does not exist
+error: column "nic_front_key" does not exist
+    at /Users/visula_s/Projects/smart-view-lounge/backend/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async Promise.all (index 2)
+    at async getDashboardStats (/Users/visula_s/Projects/smart-view-lounge/backend/src/controllers/admin.controller.ts:8:96)
+[Error] column "nic_front_key" does not exist
+error: column "nic_front_key" does not exist
+    at /Users/visula_s/Projects/smart-view-lounge/backend/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async getUsers (/Users/visula_s/Projects/smart-view-lounge/backend/src/controllers/admin.controller.ts:49:20)
+[Error] column "nic_front_key" does not exist
+error: column "nic_front_key" does not exist
+    at /Users/visula_s/Projects/smart-view-lounge/backend/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async Promise.all (index 2)
+    at async getDashboardStats (/Users/visula_s/Projects/smart-view-lounge/backend/src/controllers/admin.controller.ts:8:96)
+[Error] column "nic_front_key" does not exist
+error: column "nic_front_key" does not exist
+    at /Users/visula_s/Projects/smart-view-lounge/backend/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async getUsers (/Users/visula_s/Projects/smart-view-lounge/backend/src/controllers/admin.controller.ts:49:20)
+[Error] column "nic_front_key" does not exist
+error: column "nic_front_key" does not exist
+    at /Users/visula_s/Projects/smart-view-lounge/backend/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async Promise.all (index 2)
+    at async getDashboardStats (/Users/visula_s/Projects/smart-view-lounge/backend/src/controllers/admin.controller.ts:8:96)
+[Error] column "nic_front_key" does not exist
+error: column "nic_front_key" does not exist
+    at /Users/visula_s/Projects/smart-view-lounge/backend/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async getUsers (/Users/visula_s/Projects/smart-view-lounge/backend/src/controllers/admin.controller.ts:49:20)
+[Error] column "nic_front_key" does not exist
+error: column "nic_front_key" does not exist
+    at /Users/visula_s/Projects/smart-view-lounge/backend/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async Promise.all (index 2)
+    at async getDashboardStats (/Users/visula_s/Projects/smart-view-lounge/backend/src/controllers/admin.controller.ts:8:96)
+[Error] column "nic_front_key" does not exist
+error: column "nic_front_key" does not exist
+    at /Users/visula_s/Projects/smart-view-lounge/backend/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async getUsers (/Users/visula_s/Projects/smart-view-lounge/backend/src/controllers/admin.controller.ts:49:20)
+[Error] column "nic_front_key" does not exist
+error: column "nic_front_key" does not exist
+    at /Users/visula_s/Projects/smart-view-lounge/backend/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async Promise.all (index 2)
+    at async getDashboardStats (/Users/visula_s/Projects/smart-view-lounge/backend/src/controllers/admin.controller.ts:8:96)
+[Error] column "nic_front_key" does not exist
+error: column "nic_front_key" does not exist
+    at /Users/visula_s/Projects/smart-view-lounge/backend/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async getUsers (/Users/visula_s/Projects/smart-view-lounge/backend/src/controllers/admin.controller.ts:49:20)
+[Error] column "nic_front_key" does not exist
+error: column "nic_front_key" does not exist
+    at /Users/visula_s/Projects/smart-view-lounge/backend/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async Promise.all (index 2)
+    at async getDashboardStats (/Users/visula_s/Projects/smart-view-lounge/backend/src/controllers/admin.controller.ts:8:96)
+[Error] column "nic_front_key" does not exist
+error: column "nic_front_key" does not exist
+    at /Users/visula_s/Projects/smart-view-lounge/backend/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async getUsers (/Users/visula_s/Projects/smart-view-lounge/backend/src/controllers/admin.controller.ts:49:20)
+[Error] column "nic_front_key" does not exist
+error: column "nic_front_key" does not exist
+    at /Users/visula_s/Projects/smart-view-lounge/backend/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async Promise.all (index 2)
+    at async getDashboardStats (/Users/visula_s/Projects/smart-view-lounge/backend/src/controllers/admin.controller.ts:8:96)
+[Error] column "nic_front_key" does not exist
+error: column "nic_front_key" does not exist
+    at /Users/visula_s/Projects/smart-view-lounge/backend/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async getUsers (/Users/visula_s/Projects/smart-view-lounge/backend/src/controllers/admin.controller.ts:49:20)
+[Error] column "nic_front_key" does not exist
+error: column "nic_front_key" does not exist
+    at /Users/visula_s/Projects/smart-view-lounge/backend/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async Promise.all (index 2)
+    at async getDashboardStats (/Users/visula_s/Projects/smart-view-lounge/backend/src/controllers/admin.controller.ts:8:96)
+[Error] column "nic_front_key" does not exist
+error: column "nic_front_key" does not exist
+    at /Users/visula_s/Projects/smart-view-lounge/backend/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async getUsers (/Users/visula_s/Projects/smart-view-lounge/backend/src/controllers/admin.controller.ts:49:20)
+[Error] column "nic_front_key" does not exist
+error: column "nic_front_key" does not exist
+    at /Users/visula_s/Projects/smart-view-lounge/backend/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async Promise.all (index 2)
+    at async getDashboardStats (/Users/visula_s/Projects/smart-view-lounge/backend/src/controllers/admin.controller.ts:8:96)
+[Error] column "nic_front_key" does not exist
+error: column "nic_front_key" does not exist
+    at /Users/visula_s/Projects/smart-view-lounge/backend/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async getUsers (/Users/visula_s/Projects/smart-view-lounge/backend/src/controllers/admin.controller.ts:49:20)
+[Error] column "nic_front_key" does not exist
+error: column "nic_front_key" does not exist
+    at /Users/visula_s/Projects/smart-view-lounge/backend/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async Promise.all (index 2)
+    at async getDashboardStats (/Users/visula_s/Projects/smart-view-lounge/backend/src/controllers/admin.controller.ts:8:96)
+[Error] column "nic_front_key" does not exist
+error: column "nic_front_key" does not exist
+    at /Users/visula_s/Projects/smart-view-lounge/backend/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async getUsers (/Users/visula_s/Projects/smart-view-lounge/backend/src/controllers/admin.controller.ts:49:20)
+[Error] column "nic_front_key" does not exist
+error: column "nic_front_key" does not exist
+    at /Users/visula_s/Projects/smart-view-lounge/backend/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async Promise.all (index 2)
+    at async getDashboardStats (/Users/visula_s/Projects/smart-view-lounge/backend/src/controllers/admin.controller.ts:8:96)
+[Error] column "nic_front_key" does not exist
+error: column "nic_front_key" does not exist
+    at /Users/visula_s/Projects/smart-view-lounge/backend/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async getUsers (/Users/visula_s/Projects/smart-view-lounge/backend/src/controllers/admin.controller.ts:49:20)
+[Error] column "nic_front_key" does not exist
+error: column "nic_front_key" does not exist
+    at /Users/visula_s/Projects/smart-view-lounge/backend/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async Promise.all (index 2)
+    at async getDashboardStats (/Users/visula_s/Projects/smart-view-lounge/backend/src/controllers/admin.controller.ts:8:96)
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `tsx src/server.ts`[39m
+node:events:486
+      throw er; // Unhandled 'error' event
+      ^
+
+Error: listen EADDRINUSE: address already in use :::4000
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at Server.listen (node:net:2102:7)
+    at app.listen (/Users/visula_s/Projects/smart-view-lounge/backend/node_modules/express/lib/application.js:635:24)
+    at adminRoutes (/Users/visula_s/Projects/smart-view-lounge/backend/src/server.ts:57:5)
+    at Object.<anonymous> (/Users/visula_s/Projects/smart-view-lounge/backend/src/server.ts:61:2)
+    at Module._compile (node:internal/modules/cjs/loader:1761:14)
+    at Object.transformer (/Users/visula_s/Projects/smart-view-lounge/backend/node_modules/tsx/dist/register-D46fvsV_.cjs:3:1104)
+    at Module.load (node:internal/modules/cjs/loader:1481:32)
+    at Module._load (node:internal/modules/cjs/loader:1300:12)
+Emitted 'error' event on Server instance at:
+    at emitErrorNT (node:net:1976:8)
+    at process.processTicksAndRejections (node:internal/process/task_queues:89:21) {
+  code: 'EADDRINUSE',
+  errno: -48,
+  syscall: 'listen',
+  address: '::',
+  port: 4000
+}
+
+Node.js v24.12.0
+[31m[nodemon] app crashed - waiting for file changes before starting...[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `tsx src/server.ts`[39m
+[Server] Running on http://localhost:4000
+[Scheduler] Starting SMS + Tuya cron jobs...
+[Scheduler] Cron running — checks every minute.
+[DB] PostgreSQL connected
+[Tuya] Access token refreshed, valid for 6913 seconds
+[Tuya] ✅ Connected to Tuya IoT Cloud (Central Europe)
+[Tuya] v2 scene API unavailable, trying v1...
+[Tuya] v1 scene API also unavailable
+[Tuya] ⚠️  Required scenes NOT found!
+  Looking for: "Session Start" and "Session End"
+  Found: none
+  → Create these scenes in Smart Life app with exact names above.
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `tsx src/server.ts`[39m
+node:events:486
+      throw er; // Unhandled 'error' event
+      ^
+
+Error: listen EADDRINUSE: address already in use :::4000
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at Server.listen (node:net:2102:7)
+    at app.listen (/Users/visula_s/Projects/smart-view-lounge/backend/node_modules/express/lib/application.js:635:24)
+    at adminRoutes (/Users/visula_s/Projects/smart-view-lounge/backend/src/server.ts:57:5)
+    at Object.<anonymous> (/Users/visula_s/Projects/smart-view-lounge/backend/src/server.ts:61:2)
+    at Module._compile (node:internal/modules/cjs/loader:1761:14)
+    at Object.transformer (/Users/visula_s/Projects/smart-view-lounge/backend/node_modules/tsx/dist/register-D46fvsV_.cjs:3:1104)
+    at Module.load (node:internal/modules/cjs/loader:1481:32)
+    at Module._load (node:internal/modules/cjs/loader:1300:12)
+Emitted 'error' event on Server instance at:
+    at emitErrorNT (node:net:1976:8)
+    at process.processTicksAndRejections (node:internal/process/task_queues:89:21) {
+  code: 'EADDRINUSE',
+  errno: -48,
+  syscall: 'listen',
+  address: '::',
+  port: 4000
+}
+
+Node.js v24.12.0
+[31m[nodemon] app crashed - waiting for file changes before starting...[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `tsx src/server.ts`[39m
+node:events:486
+      throw er; // Unhandled 'error' event
+      ^
+
+Error: listen EADDRINUSE: address already in use :::4000
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at Server.listen (node:net:2102:7)
+    at app.listen (/Users/visula_s/Projects/smart-view-lounge/backend/node_modules/express/lib/application.js:635:24)
+    at adminRoutes (/Users/visula_s/Projects/smart-view-lounge/backend/src/server.ts:57:5)
+    at Object.<anonymous> (/Users/visula_s/Projects/smart-view-lounge/backend/src/server.ts:61:2)
+    at Module._compile (node:internal/modules/cjs/loader:1761:14)
+    at Object.transformer (/Users/visula_s/Projects/smart-view-lounge/backend/node_modules/tsx/dist/register-D46fvsV_.cjs:3:1104)
+    at Module.load (node:internal/modules/cjs/loader:1481:32)
+    at Module._load (node:internal/modules/cjs/loader:1300:12)
+Emitted 'error' event on Server instance at:
+    at emitErrorNT (node:net:1976:8)
+    at process.processTicksAndRejections (node:internal/process/task_queues:89:21) {
+  code: 'EADDRINUSE',
+  errno: -48,
+  syscall: 'listen',
+  address: '::',
+  port: 4000
+}
+
+Node.js v24.12.0
+[31m[nodemon] app crashed - waiting for file changes before starting...[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `tsx src/server.ts`[39m
+node:events:486
+      throw er; // Unhandled 'error' event
+      ^
+
+Error: listen EADDRINUSE: address already in use :::4000
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at Server.listen (node:net:2102:7)
+    at app.listen (/Users/visula_s/Projects/smart-view-lounge/backend/node_modules/express/lib/application.js:635:24)
+    at adminRoutes (/Users/visula_s/Projects/smart-view-lounge/backend/src/server.ts:57:5)
+    at Object.<anonymous> (/Users/visula_s/Projects/smart-view-lounge/backend/src/server.ts:61:2)
+    at Module._compile (node:internal/modules/cjs/loader:1761:14)
+    at Object.transformer (/Users/visula_s/Projects/smart-view-lounge/backend/node_modules/tsx/dist/register-D46fvsV_.cjs:3:1104)
+    at Module.load (node:internal/modules/cjs/loader:1481:32)
+    at Module._load (node:internal/modules/cjs/loader:1300:12)
+Emitted 'error' event on Server instance at:
+    at emitErrorNT (node:net:1976:8)
+    at process.processTicksAndRejections (node:internal/process/task_queues:89:21) {
+  code: 'EADDRINUSE',
+  errno: -48,
+  syscall: 'listen',
+  address: '::',
+  port: 4000
+}
+
+Node.js v24.12.0
+[31m[nodemon] app crashed - waiting for file changes before starting...[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `tsx src/server.ts`[39m
+node:events:486
+      throw er; // Unhandled 'error' event
+      ^
+
+Error: listen EADDRINUSE: address already in use :::4000
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at Server.listen (node:net:2102:7)
+    at app.listen (/Users/visula_s/Projects/smart-view-lounge/backend/node_modules/express/lib/application.js:635:24)
+    at adminRoutes (/Users/visula_s/Projects/smart-view-lounge/backend/src/server.ts:57:5)
+    at Object.<anonymous> (/Users/visula_s/Projects/smart-view-lounge/backend/src/server.ts:61:2)
+    at Module._compile (node:internal/modules/cjs/loader:1761:14)
+    at Object.transformer (/Users/visula_s/Projects/smart-view-lounge/backend/node_modules/tsx/dist/register-D46fvsV_.cjs:3:1104)
+    at Module.load (node:internal/modules/cjs/loader:1481:32)
+    at Module._load (node:internal/modules/cjs/loader:1300:12)
+Emitted 'error' event on Server instance at:
+    at emitErrorNT (node:net:1976:8)
+    at process.processTicksAndRejections (node:internal/process/task_queues:89:21) {
+  code: 'EADDRINUSE',
+  errno: -48,
+  syscall: 'listen',
+  address: '::',
+  port: 4000
+}
+
+Node.js v24.12.0
+[31m[nodemon] app crashed - waiting for file changes before starting...[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `tsx src/server.ts`[39m
+node:events:486
+      throw er; // Unhandled 'error' event
+      ^
+
+Error: listen EADDRINUSE: address already in use :::4000
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at Server.listen (node:net:2102:7)
+    at app.listen (/Users/visula_s/Projects/smart-view-lounge/backend/node_modules/express/lib/application.js:635:24)
+    at adminRoutes (/Users/visula_s/Projects/smart-view-lounge/backend/src/server.ts:57:5)
+    at Object.<anonymous> (/Users/visula_s/Projects/smart-view-lounge/backend/src/server.ts:61:2)
+    at Module._compile (node:internal/modules/cjs/loader:1761:14)
+    at Object.transformer (/Users/visula_s/Projects/smart-view-lounge/backend/node_modules/tsx/dist/register-D46fvsV_.cjs:3:1104)
+    at Module.load (node:internal/modules/cjs/loader:1481:32)
+    at Module._load (node:internal/modules/cjs/loader:1300:12)
+Emitted 'error' event on Server instance at:
+    at emitErrorNT (node:net:1976:8)
+    at process.processTicksAndRejections (node:internal/process/task_queues:89:21) {
+  code: 'EADDRINUSE',
+  errno: -48,
+  syscall: 'listen',
+  address: '::',
+  port: 4000
+}
+
+Node.js v24.12.0
+[31m[nodemon] app crashed - waiting for file changes before starting...[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `tsx src/server.ts`[39m
+node:events:486
+      throw er; // Unhandled 'error' event
+      ^
+
+Error: listen EADDRINUSE: address already in use :::4000
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at Server.listen (node:net:2102:7)
+    at app.listen (/Users/visula_s/Projects/smart-view-lounge/backend/node_modules/express/lib/application.js:635:24)
+    at adminRoutes (/Users/visula_s/Projects/smart-view-lounge/backend/src/server.ts:57:5)
+    at Object.<anonymous> (/Users/visula_s/Projects/smart-view-lounge/backend/src/server.ts:61:2)
+    at Module._compile (node:internal/modules/cjs/loader:1761:14)
+    at Object.transformer (/Users/visula_s/Projects/smart-view-lounge/backend/node_modules/tsx/dist/register-D46fvsV_.cjs:3:1104)
+    at Module.load (node:internal/modules/cjs/loader:1481:32)
+    at Module._load (node:internal/modules/cjs/loader:1300:12)
+Emitted 'error' event on Server instance at:
+    at emitErrorNT (node:net:1976:8)
+    at process.processTicksAndRejections (node:internal/process/task_queues:89:21) {
+  code: 'EADDRINUSE',
+  errno: -48,
+  syscall: 'listen',
+  address: '::',
+  port: 4000
+}
+
+Node.js v24.12.0
+[31m[nodemon] app crashed - waiting for file changes before starting...[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `tsx src/server.ts`[39m
+[Server] Running on http://localhost:4000
+[Scheduler] Starting SMS + Tuya cron jobs...
+[Scheduler] Cron running — checks every minute.
+[DB] PostgreSQL connected
+[Tuya] Access token refreshed, valid for 4649 seconds
+[Tuya] ✅ Connected to Tuya IoT Cloud (Central Europe)
+[Tuya] v2 scene API unavailable, trying v1...
+[Tuya] v1 scene API also unavailable
+[Tuya] ⚠️  Required scenes NOT found!
+  Looking for: "Session Start" and "Session End"
+  Found: none
+  → Create these scenes in Smart Life app with exact names above.
+[Tuya] Access token refreshed, valid for 7200 seconds
+[Tuya] v2 scene API unavailable, trying v1...
+[Tuya] v1 scene API also unavailable
+[Tuya] ❌ Failed to start devices for booking a179d4eb-98f9-4248-8b67-a65cf08291ca: [Tuya] Scene "Session Start" not found. Available: none found. Create a scene with this exact name in the Smart Life app.
+[SMS] Sent "tuya_start_fail" to 0771234567
