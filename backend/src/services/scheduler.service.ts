@@ -1,7 +1,7 @@
 import cron from 'node-cron';
 import db from '../db';
 import { sendSMS, getSetting } from './sms.service';
-import { startSessionDevices, endSessionDevices } from './tuya.service';
+import { startSessionDevices, endSessionDevices, createSessionPin } from './tuya.service';
 
 export function startScheduler(): void {
   console.log('[Scheduler] Starting SMS + Tuya cron jobs...');
@@ -186,11 +186,9 @@ async function checkSessionStartPasscode() {
     JOIN users u ON b.user_id = u.id
     WHERE b.status = 'confirmed'
       AND b.pin_sms_sent = FALSE
-      AND b.start_time <= NOW()
-      AND b.start_time > NOW() - INTERVAL '3 minutes'
+      AND b.start_time <= NOW() + INTERVAL '2 minutes'
+      AND b.end_time > NOW()
   `);
-
-  const { createSessionPin } = await import('./tuya.service');
 
   for (const row of rows) {
     try {
