@@ -10,6 +10,7 @@ CREATE TABLE users (
   password_hash    TEXT        NOT NULL,
   nic_number       TEXT,
   nic_image_key    TEXT,                           -- Cloudflare R2 object key
+  nic_back_key     TEXT,
   status           user_status DEFAULT 'pending_verification',
   role             user_role   DEFAULT 'customer',
   rejection_reason TEXT,
