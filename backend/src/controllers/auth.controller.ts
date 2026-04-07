@@ -214,23 +214,35 @@ export async function forgotPassword(req: Request, res: Response): Promise<void>
   const { rows } = await db.query('SELECT id, full_name FROM users WHERE email = $1', [email.toLowerCase()]);
   const user = rows[0];
 
-  // Always respond OK to prevent email enumeration
-  res.json({ message: 'If that email exists, a reset link has been sent.' });
-
-  if (!user) return;
+  // Return 404 so the frontend can inform the user their email isn't registered
+  if (!user) {
+    res.status(404).json({ error: 'No account found with that email address.' });
+    return;
+  }
 
   const token     = crypto.randomBytes(32).toString('hex');
   const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
 
+  // Replace any existing token for this user (ON CONFLICT DO NOTHING silently failed!)
   await db.query(
     `INSERT INTO password_reset_tokens (user_id, token, expires_at)
      VALUES ($1, $2, $3)
-     ON CONFLICT DO NOTHING`,
+     ON CONFLICT (user_id) DO UPDATE
+       SET token = EXCLUDED.token,
+           expires_at = EXCLUDED.expires_at,
+           used = FALSE`,
     [user.id, token, expiresAt]
   );
 
   const resetUrl = `${process.env.CORS_ORIGIN}/reset-password?token=${token}`;
-  sendPasswordResetEmail({ to: email, name: user.full_name, resetUrl }).catch(console.error);
+
+  try {
+    await sendPasswordResetEmail({ to: email, name: user.full_name, resetUrl });
+    res.json({ message: 'Reset link sent to your email.' });
+  } catch (emailErr: any) {
+    console.error('[Auth] Failed to send reset email:', emailErr.message);
+    res.status(500).json({ error: 'Failed to send reset email. Please try again.' });
+  }
 }
 
 // POST /api/auth/reset-password
