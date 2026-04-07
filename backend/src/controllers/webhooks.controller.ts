@@ -64,53 +64,11 @@ async function runPostConfirmTriggers(
     amountPaid: Number(booking.total_amount)
   }).catch((err: any) => console.error('[Calendar] Failed:', err.message));
 
-  // ── D. 🔐 Tuya: Generate Door PIN + send via SMS ─────────────────
-  //  Creates a 6-digit PIN valid only for this session window.
-  //  Stores it in the DB so admin can resend if user loses it.
-  (async () => {
-    try {
-      const { pin, ticketId } = await createSessionPin(
-        booking.id,
-        new Date(booking.start_time),
-        new Date(booking.end_time)
-      );
-
-      // Store PIN in DB so we can resend and audit later
-      await db.query(
-        `UPDATE bookings SET door_pin = $1, tuya_ticket_id = $2, pin_sms_sent = FALSE WHERE id = $3`,
-        [pin, ticketId, booking.id]
-      );
-
-      // Format session times in Sri Lanka timezone for the SMS
-      const startFmt = new Date(booking.start_time).toLocaleString('en-LK', {
-        timeZone: 'Asia/Colombo', dateStyle: 'medium', timeStyle: 'short'
-      });
-      const endFmt = new Date(booking.end_time).toLocaleString('en-LK', {
-        timeZone: 'Asia/Colombo', timeStyle: 'short'
-      });
-
-      const pinMsg =
-        `SmartView Lounge: Your door PIN is *${pin}*. ` +
-        `Valid: ${startFmt} – ${endFmt}. ` +
-        `Do NOT share this PIN.`;
-
-      await sendSMS(user.mobile, pinMsg, 'door_pin', booking.id);
-      await db.query(`UPDATE bookings SET pin_sms_sent = TRUE WHERE id = $1`, [booking.id]);
-
-      console.log(`[Tuya] ✅ PIN ${pin} sent to ${user.mobile} for booking ${booking.id}`);
-    } catch (err: any) {
-      console.error('[Tuya] ❌ PIN generation failed for booking', booking.id, ':', err.message);
-      // Alert admin so they can manually give the customer access
-      if (adminMobile) {
-        sendSMS(
-          adminMobile,
-          `⚠️ TUYA ALERT: Door PIN FAILED for booking ${booking.id.slice(0, 8)}. Give manual access!`,
-          'tuya_pin_fail',
-          booking.id
-        ).catch(console.error);
-      }
-    }
-  })();
+  // ── D. Tuya: Door PIN Generation (Now handled by Scheduler) ────
+  //  The Door PIN is generated and sent via SMS EXACTLY when the
+  //  session starts to ensure it cannot be used prematurely.
+  //  We simply log that the booking is confirmed and waiting for start.
+  console.log(`[Webhook] Tuya Door PIN scheduled for exactly ${booking.start_time}`);
 }
 
 // ─────────────────────────────────────────────────────────────────

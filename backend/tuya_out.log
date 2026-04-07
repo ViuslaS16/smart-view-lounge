@@ -1,0 +1,6 @@
+Token: 557812fccc0566bf3be295f8d58379b2
+[/v1.0/devices/bf34ddf1129a83b51aoiwr/door-lock/device-password-ticket] SUCCESS: {"code":1108,"msg":"uri path invalid","success":false,"t":1775542312505,"tid":"abb5d955324811f1b270d6c5c1a9e32b"}
+[/v1.0/devices/bf34ddf1129a83b51aoiwr/door-lock/offline-temp-password] SUCCESS: {"code":1109,"msg":"param is illegal ,please check it","success":false,"t":1775542312697,"tid":"abce880f324811f1b270d6c5c1a9e32b"}
+[/v1.0/devices/bf34ddf1129a83b51aoiwr/door-lock/temp-passwords] SUCCESS: {"code":1108,"msg":"uri path invalid","success":false,"t":1775542312856,"tid":"abeb6482324811f1a34cee5ee6a19de0"}
+[/v1.0/devices/bf34ddf1129a83b51aoiwr/door-lock/password-offline] SUCCESS: {"code":1108,"msg":"uri path invalid","success":false,"t":1775542313016,"tid":"ac03c9a1324811f1b270d6c5c1a9e32b"}
+[/v1.0/devices/bf34ddf1129a83b51aoiwr/passwords/offline/create] SUCCESS: {"code":1108,"msg":"uri path invalid","success":false,"t":1775542313177,"tid":"ac1c6824324811f1a34cee5ee6a19de0"}

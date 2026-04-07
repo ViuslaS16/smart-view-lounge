@@ -18,6 +18,7 @@ export function startScheduler(): void {
       // ── Tuya Device Automation ──────────────────────────────────────────
       await checkTuyaSessionStart();
       await checkTuyaSessionEnd();
+      await checkSessionStartPasscode();
     } catch (err: any) {
       console.error('[Scheduler] Cron error:', err.message);
     }
@@ -173,3 +174,66 @@ async function checkTuyaSessionEnd() {
     }
   }
 }
+
+/**
+ * Generate Tuya Door PIN exactly at the session start time.
+ * This guarantees the PIN closely matches the actual session period.
+ */
+async function checkSessionStartPasscode() {
+  const { rows } = await db.query(`
+    SELECT b.id, b.start_time, b.end_time, u.mobile
+    FROM bookings b
+    JOIN users u ON b.user_id = u.id
+    WHERE b.status = 'confirmed'
+      AND b.pin_sms_sent = FALSE
+      AND b.start_time <= NOW()
+      AND b.start_time > NOW() - INTERVAL '3 minutes'
+  `);
+
+  const { createSessionPin } = await import('./tuya.service');
+
+  for (const row of rows) {
+    try {
+      const { pin, ticketId } = await createSessionPin(
+        row.id,
+        new Date(row.start_time),
+        new Date(row.end_time)
+      );
+
+      await db.query(
+        `UPDATE bookings SET door_pin = $1, tuya_ticket_id = $2 WHERE id = $3`,
+        [pin, ticketId, row.id]
+      );
+
+      const startFmt = new Date(row.start_time).toLocaleString('en-LK', {
+        timeZone: 'Asia/Colombo', dateStyle: 'medium', timeStyle: 'short'
+      });
+      const endFmt = new Date(row.end_time).toLocaleString('en-LK', {
+        timeZone: 'Asia/Colombo', timeStyle: 'short'
+      });
+
+      // Format PIN with '#' symbol as requested by the lock hardware
+      const pinMsg =
+        `SmartView Lounge: Your door PIN is *${pin}#*. ` +
+        `Valid: ${startFmt} - ${endFmt}. ` +
+        `Do NOT share this PIN.`;
+
+      await sendSMS(row.mobile, pinMsg, 'door_pin', row.id);
+      await db.query(`UPDATE bookings SET pin_sms_sent = TRUE WHERE id = $1`, [row.id]);
+
+      console.log(`[Tuya] ✅ PIN ${pin}# sent to ${row.mobile} for session starting now (${row.id})`);
+    } catch (err: any) {
+      console.error(`[Tuya] ❌ PIN generation failed for booking ${row.id}:`, err.message);
+      const adminMobile = process.env.ADMIN_MOBILE;
+      if (adminMobile) {
+        sendSMS(
+          adminMobile,
+          `⚠️ TUYA ALERT: Door PIN FAILED for booking ${row.id.slice(0, 8)}. Give manual access!`,
+          'tuya_pin_fail',
+          row.id
+        ).catch(console.error);
+      }
+    }
+  }
+}
+

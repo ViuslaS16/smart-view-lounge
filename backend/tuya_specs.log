@@ -1,0 +1,66 @@
+{
+  "result": {
+    "category": "ms",
+    "functions": [],
+    "status": [
+      {
+        "code": "unlock_fingerprint",
+        "type": "Integer",
+        "values": "{\"min\":0,\"max\":999,\"scale\":0,\"step\":1}"
+      },
+      {
+        "code": "unlock_password",
+        "type": "Integer",
+        "values": "{\"min\":0,\"max\":999,\"scale\":0,\"step\":1}"
+      },
+      {
+        "code": "unlock_temporary",
+        "type": "Integer",
+        "values": "{\"min\":0,\"max\":999,\"scale\":0,\"step\":1}"
+      },
+      {
+        "code": "unlock_dynamic",
+        "type": "Integer",
+        "values": "{\"min\":0,\"max\":999,\"scale\":0,\"step\":1}"
+      },
+      {
+        "code": "unlock_card",
+        "type": "Integer",
+        "values": "{\"min\":0,\"max\":999,\"scale\":0,\"step\":1}"
+      },
+      {
+        "code": "alarm_lock",
+        "type": "Enum",
+        "values": "{\"range\":[\"wrong_finger\",\"wrong_password\",\"wrong_card\",\"wrong_face\",\"tongue_bad\",\"too_hot\",\"unclosed_time\",\"tongue_not_out\",\"pry\",\"key_in\",\"low_battery\",\"power_off\",\"shock\"]}"
+      },
+      {
+        "code": "unlock_request",
+        "type": "Integer",
+        "values": "{\"min\":0,\"max\":90,\"scale\":0,\"step\":1}"
+      },
+      {
+        "code": "battery_state",
+        "type": "Enum",
+        "values": "{\"range\":[\"high\",\"medium\",\"low\",\"poweroff\"]}"
+      },
+      {
+        "code": "unlock_app",
+        "type": "Integer",
+        "values": "{\"min\":0,\"max\":999,\"scale\":0,\"step\":1}"
+      },
+      {
+        "code": "hijack",
+        "type": "Boolean",
+        "values": "{}"
+      },
+      {
+        "code": "doorbell",
+        "type": "Boolean",
+        "values": "{}"
+      }
+    ]
+  },
+  "success": true,
+  "t": 1775543136580,
+  "tid": "96dfb991324a11f1b270d6c5c1a9e32b"
+}
