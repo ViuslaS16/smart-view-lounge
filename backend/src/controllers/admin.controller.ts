@@ -304,10 +304,11 @@ export async function controlLight(req: Request, res: Response): Promise<void> {
 }
 
 export async function generateAdminDoorPin(req: Request, res: Response): Promise<void> {
-  // Find the currently active confirmed booking
   const now = new Date();
-  const { rows } = await db.query(
-    `SELECT b.id, b.start_time, b.end_time, b.tuya_ticket_id, u.mobile, u.full_name
+
+  // Check for any currently running confirmed booking
+  const { rows: activeRows } = await db.query(
+    `SELECT b.id, u.full_name
      FROM bookings b
      JOIN users u ON b.user_id = u.id
      WHERE b.status = 'confirmed'
@@ -317,33 +318,37 @@ export async function generateAdminDoorPin(req: Request, res: Response): Promise
     [now.toISOString()]
   );
 
-  const booking = rows[0];
-  if (!booking) {
-    res.status(404).json({ error: 'No active session right now. Door PIN can only be generated for a running booking.' });
+  // If a session is actively running, do NOT generate — it would conflict with the customer's PIN
+  if (activeRows[0]) {
+    const booking = activeRows[0];
+    res.status(409).json({
+      error: `A customer session is currently in progress for ${booking.full_name}. Do not generate a new PIN — it would invalidate the customer's access.`,
+    });
     return;
   }
 
-  try {
-    // Revoke old PIN first (best effort)
-    if (booking.tuya_ticket_id) {
-      revokeSessionPin(booking.tuya_ticket_id).catch(() => {});
-    }
+  // No active session — generate a short-lived admin access PIN (valid 30 minutes)
+  const pinStart = new Date();
+  const pinEnd   = new Date(Date.now() + 30 * 60 * 1000); // 30 minutes from now
 
+  try {
     const { pin, ticketId } = await createSessionPin(
-      booking.id,
-      new Date(booking.start_time),
-      new Date(booking.end_time)
+      'admin-access',          // pseudo bookingId label
+      pinStart,
+      pinEnd
     );
 
     await db.query(
-      `UPDATE bookings SET door_pin = $1, tuya_ticket_id = $2 WHERE id = $3`,
-      [pin, ticketId, booking.id]
+      `INSERT INTO audit_logs (actor_id, action, target_type, metadata)
+       VALUES ($1, 'device.door_pin_admin_access', 'system', $2)`,
+      [req.user!.id, JSON.stringify({ pin_label: `${pin}#`, valid_until: pinEnd.toISOString() })]
     );
 
-    await db.query(`INSERT INTO audit_logs (actor_id, action, target_id, target_type) VALUES ($1, 'device.door_pin_admin', $2, 'booking')`, [req.user!.id, booking.id]);
-
-    console.log(`[Admin] ✅ Door PIN regenerated for active booking ${booking.id}: ${pin}`);
-    res.json({ message: `New door PIN generated for ${booking.full_name}`, door_pin: `${pin}#` });
+    console.log(`[Admin] ✅ Admin access PIN generated: ${pin}# (valid 30 min)`);
+    res.json({
+      message: `Admin access PIN generated. Valid for 30 minutes.`,
+      door_pin: `${pin}#`,
+    });
   } catch (err: any) {
     console.error('[Admin] Door PIN generation error:', err.message);
     res.status(500).json({ error: 'Failed to generate door PIN: ' + err.message });

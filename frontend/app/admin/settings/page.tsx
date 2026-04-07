@@ -338,10 +338,11 @@ export default function AdminSettingsPage() {
         {/* Door PIN */}
         <div>
           <p style={{ fontSize: 13, fontWeight: 600, marginBottom: 4, display: "flex", alignItems: "center", gap: 8 }}>
-            <KeyRound size={16} style={{ color: "var(--accent)" }} /> Door PIN
+            <KeyRound size={16} style={{ color: "var(--accent)" }} /> Door PIN — Admin Access
           </p>
           <p style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 12 }}>
-            Generates a fresh PIN for the currently active session, replacing the existing one on the smart lock.
+            Generates a 30-minute admin access PIN on the smart lock.
+            Only works when <strong>no customer session is running</strong> — if a session is active, the customer&apos;s PIN is protected.
           </p>
           <button
             id="btn-door-pin"
@@ -365,7 +366,7 @@ export default function AdminSettingsPage() {
           >
             {deviceStatus.doorPin === "loading"
               ? <><span className="spinner" style={{ width: 14, height: 14, borderWidth: 1.5 }} /> Generating...</>
-              : <><KeyRound size={14} /> Generate Door PIN for Active Session</>
+              : <><KeyRound size={14} /> Generate Admin Access PIN</>
             }
           </button>
           {generatedPin && (
@@ -373,12 +374,15 @@ export default function AdminSettingsPage() {
               marginTop: 14, padding: "14px 18px",
               background: "rgba(201,147,58,0.08)", borderRadius: 10,
               border: "1px solid rgba(201,147,58,0.25)",
-              display: "flex", alignItems: "center", justifyContent: "space-between",
             }}>
-              <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>New Door PIN</span>
-              <span style={{ fontFamily: "var(--font-mono)", fontSize: 22, fontWeight: 700, color: "var(--accent)", letterSpacing: 3 }}>
-                {generatedPin}
-              </span>
+              <p style={{ fontSize: 11, color: "var(--text-muted)", marginBottom: 6, letterSpacing: 1, textTransform: "uppercase" }}>Admin Door PIN — Valid 30 min</p>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>Enter on keypad:</span>
+                <span style={{ fontFamily: "var(--font-mono)", fontSize: 22, fontWeight: 700, color: "var(--accent)", letterSpacing: 3 }}>
+                  {generatedPin}
+                </span>
+              </div>
+              <p style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 8 }}>Press the PIN digits followed by # on the door keypad.</p>
             </div>
           )}
           {deviceMsg.doorPin && !generatedPin && (
