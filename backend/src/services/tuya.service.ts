@@ -23,22 +23,12 @@ const BASE_URL      = process.env.TUYA_API_ENDPOINT   ?? 'https://openapi.tuyaeu
 const CLIENT_ID     = process.env.TUYA_CLIENT_ID      ?? '';
 const CLIENT_SECRET = process.env.TUYA_CLIENT_SECRET  ?? '';
 
-/**
- * The exact names you give to your scenes in the Smart Life app.
- * Override via .env if you use different names.
- */
-const SCENE_NAME_START = process.env.TUYA_SCENE_START_NAME ?? 'Session Start';
-const SCENE_NAME_END   = process.env.TUYA_SCENE_END_NAME   ?? 'Session End';
-
 // ── Token Cache ──────────────────────────────────────────────────────────────
 interface TokenCache {
   token: string;
   expiresAt: number; // ms epoch
 }
 let _tokenCache: TokenCache | null = null;
-
-/** In-memory cache: scene name → scene ID, loaded once at startup */
-const _sceneCache = new Map<string, string>();
 
 // ── HMAC-SHA256 Signing ──────────────────────────────────────────────────────
 /**
@@ -280,104 +270,124 @@ export async function extendSessionPin(
 }
 
 
-// ── IR Blaster — Scene Auto-Discovery ────────────────────────────────────────
+// ── IR Blaster — Direct Device Commands ──────────────────────────────────────
 //
-// Instead of hardcoding scene IDs in .env, we fetch all scenes from the Tuya
-// API and match them by the name you gave them in Smart Life app.
-// Default names: "Session Start" and "Session End" — customise via .env if needed.
+// Device:  TUYA_IR_DEVICE_ID (Smart IR Remote, online, category: wnykq)
+// Remote:  AC remote — Panasonic, retrieved via GET /v2.0/infrareds/{id}/remotes
+//
+// Working AC send endpoint (confirmed via testing):
+//   POST /v2.0/infrareds/{infrared_id}/air-conditioners/{remote_id}/command
+//   Body: { code: "power", value: "1" }   ← power ON
+//         { code: "power", value: "0" }   ← power OFF
+//
+// AC state breakdown (from /code-library):
+//   mode:  0=cool | 1=heat | 2=auto | 3=fan | 4=dry
+//   temp:  16–30 (integer)
+//   fan:   0=auto | 1=low | 2=mid | 3=high
+//
+// IMPORTANT: AC remote_id is stored in TUYA_AC_REMOTE_ID env var.
+// If not set, it falls back to auto-discovery (first remote on the IR blaster).
+
+/** Resolve the AC remote_id — env var first, then auto-discover */
+let _acRemoteId: string | null = null;
+
+async function resolveAcRemoteId(): Promise<string> {
+  if (_acRemoteId) return _acRemoteId;
+
+  // Check env first
+  if (process.env.TUYA_AC_REMOTE_ID) {
+    _acRemoteId = process.env.TUYA_AC_REMOTE_ID;
+    return _acRemoteId;
+  }
+
+  // Auto-discover — get the first remote on the IR blaster
+  const irId = process.env.TUYA_IR_DEVICE_ID;
+  if (!irId) throw new Error('[Tuya] TUYA_IR_DEVICE_ID is not set in .env');
+
+  const result = await tuyaRequest<Array<{ remote_id: string; remote_name: string; category_id: number }>>(
+    'GET',
+    `/v2.0/infrareds/${irId}/remotes`
+  );
+  const remotes = Array.isArray(result) ? result : [];
+  if (remotes.length === 0) throw new Error('[Tuya] No remotes found on IR blaster. Add AC in Smart Life app first.');
+
+  _acRemoteId = remotes[0].remote_id;
+  console.log(`[Tuya] Auto-discovered AC remote: ${_acRemoteId} ("${remotes[0].remote_name}")`);
+  return _acRemoteId;
+}
 
 /**
- * Fetch all scenes from Tuya and cache name → ID mapping.
- * Tries the v2 cloud endpoint first, then falls back to v1.
+ * Send a command to one IR remote.
+ * path: `v2.0/infrareds/${irId}/air-conditioners/${remoteId}/command`
+ * body: { code: string, value: string | number }
  */
-async function loadSceneIds(): Promise<void> {
-  // Try v2 endpoint (newer accounts)
-  try {
-    const result = await tuyaRequest<{ list: Array<{ id: string; name: string }> }>(
-      'GET',
-      '/v2.0/cloud/scene/rule?page_size=50'
-    );
-    const scenes = result?.list ?? [];
-    for (const s of scenes) _sceneCache.set(s.name.trim(), s.id);
-    console.log(`[Tuya] Discovered ${scenes.length} scene(s):`, scenes.map(s => `"${s.name}"`).join(', '));
-    return;
-  } catch {
-    console.warn('[Tuya] v2 scene API unavailable, trying v1...');
-  }
+async function irAcCommand(code: string, value: string | number): Promise<void> {
+  const irId     = process.env.TUYA_IR_DEVICE_ID;
+  if (!irId) throw new Error('[Tuya] TUYA_IR_DEVICE_ID is not set in .env');
 
-  // Fallback: v1 endpoint (older accounts)
-  try {
-    const result2 = await tuyaRequest<Array<{ scene_id: string; name: string }>>(
-      'GET',
-      '/v1.0/homes/scene/rule?page_no=1&page_size=50'
-    );
-    const scenes2 = Array.isArray(result2) ? result2 : [];
-    for (const s of scenes2) _sceneCache.set(s.name.trim(), s.scene_id);
-    console.log(`[Tuya] Discovered ${scenes2.length} scene(s) via v1 fallback`);
-    return;
-  } catch {
-    console.warn('[Tuya] v1 scene API also unavailable');
-  }
+  const remoteId = await resolveAcRemoteId();
+  const token    = await getAccessToken();
+  const path     = `/v2.0/infrareds/${irId}/air-conditioners/${remoteId}/command`;
+  const body     = JSON.stringify({ code, value });
+  const headers  = buildHeaders('POST', path, body, token);
 
-  // Last resort: use explicit env var IDs if set (backward compat)
-  if (process.env.TUYA_SCENE_SESSION_START) {
-    _sceneCache.set(SCENE_NAME_START, process.env.TUYA_SCENE_SESSION_START);
-    console.log('[Tuya] Using TUYA_SCENE_SESSION_START from .env');
+  const res = await axios.post(`${BASE_URL}${path}`, body, { headers });
+  if (!res.data.success) {
+    throw new Error(`[Tuya] IR AC command "${code}=${value}" failed: ${res.data.msg} (${res.data.code})`);
   }
-  if (process.env.TUYA_SCENE_SESSION_END) {
-    _sceneCache.set(SCENE_NAME_END, process.env.TUYA_SCENE_SESSION_END);
-    console.log('[Tuya] Using TUYA_SCENE_SESSION_END from .env');
-  }
-}
-
-/** Resolve scene name → ID, loading the list if not yet cached */
-async function resolveSceneId(sceneName: string): Promise<string> {
-  if (_sceneCache.size === 0) await loadSceneIds();
-
-  const id = _sceneCache.get(sceneName);
-  if (!id) {
-    const available = [..._sceneCache.keys()].map(n => `"${n}"`).join(', ') || 'none found';
-    throw new Error(
-      `[Tuya] Scene "${sceneName}" not found. ` +
-      `Available: ${available}. ` +
-      `Create a scene with this exact name in the Smart Life app.`
-    );
-  }
-  return id;
+  console.log(`[Tuya] IR AC "${code}=${value}" sent OK`);
 }
 
 /**
- * Turn ON all devices: AC (cool mode), Projector, Lights.
- * Called 5 minutes before session start — no scene IDs needed in .env.
+ * Turn ON all devices 5 minutes before session start.
+ * Currently: AC power ON at 24°C cool mode (low fan).
+ * Add projector/light sub-calls here when you add those remotes.
  */
 export async function startSessionDevices(): Promise<void> {
-  const sceneId = await resolveSceneId(SCENE_NAME_START);
-  await tuyaRequest('POST', `/v2.0/cloud/scene/rule/${sceneId}/actions/trigger`);
-  console.log(`[Tuya] ✅ Session Start scene triggered ("${SCENE_NAME_START}")`);
+  // Power ON
+  await irAcCommand('power', '1');
+  // Set to cool mode, 24°C, low fan
+  await irAcCommand('mode',  '0');  // cool
+  await irAcCommand('temp',  24);   // 24 °C
+  await irAcCommand('wind',  '1');  // low fan
+  console.log('[Tuya] ✅ AC started (cool mode, 24°C, low fan)');
+
+  // TODO: add Projector remote commands here when remote is added to IR blaster
+  // TODO: add Lights remote commands here when remote is added to IR blaster
 }
 
 /**
  * Turn OFF all devices after session ends.
  */
 export async function endSessionDevices(): Promise<void> {
-  const sceneId = await resolveSceneId(SCENE_NAME_END);
-  await tuyaRequest('POST', `/v2.0/cloud/scene/rule/${sceneId}/actions/trigger`);
-  console.log(`[Tuya] ✅ Session End scene triggered ("${SCENE_NAME_END}")`);
+  await irAcCommand('power', '0');
+  console.log('[Tuya] ✅ AC powered OFF');
+
+  // TODO: turn off projector when remote added
+  // TODO: turn off lights when remote added
 }
 
 /**
- * List all discovered scenes — useful for debugging scene names.
- * Called from admin API: GET /api/admin/tuya/scenes
+ * List all remotes on the IR blaster (for admin debug endpoint).
  */
 export async function listScenes(): Promise<Array<{ name: string; id: string }>> {
-  if (_sceneCache.size === 0) await loadSceneIds();
-  return [..._sceneCache.entries()].map(([name, id]) => ({ name, id }));
+  const irId = process.env.TUYA_IR_DEVICE_ID;
+  if (!irId) return [];
+  try {
+    const result = await tuyaRequest<Array<{ remote_id: string; remote_name: string }>>(
+      'GET',
+      `/v2.0/infrareds/${irId}/remotes`
+    );
+    const remotes = Array.isArray(result) ? result : [];
+    return remotes.map(r => ({ name: r.remote_name, id: r.remote_id }));
+  } catch {
+    return [];
+  }
 }
 
 // ── Health / Connectivity Check ───────────────────────────────────────────────
 /**
- * Verify Tuya connection and pre-load scene IDs at server startup.
- * Shows exactly what scenes were found so you can correct names if needed.
+ * Verify Tuya connection and pre-discover the AC remote ID at server startup.
  */
 export async function tuyaHealthCheck(): Promise<void> {
   if (!CLIENT_ID || !CLIENT_SECRET || CLIENT_SECRET === 'REGENERATE_THIS_IN_TUYA_CONSOLE') {
@@ -388,22 +398,14 @@ export async function tuyaHealthCheck(): Promise<void> {
     await getAccessToken();
     console.log('[Tuya] ✅ Connected to Tuya IoT Cloud (Central Europe)');
 
-    // Pre-load scenes so the first booking trigger is instant
-    await loadSceneIds();
-
-    const startId = _sceneCache.get(SCENE_NAME_START);
-    const endId   = _sceneCache.get(SCENE_NAME_END);
-
-    if (startId && endId) {
-      console.log(`[Tuya] ✅ Scenes ready — Start: ${startId}, End: ${endId}`);
-    } else {
-      console.warn(
-        `[Tuya] ⚠️  Required scenes NOT found!\n` +
-        `  Looking for: "${SCENE_NAME_START}" and "${SCENE_NAME_END}"\n` +
-        `  Found: ${[..._sceneCache.keys()].join(', ') || 'none'}\n` +
-        `  → Create these scenes in Smart Life app with exact names above.`
-      );
+    const irId = process.env.TUYA_IR_DEVICE_ID;
+    if (!irId) {
+      console.warn('[Tuya] ⚠️  TUYA_IR_DEVICE_ID not set — device automation disabled');
+      return;
     }
+
+    const remoteId = await resolveAcRemoteId();
+    console.log(`[Tuya] ✅ IR Blaster ready — AC remote: ${remoteId}`);
   } catch (err: any) {
     console.error('[Tuya] ❌ Health check failed:', err.message);
   }
