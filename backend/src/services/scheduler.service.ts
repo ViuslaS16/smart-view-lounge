@@ -75,10 +75,10 @@ async function checkAdminOffAlerts() {
     SELECT b.id, b.end_time, u.full_name
     FROM bookings b
     JOIN users u ON b.user_id = u.id
-    WHERE b.status = 'confirmed'
+    WHERE b.status IN ('confirmed', 'completed')
       AND b.sms_admin_off_sent = FALSE
       AND b.end_time <= NOW() - INTERVAL '5 minutes'
-      AND b.end_time >= NOW() - INTERVAL '7 minutes'
+      AND b.end_time >= NOW() - INTERVAL '1 hour'
   `);
 
   for (const row of rows) {
@@ -111,7 +111,7 @@ async function checkTuyaSessionStart() {
     WHERE b.status = 'confirmed'
       AND b.devices_started = FALSE
       AND b.start_time <= NOW() + INTERVAL '5 minutes'
-      AND b.start_time  > NOW() - INTERVAL '2 minutes'
+      AND b.end_time > NOW() -- Valid anytime during the session if missed
   `);
 
   for (const row of rows) {
@@ -145,11 +145,11 @@ async function checkTuyaSessionEnd() {
   const { rows } = await db.query(`
     SELECT b.id, b.end_time
     FROM bookings b
-    WHERE b.status = 'confirmed'
+    WHERE b.status IN ('confirmed', 'completed')
       AND b.devices_started = TRUE
       AND b.devices_stopped = FALSE
       AND b.end_time <= NOW() - INTERVAL '2 minutes'
-      AND b.end_time  > NOW() - INTERVAL '5 minutes'
+      AND b.end_time > NOW() - INTERVAL '1 day' -- Catch missed sessions up to 1 day old
   `);
 
   for (const row of rows) {

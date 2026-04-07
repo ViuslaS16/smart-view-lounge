@@ -339,9 +339,27 @@ async function irAcCommand(code: string, value: string | number): Promise<void> 
 }
 
 /**
+ * Send a command to a standard IR remote (like TV/Projector).
+ * path: `v2.0/infrareds/${irId}/remotes/${remoteId}/command`
+ */
+async function irStandardCommand(remoteId: string, code: string): Promise<void> {
+  const irId = process.env.TUYA_IR_DEVICE_ID;
+  if (!irId) throw new Error('[Tuya] TUYA_IR_DEVICE_ID is not set in .env');
+
+  const token   = await getAccessToken();
+  const path    = `/v2.0/infrareds/${irId}/remotes/${remoteId}/command`;
+  const body    = JSON.stringify({ code });
+  const headers = buildHeaders('POST', path, body, token);
+
+  const res = await axios.post(`${BASE_URL}${path}`, body, { headers });
+  if (!res.data.success) {
+    throw new Error(`[Tuya] IR Standard command "${code}" failed: ${res.data.msg} (${res.data.code})`);
+  }
+}
+
+/**
  * Turn ON all devices 5 minutes before session start.
  * Currently: AC power ON at 24°C cool mode (low fan).
- * Add projector/light sub-calls here when you add those remotes.
  */
 export async function startSessionDevices(): Promise<void> {
   // Power ON
@@ -352,7 +370,11 @@ export async function startSessionDevices(): Promise<void> {
   await irAcCommand('wind',  '1');  // low fan
   console.log('[Tuya] ✅ AC started (cool mode, 24°C, low fan)');
 
-  // TODO: add Projector remote commands here when remote is added to IR blaster
+  if (process.env.TUYA_PROJECTOR_REMOTE_ID) {
+    await irStandardCommand(process.env.TUYA_PROJECTOR_REMOTE_ID, 'power');
+    console.log('[Tuya] ✅ Projector started');
+  }
+  
   // TODO: add Lights remote commands here when remote is added to IR blaster
 }
 
@@ -363,7 +385,14 @@ export async function endSessionDevices(): Promise<void> {
   await irAcCommand('power', '0');
   console.log('[Tuya] ✅ AC powered OFF');
 
-  // TODO: turn off projector when remote added
+  if (process.env.TUYA_PROJECTOR_REMOTE_ID) {
+    // For projectors, turning off usually requires sending the power code twice.
+    await irStandardCommand(process.env.TUYA_PROJECTOR_REMOTE_ID, 'power');
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    await irStandardCommand(process.env.TUYA_PROJECTOR_REMOTE_ID, 'power');
+    console.log('[Tuya] ✅ Projector powered OFF');
+  }
+
   // TODO: turn off lights when remote added
 }
 

@@ -1,7 +1,9 @@
 import { Request, Response } from 'express';
 import db from '../db';
 import { getNicImageSignedUrl } from '../services/storage.service';
-import { sendAccountApprovedEmail, sendAccountRejectedEmail } from '../services/email.service';
+import { sendAccountApprovedEmail, sendAccountRejectedEmail, sendBookingConfirmationEmail } from '../services/email.service';
+import { sendSMS, getSetting } from '../services/sms.service';
+import { createSessionPin } from '../services/tuya.service';
 
 // --- Dashboard & Analytics ---
 export async function getDashboardStats(req: Request, res: Response): Promise<void> {
@@ -143,7 +145,8 @@ export async function manualBooking(req: Request, res: Response): Promise<void> 
   
   const start = new Date(start_time);
   const end = new Date(start.getTime() + duration_minutes * 60000);
-  const amount = (duration_minutes / 60) * (parseFloat(process.env.PRICE_PER_HOUR || '2500'));
+  const pricePerHour = parseFloat(await getSetting('price_per_hour').catch(() => '2500')) || parseFloat(process.env.PRICE_PER_HOUR || '2500');
+  const amount = (duration_minutes / 60) * pricePerHour;
 
   // Database EXCLUDE constraint handles overlap checks
   const { rows } = await db.query(
@@ -153,8 +156,72 @@ export async function manualBooking(req: Request, res: Response): Promise<void> 
     [user_id, start.toISOString(), end.toISOString(), duration_minutes, amount, notes]
   );
 
-  await db.query(`INSERT INTO audit_logs (actor_id, action, target_id, target_type) VALUES ($1, 'booking.manual_create', $2, 'booking')`, [req.user!.id, rows[0].id]);
-  res.status(201).json({ booking: rows[0] });
+  const booking = rows[0];
+  await db.query(`INSERT INTO audit_logs (actor_id, action, target_id, target_type) VALUES ($1, 'booking.manual_create', $2, 'booking')`, [req.user!.id, booking.id]);
+
+  // Respond immediately — fire notifications in background
+  res.status(201).json({ booking });
+
+  // ── Post-confirmation triggers (fire-and-forget) ──────────────────────────
+  try {
+    const uRows = await db.query(
+      'SELECT full_name, email, mobile FROM users WHERE id = $1',
+      [user_id]
+    );
+    const user = uRows.rows[0];
+    if (!user) return;
+
+    // A. Confirmation email
+    sendBookingConfirmationEmail({
+      to: user.email,
+      name: user.full_name,
+      bookingId: booking.id,
+      startTime: booking.start_time,
+      endTime: booking.end_time,
+      durationMinutes: booking.duration_minutes,
+      amount: Number(booking.total_amount)
+    }).catch((err: any) => console.error('[Admin/Email] Failed:', err.message));
+
+    // B. Admin SMS notification
+    const adminMobile = process.env.ADMIN_MOBILE;
+    if (adminMobile) {
+      const adminOnTemplate = await getSetting('sms_admin_on').catch(() => 'New booking confirmed.');
+      sendSMS(
+        adminMobile,
+        `${adminOnTemplate} (Ref: ${booking.id.slice(0, 8)})`,
+        'admin_on',
+        booking.id
+      ).catch((err: any) => console.error('[Admin/SMS] Admin notify failed:', err.message));
+    }
+
+    // C. Door PIN — generate immediately if session starts within 2 hours
+    //    (otherwise the scheduler will pick it up at session start time)
+    const minutesUntilStart = (start.getTime() - Date.now()) / 60000;
+    const sessionIsActiveOrSoon = minutesUntilStart <= 120 && end > new Date();
+
+    if (sessionIsActiveOrSoon) {
+      try {
+        const { pin, ticketId } = await createSessionPin(booking.id, start, end);
+        await db.query(
+          `UPDATE bookings SET door_pin = $1, tuya_ticket_id = $2, pin_sms_sent = TRUE WHERE id = $3`,
+          [pin, ticketId, booking.id]
+        );
+
+        const startFmt = start.toLocaleString('en-LK', { timeZone: 'Asia/Colombo', dateStyle: 'medium', timeStyle: 'short' });
+        const endFmt   = end.toLocaleString('en-LK',   { timeZone: 'Asia/Colombo', timeStyle: 'short' });
+        const pinMsg = `SmartView Lounge: Your door PIN is *${pin}#*. Valid: ${startFmt} - ${endFmt}. Do NOT share this PIN.`;
+
+        await sendSMS(user.mobile, pinMsg, 'door_pin', booking.id);
+        console.log(`[Admin] ✅ PIN ${pin}# generated & sent for manual booking ${booking.id}`);
+      } catch (pinErr: any) {
+        console.error(`[Admin] ❌ PIN generation failed for manual booking ${booking.id}:`, pinErr.message);
+      }
+    } else {
+      console.log(`[Admin] Door PIN scheduled for ${start.toLocaleString('en-LK', { timeZone: 'Asia/Colombo' })} (${Math.round(minutesUntilStart)} min from now)`);
+    }
+  } catch (err: any) {
+    console.error('[Admin/ManualBooking] Post-confirm trigger error:', err.message);
+  }
 }
 
 export async function cancelBookingAdmin(req: Request, res: Response): Promise<void> {

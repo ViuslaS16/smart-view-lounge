@@ -21,19 +21,35 @@ jobs:
           script: |
              cd /home/smartviewlounge/smart-view-lounge
              git pull origin main
-             
+
+             # ── Patch production .env with any missing vars ───────────────
+             ENV_FILE="/home/smartviewlounge/smart-view-lounge/backend/.env"
+
+             add_env_if_missing() {
+               local key="$1" val="$2"
+               if ! grep -q "^${key}=" "$ENV_FILE" 2>/dev/null; then
+                 echo "${key}=\"${val}\"" >> "$ENV_FILE"
+                 echo "Added ${key} to .env"
+               fi
+             }
+
+             add_env_if_missing "TUYA_IR_DEVICE_ID"  "bf4b8bd01af995cef1a07n"
+             add_env_if_missing "TUYA_AC_REMOTE_ID"  "bfdef7207b9d27f14dscmu"
+             # ─────────────────────────────────────────────────────────────
+
              echo "Building Database & Backend..."
              cd backend
              npm install
              export NODE_OPTIONS=--max-old-space-size=4096
              npm run build
              pm2 restart smartview-backend
-             
+
              echo "Building Client & Frontend..."
              cd ../frontend
              npm install
              export NODE_OPTIONS=--max-old-space-size=4096
              npm run build
              pm2 restart smartview-frontend
-             
+
              echo "Deployment Completed Successfully!"
+

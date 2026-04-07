@@ -1,7 +1,8 @@
 import { Resend } from 'resend';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
-const FROM = process.env.EMAIL_FROM ?? 'SmartView Lounge <noreply@smartviewlounge.lk>';
+const FROM = process.env.EMAIL_FROM ?? 'SmartView Lounge <noreply@smartviewlounge.com>';
+
 
 export async function sendBookingConfirmationEmail(params: {
   to: string;
