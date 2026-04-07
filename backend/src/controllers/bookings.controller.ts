@@ -63,8 +63,8 @@ export async function createBooking(req: Request, res: Response): Promise<void> 
   const overlapCheck = await db.query(
     `SELECT id FROM bookings
      WHERE status NOT IN ('cancelled')
-       AND tstzrange($1, $2, '[)') && tstzrange(start_time, end_time + (INTERVAL '1 minute' * $3), '[)')`,
-    [start.toISOString(), bufferedEnd.toISOString(), bufferMins]
+       AND tstzrange($1, $2, '[)') && tstzrange(start_time, end_time, '[)')`,
+    [start.toISOString(), bufferedEnd.toISOString()]
   );
 
   if (overlapCheck.rows.length > 0) {
@@ -126,8 +126,8 @@ export async function extendBooking(req: Request, res: Response): Promise<void> 
     `SELECT id FROM bookings
      WHERE status NOT IN ('cancelled')
        AND id != $1
-       AND tstzrange($2, $3, '[)') && tstzrange(start_time, end_time + (INTERVAL '1 minute' * $4), '[)')`,
-    [bookingId, currentEnd.toISOString(), bufferedNewEnd.toISOString(), bufferMins]
+       AND tstzrange($2, $3, '[)') && tstzrange(start_time, end_time, '[)')`,
+    [bookingId, currentEnd.toISOString(), bufferedNewEnd.toISOString()]
   );
 
   if (overlapCheck.rows.length > 0) {
