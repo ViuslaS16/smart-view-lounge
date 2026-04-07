@@ -1357,3 +1357,12 @@ Node.js v24.12.0
 [Tuya] v1 scene API also unavailable
 [Tuya] ❌ Failed to start devices for booking a179d4eb-98f9-4248-8b67-a65cf08291ca: [Tuya] Scene "Session Start" not found. Available: none found. Create a scene with this exact name in the Smart Life app.
 [SMS] Sent "tuya_start_fail" to 0771234567
+./run.sh: line 24: 83173 Hangup: 1               npm run dev  (wd: ~/Projects/smart-view-lounge/backend)
+
+🛑 Stopping servers...
+
+🛑 Stopping servers...
+
+🛑 Stopping servers...
+[32m[nodemon] restarting child process[39m
+[32m[nodemon] starting `tsx src/server.ts`[39m

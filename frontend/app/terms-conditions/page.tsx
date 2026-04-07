@@ -50,7 +50,10 @@ export default function TermsConditionsPage() {
           <h2 style={{ fontFamily: "var(--font-display)", fontSize: 24, fontWeight: 700, color: "var(--text-primary)", marginTop: 16 }}>1. User Account and Verification</h2>
           <p>To use our services, you must register for an account and provide a valid National Identity Card (NIC). You are responsible for maintaining the confidentiality of your account credentials. You agree that all information provided during registration is accurate and complete.</p>
 
-          <h2 style={{ fontFamily: "var(--font-display)", fontSize: 24, fontWeight: 700, color: "var(--text-primary)", marginTop: 16 }}>2. Facility Usage and Conduct</h2>
+          <h2 style={{ fontFamily: "var(--font-display)", fontSize: 24, fontWeight: 700, color: "var(--text-primary)", marginTop: 16 }}>2. Age Restriction Policy</h2>
+          <p>By country law, every individual entering the premises must be 18 years of age or older. Entry for anyone under 18 is strictly prohibited. If any user violates this rule, severe legal and company action will be taken against them, as the company is legally obligated to enforce this regulation.</p>
+
+          <h2 style={{ fontFamily: "var(--font-display)", fontSize: 24, fontWeight: 700, color: "var(--text-primary)", marginTop: 16 }}>3. Facility Usage and Conduct</h2>
           <p>SmartView Lounge provides a premium, automated private theater experience. Users agree to:</p>
           <ul style={{ paddingLeft: 24, display: "flex", flexDirection: "column", gap: 12 }}>
             <li>Use the provided equipment (projectors, sound systems, seating) with care.</li>
@@ -59,16 +62,16 @@ export default function TermsConditionsPage() {
             <li>Refrain from any illegal activities within the premises.</li>
           </ul>
 
-          <h2 style={{ fontFamily: "var(--font-display)", fontSize: 24, fontWeight: 700, color: "var(--text-primary)", marginTop: 16 }}>3. Access Codes</h2>
+          <h2 style={{ fontFamily: "var(--font-display)", fontSize: 24, fontWeight: 700, color: "var(--text-primary)", marginTop: 16 }}>4. Access Codes</h2>
           <p>Access to the lounge is granted via a temporary, unique PIN code generated for your specific time slot. This code must not be shared with unauthorized individuals. You are responsible for the actions of all guests you bring into the lounge.</p>
 
-          <h2 style={{ fontFamily: "var(--font-display)", fontSize: 24, fontWeight: 700, color: "var(--text-primary)", marginTop: 16 }}>4. Damage Liability</h2>
+          <h2 style={{ fontFamily: "var(--font-display)", fontSize: 24, fontWeight: 700, color: "var(--text-primary)", marginTop: 16 }}>5. Damage Liability</h2>
           <p>The registered user holds full financial responsibility for any damage to the audio-visual equipment, furniture, or facility structure occurring during their booked session. SmartView Lounge reserves the right to charge the user for repair or replacement costs.</p>
 
-          <h2 style={{ fontFamily: "var(--font-display)", fontSize: 24, fontWeight: 700, color: "var(--text-primary)", marginTop: 16 }}>5. Technical Support</h2>
+          <h2 style={{ fontFamily: "var(--font-display)", fontSize: 24, fontWeight: 700, color: "var(--text-primary)", marginTop: 16 }}>6. Technical Support</h2>
           <p>While we ensure high-quality equipment, technical issues may occasionally arise. Support contact details are provided within the lounge. We are not liable for compensation beyond the cost of the booking in case of technical failure.</p>
 
-          <h2 style={{ fontFamily: "var(--font-display)", fontSize: 24, fontWeight: 700, color: "var(--text-primary)", marginTop: 16 }}>6. Modifications to Terms</h2>
+          <h2 style={{ fontFamily: "var(--font-display)", fontSize: 24, fontWeight: 700, color: "var(--text-primary)", marginTop: 16 }}>7. Modifications to Terms</h2>
           <p>We reserve the right to modify these Terms and Conditions at any time. Changes will be effective immediately upon posting to the website. Continued use of the service signifies your acceptance of the updated terms.</p>
         </div>
       </main>
