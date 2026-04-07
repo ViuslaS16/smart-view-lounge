@@ -1,0 +1,7 @@
+Ticket Error: {
+  code: 1004,
+  msg: 'sign invalid',
+  success: false,
+  t: 1775588052681,
+  tid: '2af9a9f432b311f1a34cee5ee6a19de0'
+}
