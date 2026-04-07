@@ -28,6 +28,7 @@ router.post('/create', requireActive, validate(createBookingSchema), bookings.cr
 router.post('/:id/extend', requireActive, validate(extendSchema), bookings.extendBooking);
 router.post('/:id/cancel', requireActive, bookings.cancelBooking);
 router.post('/:id/resend-pin', requireActive, bookings.resendDoorPin);     // 🔐 Tuya — resend door PIN via SMS
+router.post('/:id/refresh-pin', requireActive, bookings.refreshDoorPin);    // 🔐 Tuya — generate totally new pin
 router.post('/:id/confirm-test', requireActive, testConfirmBooking);        // 🦹 TEST ONLY — remove when PayHere is ready
 
 export default router;

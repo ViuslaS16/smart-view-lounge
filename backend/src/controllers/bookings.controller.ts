@@ -226,3 +226,52 @@ export async function resendDoorPin(req: Request, res: Response): Promise<void> 
 
   res.json({ message: 'Door PIN resent via SMS.' });
 }
+
+// POST /api/bookings/:id/refresh-pin
+export async function refreshDoorPin(req: Request, res: Response): Promise<void> {
+  const bookingId = req.params.id;
+  const userId    = req.user!.id;
+
+  try {
+    const { rows } = await db.query(
+      `SELECT status, u.mobile
+       FROM bookings b
+       JOIN users u ON b.user_id = u.id
+       WHERE b.id = $1 AND b.user_id = $2`,
+      [bookingId, userId]
+    );
+
+    const booking = rows[0];
+    if (!booking) {
+      res.status(404).json({ error: 'Booking not found' });
+      return;
+    }
+    if (booking.status !== 'confirmed') {
+      res.status(400).json({ error: 'Only confirmed bookings can refresh pins.' });
+      return;
+    }
+
+    // Import here to avoid circular dependency if needed, or we can just import at top. Let's do dynamic import or standard import.
+    // wait, getSessionPin doesn't exist, we use createSessionPin from tuya service.
+    const { createSessionPin } = await import('../services/tuya.service');
+    
+    // We just pass dummy dates to createSessionPin, because as we discovered, Dynamic Password API doesn't actually use the dates! It ignores them and generates an immediate 5-minute pin!
+    const pin = await createSessionPin(bookingId, new Date(), new Date());
+
+    if (!pin) {
+      res.status(500).json({ error: 'Failed to generate new PIN from Tuya.' });
+      return;
+    }
+
+    // Update the database with the new PIN so it shows correctly in admin/dashboard
+    await db.query(`UPDATE bookings SET door_pin = $1 WHERE id = $2`, [pin, bookingId]);
+
+    const pinMsg = `SmartView Lounge: Your requested new door PIN is *${pin}*. It is valid for the next 5 minutes only. Type it on the lock followed by #.`;
+    await sendSMS(booking.mobile, pinMsg, 'door_pin_refresh', bookingId);
+    
+    res.json({ message: 'New Door PIN generated and sent via SMS.', door_pin: pin });
+  } catch (err: any) {
+    console.error('Refresh PIN Error:', err.message);
+    res.status(500).json({ error: 'Failed to refresh pin' });
+  }
+}
