@@ -3,7 +3,7 @@ import db from '../db';
 import { getNicImageSignedUrl } from '../services/storage.service';
 import { sendAccountApprovedEmail, sendAccountRejectedEmail, sendBookingConfirmationEmail } from '../services/email.service';
 import { sendSMS, getSetting } from '../services/sms.service';
-import { createSessionPin } from '../services/tuya.service';
+import { createSessionPin, revokeSessionPin, irAcOn, irAcOff, irProjectorToggle } from '../services/tuya.service';
 
 // --- Dashboard & Analytics ---
 export async function getDashboardStats(req: Request, res: Response): Promise<void> {
@@ -264,4 +264,88 @@ export async function updateSettings(req: Request, res: Response): Promise<void>
     }
     await db.query(`INSERT INTO audit_logs (actor_id, action, target_type) VALUES ($1, 'settings.update', 'system')`, [req.user!.id]);
     res.json({ message: 'Settings updated' });
+}
+
+// ── Device Controls ──────────────────────────────────────────────────────────
+
+export async function controlAc(req: Request, res: Response): Promise<void> {
+  const { action } = req.body as { action: 'on' | 'off' };
+  if (!['on', 'off'].includes(action)) { res.status(400).json({ error: 'action must be on or off' }); return; }
+  try {
+    if (action === 'on') await irAcOn();
+    else await irAcOff();
+    await db.query(`INSERT INTO audit_logs (actor_id, action, target_type, metadata) VALUES ($1, 'device.ac', 'system', $2)`, [req.user!.id, JSON.stringify({ action })]);
+    res.json({ message: `AC turned ${action}` });
+  } catch (err: any) {
+    console.error('[Admin] AC control error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+}
+
+export async function controlProjector(req: Request, res: Response): Promise<void> {
+  const { action } = req.body as { action: 'on' | 'off' };
+  if (!['on', 'off'].includes(action)) { res.status(400).json({ error: 'action must be on or off' }); return; }
+  try {
+    await irProjectorToggle(action === 'off');
+    await db.query(`INSERT INTO audit_logs (actor_id, action, target_type, metadata) VALUES ($1, 'device.projector', 'system', $2)`, [req.user!.id, JSON.stringify({ action })]);
+    res.json({ message: `Projector toggled (${action})` });
+  } catch (err: any) {
+    console.error('[Admin] Projector control error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+}
+
+export async function controlLight(req: Request, res: Response): Promise<void> {
+  const { action } = req.body as { action: 'on' | 'off' };
+  // Lights remote is not yet configured in Tuya — log and acknowledge
+  console.log(`[Admin] Light control requested: ${action} — IR remote not yet configured`);
+  await db.query(`INSERT INTO audit_logs (actor_id, action, target_type, metadata) VALUES ($1, 'device.light', 'system', $2)`, [req.user!.id, JSON.stringify({ action, note: 'stub - remote not configured' })]);
+  res.json({ message: `Light ${action} command logged. Connect IR remote in Smart Life app to activate.` });
+}
+
+export async function generateAdminDoorPin(req: Request, res: Response): Promise<void> {
+  // Find the currently active confirmed booking
+  const now = new Date();
+  const { rows } = await db.query(
+    `SELECT b.id, b.start_time, b.end_time, b.tuya_ticket_id, u.mobile, u.full_name
+     FROM bookings b
+     JOIN users u ON b.user_id = u.id
+     WHERE b.status = 'confirmed'
+       AND b.start_time <= $1
+       AND b.end_time   >= $1
+     LIMIT 1`,
+    [now.toISOString()]
+  );
+
+  const booking = rows[0];
+  if (!booking) {
+    res.status(404).json({ error: 'No active session right now. Door PIN can only be generated for a running booking.' });
+    return;
+  }
+
+  try {
+    // Revoke old PIN first (best effort)
+    if (booking.tuya_ticket_id) {
+      revokeSessionPin(booking.tuya_ticket_id).catch(() => {});
+    }
+
+    const { pin, ticketId } = await createSessionPin(
+      booking.id,
+      new Date(booking.start_time),
+      new Date(booking.end_time)
+    );
+
+    await db.query(
+      `UPDATE bookings SET door_pin = $1, tuya_ticket_id = $2 WHERE id = $3`,
+      [pin, ticketId, booking.id]
+    );
+
+    await db.query(`INSERT INTO audit_logs (actor_id, action, target_id, target_type) VALUES ($1, 'device.door_pin_admin', $2, 'booking')`, [req.user!.id, booking.id]);
+
+    console.log(`[Admin] ✅ Door PIN regenerated for active booking ${booking.id}: ${pin}`);
+    res.json({ message: `New door PIN generated for ${booking.full_name}`, door_pin: `${pin}#` });
+  } catch (err: any) {
+    console.error('[Admin] Door PIN generation error:', err.message);
+    res.status(500).json({ error: 'Failed to generate door PIN: ' + err.message });
+  }
 }

@@ -46,7 +46,6 @@ export default function SessionPage() {
   const [showExtend, setShowExtend] = useState(false);
   const [extending, setExtending] = useState(false);
   const [extendDone, setExtendDone] = useState(false);
-  const [refreshingPin, setRefreshingPin] = useState(false);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -79,20 +78,7 @@ export default function SessionPage() {
     }
   }
 
-  async function handleRefreshPin() {
-    if (!booking) return;
-    setRefreshingPin(true);
-    try {
-      const res = await apiFetch(`/bookings/${booking.id}/refresh-pin`, { method: "POST" });
-      alert(res.message);
-      // Let the SWR revalidate or just reload the page to get the updated booking
-      window.location.reload();
-    } catch (err: any) {
-      alert(err.message || 'Failed to refresh pin');
-    } finally {
-      setRefreshingPin(false);
-    }
-  }
+
 
   if (isLoading) {
     return <div style={{ padding: 80, textAlign: "center" }}>Loading session...</div>;
@@ -218,30 +204,7 @@ export default function SessionPage() {
           </div>
         )}
 
-        {/* Door PIN actions container */}
-        <div style={{
-          padding: "16px", background: "var(--bg-elevated)", borderRadius: 12, marginBottom: 28,
-          border: '1px solid var(--border)'
-        }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
-            <span style={{ fontSize: 13, color: "var(--text-muted)" }}>Current Door PIN</span>
-            <span style={{ fontFamily: "var(--font-mono)", fontSize: 18, color: "var(--accent)", fontWeight: 700, letterSpacing: 2 }}>
-              {booking.door_pin || 'Pending'}
-            </span>
-          </div>
-          
-          <p style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 16 }}>
-            Note: For security, the physical lock's PIN expires <strong style={{color:"var(--text-primary)"}}>5 minutes</strong> after generation. If you are standing at the door and the PIN above says "INVALID", tap the button below to generate a fresh one instantly.
-          </p>
 
-          <button
-            onClick={handleRefreshPin}
-            disabled={refreshingPin || timeLeft.totalMs === 0}
-            className="btn btn-secondary btn-full btn-sm"
-          >
-            {refreshingPin ? "Generating..." : "Generate New 5-Min PIN"}
-          </button>
-        </div>
 
         {/* Extend flow */}
         {!showExtend ? (

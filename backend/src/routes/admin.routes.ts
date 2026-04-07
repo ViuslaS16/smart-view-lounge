@@ -36,4 +36,9 @@ router.get('/sms-logs', admin.getSmsLogs);
 router.get('/settings', admin.getSettings);
 router.patch('/settings', admin.updateSettings);
 
+router.post('/devices/ac', admin.controlAc);
+router.post('/devices/projector', admin.controlProjector);
+router.post('/devices/light', admin.controlLight);
+router.post('/devices/door-pin', admin.generateAdminDoorPin);
+
 export default router;

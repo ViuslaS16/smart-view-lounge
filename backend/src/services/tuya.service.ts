@@ -414,6 +414,39 @@ export async function listScenes(): Promise<Array<{ name: string; id: string }>>
   }
 }
 
+// ── Exported Individual Device Commands (for admin manual control) ───────────
+
+/** Turn the AC on at 24°C cool mode (low fan) via the IR blaster. */
+export async function irAcOn(): Promise<void> {
+  await irAcCommand('power', '1');
+  await irAcCommand('mode',  '0');  // cool
+  await irAcCommand('temp',  24);
+  await irAcCommand('wind',  '1');  // low fan
+  console.log('[Tuya] ✅ AC ON (admin manual)');
+}
+
+/** Turn the AC off via the IR blaster. */
+export async function irAcOff(): Promise<void> {
+  await irAcCommand('power', '0');
+  console.log('[Tuya] ✅ AC OFF (admin manual)');
+}
+
+/**
+ * Send a power toggle to the projector via the IR blaster.
+ * NOTE: Most projectors need the power code sent twice to turn OFF — this
+ * sends it once (ON) or twice with a 1s delay (OFF), matching `endSessionDevices`.
+ */
+export async function irProjectorToggle(off = false): Promise<void> {
+  const remoteId = process.env.TUYA_PROJECTOR_REMOTE_ID;
+  if (!remoteId) throw new Error('[Tuya] TUYA_PROJECTOR_REMOTE_ID is not set');
+  await irStandardCommand(remoteId, 'power');
+  if (off) {
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    await irStandardCommand(remoteId, 'power');
+  }
+  console.log(`[Tuya] ✅ Projector ${off ? 'OFF' : 'ON'} (admin manual)`);
+}
+
 // ── Health / Connectivity Check ───────────────────────────────────────────────
 /**
  * Verify Tuya connection and pre-discover the AC remote ID at server startup.
