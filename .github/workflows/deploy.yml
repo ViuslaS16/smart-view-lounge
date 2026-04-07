@@ -1,0 +1,39 @@
+name: Deploy to DigitalOcean
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  deploy:
+    name: Deploy to VPS
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Execute deployment script via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+             cd /home/smartviewlounge/smart-view-lounge
+             git pull origin main
+             
+             echo "Building Database & Backend..."
+             cd backend
+             npm install
+             export NODE_OPTIONS=--max-old-space-size=4096
+             npm run build
+             pm2 restart smartview-backend
+             
+             echo "Building Client & Frontend..."
+             cd ../frontend
+             npm install
+             export NODE_OPTIONS=--max-old-space-size=4096
+             npm run build
+             pm2 restart smartview-frontend
+             
+             echo "Deployment Completed Successfully!"
