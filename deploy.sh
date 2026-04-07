@@ -35,8 +35,10 @@ fi
 
 if [[ "$MODE" == "frontend" || "$MODE" == "all" ]]; then
   echo ""
-  echo "▶ Building frontend locally..."
+  echo "▶ Building frontend locally (with production env)..."
   cd "$(dirname "$0")/frontend"
+  NEXT_PUBLIC_API_URL=https://smartviewlounge.com/api \
+  NEXT_PUBLIC_APP_URL=https://smartviewlounge.com \
   npm run build
   echo "✅ Frontend compiled"
 
