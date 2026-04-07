@@ -317,25 +317,39 @@ async function resolveAcRemoteId(): Promise<string> {
 }
 
 /**
- * Send a command to one IR remote.
- * path: `v2.0/infrareds/${irId}/air-conditioners/${remoteId}/command`
- * body: { code: string, value: string | number }
+ * Send a FULL AC state command to the Panasonic remote.
+ *
+ * Panasonic IR requires all fields in a single IR frame — you cannot send
+ * just `{ code: 'power', value: '0' }` by itself. The Tuya API may return
+ * success but the physical AC ignores partial frames.
+ *
+ * Body format (v2 AC endpoint):
+ *   power: '0' (off) | '1' (on)
+ *   mode:  '0' (cool) | '1' (heat) | '2' (auto) | '3' (fan) | '4' (dry)
+ *   temp:  16–30 (integer)
+ *   wind:  '0' (auto) | '1' (low) | '2' (mid) | '3' (high)
  */
-async function irAcCommand(code: string, value: string | number): Promise<void> {
-  const irId     = process.env.TUYA_IR_DEVICE_ID;
+async function irAcFullState(
+  power: '0' | '1',
+  mode = '0',
+  temp = 24,
+  wind = '1'
+): Promise<void> {
+  const irId = process.env.TUYA_IR_DEVICE_ID;
   if (!irId) throw new Error('[Tuya] TUYA_IR_DEVICE_ID is not set in .env');
 
   const remoteId = await resolveAcRemoteId();
   const token    = await getAccessToken();
   const path     = `/v2.0/infrareds/${irId}/air-conditioners/${remoteId}/command`;
-  const body     = JSON.stringify({ code, value });
+  const bodyObj  = { power, mode, temp, wind };
+  const body     = JSON.stringify(bodyObj);
   const headers  = buildHeaders('POST', path, body, token);
 
   const res = await axios.post(`${BASE_URL}${path}`, body, { headers });
   if (!res.data.success) {
-    throw new Error(`[Tuya] IR AC command "${code}=${value}" failed: ${res.data.msg} (${res.data.code})`);
+    throw new Error(`[Tuya] AC full-state command failed: ${res.data.msg} (code ${res.data.code})`);
   }
-  console.log(`[Tuya] IR AC "${code}=${value}" sent OK`);
+  console.log(`[Tuya] IR AC full-state sent — power=${power} mode=${mode} temp=${temp}°C wind=${wind}`);
 }
 
 /**
@@ -359,34 +373,30 @@ async function irStandardCommand(remoteId: string, code: string): Promise<void> 
 
 /**
  * Turn ON all devices 5 minutes before session start.
- * Currently: AC power ON at 24°C cool mode (low fan).
+ * AC: cool mode, 24°C, low fan. Sends full state in one IR frame.
  */
 export async function startSessionDevices(): Promise<void> {
-  // Power ON
-  await irAcCommand('power', '1');
-  // Set to cool mode, 24°C, low fan
-  await irAcCommand('mode',  '0');  // cool
-  await irAcCommand('temp',  24);   // 24 °C
-  await irAcCommand('wind',  '1');  // low fan
+  await irAcFullState('1', '0', 24, '1');  // power ON, cool, 24°C, low fan
   console.log('[Tuya] ✅ AC started (cool mode, 24°C, low fan)');
 
   if (process.env.TUYA_PROJECTOR_REMOTE_ID) {
     await irStandardCommand(process.env.TUYA_PROJECTOR_REMOTE_ID, 'power');
     console.log('[Tuya] ✅ Projector started');
   }
-  
+
   // TODO: add Lights remote commands here when remote is added to IR blaster
 }
 
 /**
  * Turn OFF all devices after session ends.
+ * Sends a full AC state with power=0 — required by Panasonic IR protocol.
  */
 export async function endSessionDevices(): Promise<void> {
-  await irAcCommand('power', '0');
+  await irAcFullState('0', '0', 24, '1');  // power OFF (full frame required for Panasonic)
   console.log('[Tuya] ✅ AC powered OFF');
 
   if (process.env.TUYA_PROJECTOR_REMOTE_ID) {
-    // For projectors, turning off usually requires sending the power code twice.
+    // Projectors typically need power code twice to turn OFF
     await irStandardCommand(process.env.TUYA_PROJECTOR_REMOTE_ID, 'power');
     await new Promise(resolve => setTimeout(resolve, 1000));
     await irStandardCommand(process.env.TUYA_PROJECTOR_REMOTE_ID, 'power');
@@ -418,16 +428,13 @@ export async function listScenes(): Promise<Array<{ name: string; id: string }>>
 
 /** Turn the AC on at 24°C cool mode (low fan) via the IR blaster. */
 export async function irAcOn(): Promise<void> {
-  await irAcCommand('power', '1');
-  await irAcCommand('mode',  '0');  // cool
-  await irAcCommand('temp',  24);
-  await irAcCommand('wind',  '1');  // low fan
+  await irAcFullState('1', '0', 24, '1');
   console.log('[Tuya] ✅ AC ON (admin manual)');
 }
 
-/** Turn the AC off via the IR blaster. */
+/** Turn the AC off via the IR blaster. Full state frame required (Panasonic protocol). */
 export async function irAcOff(): Promise<void> {
-  await irAcCommand('power', '0');
+  await irAcFullState('0', '0', 24, '1');
   console.log('[Tuya] ✅ AC OFF (admin manual)');
 }
 
