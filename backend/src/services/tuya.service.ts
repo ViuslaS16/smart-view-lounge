@@ -137,53 +137,146 @@ async function tuyaRequest<T>(
 }
 
 // ── Smart Door Lock ──────────────────────────────────────────────────────────
+//
+// WiFi lock flow (Tuya ticket-based temporary passwords):
+//
+//   1. POST /v1.0/devices/{id}/door-lock/password-ticket
+//      → ticket_id  (string)
+//      → ticket_key (hex, AES-256-ECB encrypted with clientSecret)
+//
+//   2. Decrypt ticket_key with AES-256-ECB (key = clientSecret, 32 bytes)
+//      → 16-byte raw key
+//
+//   3. Encrypt the desired 7-digit PIN with AES-128-ECB using that 16-byte key
+//      → encrypted_pin (hex)
+//
+//   4. POST /v1.0/devices/{id}/door-lock/temp-password
+//      { password: encrypted_pin, password_type: "ticket", ticket_id, effective_time, invalid_time, type: 0 }
+//      → password_id  (used later to delete/extend)
+//
+// effective_time / invalid_time are Unix epoch seconds and map exactly to
+// the booking start/end — so the PIN ONLY works during the session period.
 
 /**
- * Get a dynamic (one-time use) door PIN for the current session.
+ * Decrypt the Tuya ticket_key (AES-256-ECB, key = full clientSecret 32 bytes)
+ * Returns a 16-byte Buffer used to encrypt the user PIN.
+ */
+function decryptTicketKey(ticketKeyHex: string): Buffer {
+  const key = Buffer.from(CLIENT_SECRET, 'utf8');          // 32 bytes → AES-256
+  const ct  = Buffer.from(ticketKeyHex, 'hex');
+  const dec = crypto.createDecipheriv('aes-256-ecb', key, null);
+  dec.setAutoPadding(false);                               // strip manually
+  const raw = Buffer.concat([dec.update(ct), dec.final()]);
+  const padLen = raw[raw.length - 1];                      // PKCS7
+  return raw.slice(0, raw.length - padLen);                // → 16-byte key
+}
+
+/**
+ * Encrypt the user's 7-digit PIN with the 16-byte decrypted ticket key
+ * (AES-128-ECB). Returns hex string for the Tuya API.
+ */
+function encryptPin(pin: string, decryptedKey: Buffer): string {
+  const cipher = crypto.createCipheriv('aes-128-ecb', decryptedKey, null);
+  cipher.setAutoPadding(true);
+  return Buffer.concat([cipher.update(Buffer.from(pin, 'utf8')), cipher.final()]).toString('hex');
+}
+
+/**
+ * Generate a random 7-digit PIN (required by Tuya for Wi-Fi locks).
+ * Ensures it is always 7 chars, no leading zeros.
+ */
+function generateSevenDigitPin(): string {
+  const min = 1_000_000;
+  const max = 9_999_999;
+  return String(Math.floor(Math.random() * (max - min + 1)) + min);
+}
+
+/**
+ * Create a session-bound temporary PIN for the door lock.
  *
- * This lock (category: ms / Bluetooth SLock) does NOT support remote
- * temporary password creation via the ticket API — that API returns error 1109
- * for Bluetooth-only locks without a gateway.
+ * The PIN is valid from startTime → endTime only.
+ * Uses the Tuya ticket API so the lock enforces the time window.
  *
- * Instead we use the Dynamic Password feature:
- *   GET /v1.0/devices/{device_id}/door-lock/dynamic-password
- *
- * The response contains an 8-digit code the customer types on the lock's
- * keypad. It expires after one use or after the lock's internal timeout.
- *
- * We return a fake ticketId (the booking ID) so the calling code doesn't
- * need to change; revoking/extending is a no-op for dynamic passwords.
+ * Returns { pin, ticketId } where ticketId is the Tuya password_id
+ * (used later to delete or extend the password).
  */
 export async function createSessionPin(
   bookingId: string,
-  _startTime: Date,
-  _endTime: Date
+  startTime: Date,
+  endTime: Date
 ): Promise<{ pin: string; ticketId: string }> {
   const deviceId = process.env.TUYA_DOOR_DEVICE_ID;
   if (!deviceId) throw new Error('[Tuya] TUYA_DOOR_DEVICE_ID is not set in .env');
 
-  const result = await tuyaRequest<{ dynamic_password: string }>(
-    'GET',
-    `/v1.0/devices/${deviceId}/door-lock/dynamic-password`
+  // Step 1: Get a fresh ticket
+  const { ticket_id, ticket_key } = await tuyaRequest<{ ticket_id: string; ticket_key: string }>(
+    'POST',
+    `/v1.0/devices/${deviceId}/door-lock/password-ticket`
   );
 
-  const pin = result.dynamic_password;
-  console.log(`[Tuya] Dynamic PIN generated for booking ${bookingId}`);
-  return { pin, ticketId: bookingId }; // ticketId is unused for dynamic passwords
+  // Step 2: Generate & encrypt the PIN
+  const pin        = generateSevenDigitPin();
+  const decKey     = decryptTicketKey(ticket_key);
+  const encPin     = encryptPin(pin, decKey);
+
+  // Step 3: Create the time-bound temporary password
+  const effectiveTime = Math.floor(startTime.getTime() / 1000);
+  const invalidTime   = Math.floor(endTime.getTime()   / 1000);
+
+  const result = await tuyaRequest<{ id: number }>(
+    'POST',
+    `/v1.0/devices/${deviceId}/door-lock/temp-password`,
+    {
+      password:      encPin,
+      password_type: 'ticket',
+      ticket_id,
+      effective_time: effectiveTime,
+      invalid_time:   invalidTime,
+      type:           0,    // 0 = multi-use within validity window; 1 = one-time
+      name:           `Booking-${bookingId.slice(0, 8)}`,
+    }
+  );
+
+  const passwordId = String(result.id);
+  console.log(`[Tuya] ✅ Session PIN created for booking ${bookingId} | valid ${startTime.toISOString()} → ${endTime.toISOString()} | id: ${passwordId}`);
+  return { pin, ticketId: passwordId };
 }
 
 /**
- * No-op for dynamic passwords — they expire automatically after use.
+ * Delete the temporary password from the lock (call on booking cancellation).
+ * ticketId here is the Tuya password_id returned by createSessionPin.
  */
-export async function revokeSessionPin(_ticketId: string): Promise<void> {
-  console.log('[Tuya] Dynamic password — no revocation needed');
+export async function revokeSessionPin(ticketId: string): Promise<void> {
+  const deviceId = process.env.TUYA_DOOR_DEVICE_ID;
+  if (!deviceId || !ticketId) return;
+  try {
+    await tuyaRequest(
+      'DELETE',
+      `/v1.0/devices/${deviceId}/door-lock/temp-passwords/${ticketId}`
+    );
+    console.log(`[Tuya] ✅ Session PIN ${ticketId} revoked`);
+  } catch (err: any) {
+    console.warn(`[Tuya] ⚠️  Could not revoke PIN ${ticketId}:`, err.message);
+  }
 }
 
 /**
- * No-op for dynamic passwords — generate a new one if the session is extended.
+ * Extend the session password by deleting the old one and creating a new one
+ * that covers the original start time → new end time.
+ * ticketId = Tuya password_id, bookingId = UUID, originalStartTime = original session start.
+ *
+ * Returns the new { pin, ticketId } so the caller can update the DB.
  */
-export async function extendSessionPin(_ticketId: string, _newEndTime: Date): Promise<void> {
-  console.log('[Tuya] Dynamic password — no extension needed; customer should use resend-pin to get a new code');
+export async function extendSessionPin(
+  ticketId: string,
+  newEndTime: Date,
+  bookingId: string,
+  originalStartTime: Date
+): Promise<{ pin: string; ticketId: string }> {
+  // Delete the old password first
+  await revokeSessionPin(ticketId);
+  // Create a new one with the extended window
+  return createSessionPin(bookingId, originalStartTime, newEndTime);
 }
 
 
