@@ -20,9 +20,9 @@ function emailWrapper(content: string): string {
 
         <!-- HEADER -->
         <tr>
-          <td style="background:linear-gradient(135deg,#1A1408 0%,#0A0A0B 60%,#1A1408 100%);border-radius:16px 16px 0 0;padding:36px 40px;border-bottom:2px solid #C9933A;text-align:center;">
-            <div style="font-size:28px;font-weight:900;letter-spacing:4px;color:#C9933A;text-transform:uppercase;">SmartView</div>
-            <div style="font-size:11px;letter-spacing:8px;color:#8A7060;text-transform:uppercase;margin-top:4px;">Private Cinema Lounge · Sri Lanka</div>
+          <td style="background:#000000;border-radius:16px 16px 0 0;padding:24px 40px;border-bottom:2px solid #C9933A;text-align:center;">
+            <img src="https://smartviewlounge.com/logo.png" alt="SmartView Lounge" width="140" height="140" style="display:block;margin:0 auto;" />
+            <div style="font-size:11px;letter-spacing:6px;color:#8A7060;text-transform:uppercase;margin-top:4px;">Private Cinema Lounge · Sri Lanka</div>
           </td>
         </tr>
 
