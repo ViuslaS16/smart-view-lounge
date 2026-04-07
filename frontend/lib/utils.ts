@@ -88,9 +88,9 @@ export function generateTimeSlots(
   bufferMinutes: number = 15
 ) {
   const slots: { time: string; available: boolean; dateObj: Date }[] = [];
-  // For example, 10:00 to 22:00
-  const startHour = 10;
-  const endHour = 22;
+  // 24 Hour Slots: 00:00 to 24:00
+  const startHour = 0;
+  const endHour = 24;
 
   let current = new Date(date.getFullYear(), date.getMonth(), date.getDate(), startHour, 0);
   const endOfDay = new Date(date.getFullYear(), date.getMonth(), date.getDate(), endHour, 0);
