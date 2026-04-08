@@ -5,7 +5,9 @@
 
 set -e
 
+# DO NOT HARDCODE PASSWORDS HERE. WE NOW USE SSH KEYS.
 VPS="root@157.230.36.140"
+SSH_KEY="~/.ssh/id_ed25519_smartview"
 VPS_APP_DIR="/home/smartviewlounge/smart-view-lounge"
 MODE="${1:-all}"
 
@@ -20,11 +22,11 @@ if [[ "$MODE" == "backend" || "$MODE" == "all" ]]; then
 
   echo "▶ Uploading dist/ to VPS..."
   tar czf /tmp/sv-backend-dist.tar.gz dist/
-  sshpass -p 'SmartV@2003Lounge' scp -o StrictHostKeyChecking=no \
+  scp -i $SSH_KEY -o StrictHostKeyChecking=no \
     /tmp/sv-backend-dist.tar.gz "$VPS:/tmp/sv-backend-dist.tar.gz"
 
   echo "▶ Deploying on VPS..."
-  sshpass -p 'SmartV@2003Lounge' ssh -o StrictHostKeyChecking=no "$VPS" "
+  ssh -i $SSH_KEY -o StrictHostKeyChecking=no "$VPS" "
     cd $VPS_APP_DIR && git pull origin main
     cd backend && rm -rf dist && tar xzf /tmp/sv-backend-dist.tar.gz
     chown -R smartviewlounge:smartviewlounge dist
@@ -44,11 +46,11 @@ if [[ "$MODE" == "frontend" || "$MODE" == "all" ]]; then
 
   echo "▶ Uploading .next/ to VPS..."
   tar czf /tmp/sv-frontend-next.tar.gz .next/
-  sshpass -p 'SmartV@2003Lounge' scp -o StrictHostKeyChecking=no \
+  scp -i $SSH_KEY -o StrictHostKeyChecking=no \
     /tmp/sv-frontend-next.tar.gz "$VPS:/tmp/sv-frontend-next.tar.gz"
 
   echo "▶ Deploying on VPS..."
-  sshpass -p 'SmartV@2003Lounge' ssh -o StrictHostKeyChecking=no "$VPS" "
+  ssh -i $SSH_KEY -o StrictHostKeyChecking=no "$VPS" "
     cd $VPS_APP_DIR/frontend && rm -rf .next && tar xzf /tmp/sv-frontend-next.tar.gz
     chown -R smartviewlounge:smartviewlounge .next
     su - smartviewlounge -c 'pm2 restart smartview-frontend'
