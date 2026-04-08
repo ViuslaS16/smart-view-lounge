@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
@@ -70,6 +70,16 @@ const IconPlay = ({ color }: { color: string }) => (
   <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
     <circle cx="12" cy="12" r="9"/>
     <path d="M10 8l6 4-6 4V8z" fill={color} stroke="none"/>
+  </svg>
+);
+const IconMenu = () => (
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+    <path d="M3 6h18M3 12h18M3 18h18"/>
+  </svg>
+);
+const IconX = () => (
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+    <path d="M18 6L6 18M6 6l12 12"/>
   </svg>
 );
 
@@ -141,10 +151,10 @@ const steps = [
 ];
 
 const stats = [
-  { value: "4K", label: "Ultra HD Projection" },
-  { value: "7.1", label: "Surround Sound" },
-  { value: "12", label: "Seat Premium Theater" },
-  { value: "24/7", label: "Available to Book" },
+  { value: "4K", label: "Ultra HD" },
+  { value: "7.1", label: "Surround" },
+  { value: "12", label: "Seats" },
+  { value: "24/7", label: "Available" },
 ];
 
 // ─── Film grain canvas overlay ────────────────────────────────────────────────
@@ -214,6 +224,8 @@ export default function LandingPage() {
   const curtainLeftRef = useRef<HTMLDivElement>(null);
   const curtainRightRef = useRef<HTMLDivElement>(null);
 
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
   useEffect(() => {
     const ctx = gsap.context(() => {
       // ── Nav entrance ──
@@ -250,7 +262,7 @@ export default function LandingPage() {
         y: 10, repeat: -1, yoyo: true, duration: 1.1, ease: "power1.inOut", delay: 3,
       });
 
-      // ── Scroll-reveal via IntersectionObserver (avoids opacity:0 flash) ──
+      // ── Scroll-reveal via IntersectionObserver ──
       const io = new IntersectionObserver(
         (entries) => {
           entries.forEach((entry) => {
@@ -281,21 +293,18 @@ export default function LandingPage() {
         { threshold: 0.1, rootMargin: "0px 0px -40px 0px" }
       );
 
-      // Observe feature cards with stagger delays
       if (featureCardsRef.current) {
         featureCardsRef.current.querySelectorAll(".feature-card").forEach((el, i) => {
           (el as HTMLElement).dataset.delay = String(i * 0.1);
           io.observe(el);
         });
       }
-      // Observe steps with stagger delays
       if (stepsRef.current) {
         stepsRef.current.querySelectorAll(".step-item").forEach((el, i) => {
           (el as HTMLElement).dataset.delay = String(i * 0.12);
           io.observe(el);
         });
       }
-      // Observe scroll-reveal section headings
       document.querySelectorAll(".scroll-reveal").forEach((el) => io.observe(el));
 
       return () => {
@@ -345,45 +354,36 @@ export default function LandingPage() {
       <div style={{ background: "var(--bg-root)", color: "var(--text-primary)", fontFamily: "var(--font-sans)", overflowX: "hidden" }}>
 
         {/* ─── Navbar ─────────────────────────────────────────────────── */}
-        <nav ref={navRef} style={{
-          position: "fixed", top: 0, left: 0, right: 0, zIndex: 100,
-          padding: "16px 48px",
-          display: "flex", alignItems: "center", justifyContent: "space-between",
-          background: "rgba(10,10,11,0.7)", backdropFilter: "blur(24px)",
-          borderBottom: "1px solid rgba(201,147,58,0.08)",
-        }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <Image src="/logo.png" alt="SmartView Lounge" width={44} height={44} style={{ borderRadius: 10, objectFit: "cover" }} />
-            <span style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 18, letterSpacing: "-0.3px" }}>
-              SmartView Lounge
-            </span>
+        <nav ref={navRef} className="land-nav">
+          {/* Logo */}
+          <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
+            <Image src="/logo.png" alt="SmartView Lounge" width={38} height={38} style={{ borderRadius: 9, objectFit: "cover", flexShrink: 0 }} />
+            <span className="land-nav-brand">SmartView Lounge</span>
           </div>
-          <div style={{ display: "flex", gap: 14, alignItems: "center" }}>
-            <Link href="/login" style={{
-              padding: "9px 22px", borderRadius: 10, fontSize: 14, fontWeight: 500,
-              color: "var(--text-secondary)", textDecoration: "none",
-              border: "1px solid rgba(255,255,255,0.06)",
-              transition: "all 0.2s",
-            }}
-              onMouseEnter={e => { e.currentTarget.style.color = "#fff"; e.currentTarget.style.borderColor = "rgba(201,147,58,0.3)"; }}
-              onMouseLeave={e => { e.currentTarget.style.color = "var(--text-secondary)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)"; }}
-            >
-              Sign In
-            </Link>
-            <Link href="/register" style={{
-              padding: "9px 24px", borderRadius: 10, fontSize: 14, fontWeight: 600,
-              background: "linear-gradient(135deg, #C9933A, #A87828)",
-              color: "#0A0A0B", textDecoration: "none",
-              boxShadow: "0 0 24px rgba(201,147,58,0.25)",
-              transition: "all 0.2s",
-            }}
-              onMouseEnter={e => { e.currentTarget.style.boxShadow = "0 0 40px rgba(201,147,58,0.5)"; e.currentTarget.style.transform = "translateY(-1px)"; }}
-              onMouseLeave={e => { e.currentTarget.style.boxShadow = "0 0 24px rgba(201,147,58,0.25)"; e.currentTarget.style.transform = "translateY(0)"; }}
-            >
-              Book Now
-            </Link>
+
+          {/* Desktop nav links */}
+          <div className="land-nav-links">
+            <Link href="/login" className="land-nav-signin">Sign In</Link>
+            <Link href="/register" className="land-nav-book">Book Now</Link>
           </div>
+
+          {/* Mobile hamburger */}
+          <button
+            className="land-nav-hamburger"
+            onClick={() => setMobileMenuOpen(o => !o)}
+            aria-label="Toggle menu"
+          >
+            {mobileMenuOpen ? <IconX /> : <IconMenu />}
+          </button>
         </nav>
+
+        {/* Mobile menu drawer */}
+        {mobileMenuOpen && (
+          <div className="land-mobile-menu">
+            <Link href="/login" className="land-mobile-link" onClick={() => setMobileMenuOpen(false)}>Sign In</Link>
+            <Link href="/register" className="land-mobile-book" onClick={() => setMobileMenuOpen(false)}>Book Now</Link>
+          </div>
+        )}
 
         {/* ─── Hero ───────────────────────────────────────────────────── */}
         <section ref={heroRef} style={{
@@ -398,62 +398,29 @@ export default function LandingPage() {
           }} />
 
           {/* Floating orbs */}
-          <div style={{
-            position: "absolute", top: "15%", left: "8%", width: 320, height: 320, borderRadius: "50%",
-            background: "radial-gradient(circle, rgba(201,147,58,0.08) 0%, transparent 70%)",
-            filter: "blur(40px)", animation: "float 7s ease-in-out infinite",
-          }} />
-          <div style={{
-            position: "absolute", bottom: "20%", right: "6%", width: 250, height: 250, borderRadius: "50%",
-            background: "radial-gradient(circle, rgba(124,106,255,0.08) 0%, transparent 70%)",
-            filter: "blur(40px)", animation: "float 9s ease-in-out infinite reverse",
-          }} />
+          <div className="land-orb-left" />
+          <div className="land-orb-right" />
 
-          {/* Film perforations left */}
-          <div style={{
-            position: "absolute", left: 0, top: 0, bottom: 0, width: 28,
-            display: "flex", flexDirection: "column", justifyContent: "space-around",
-            paddingBlock: 20, opacity: 0.12,
-          }}>
+          {/* Film perforations — hidden on very small screens */}
+          <div className="land-perforations land-perf-left">
             {Array.from({ length: 24 }).map((_, i) => (
-              <div key={i} style={{
-                width: 16, height: 12, borderRadius: 3, background: "#C9933A", marginLeft: 6,
-              }} />
+              <div key={i} style={{ width: 14, height: 11, borderRadius: 3, background: "#C9933A", marginLeft: 6 }} />
             ))}
           </div>
-          {/* Film perforations right */}
-          <div style={{
-            position: "absolute", right: 0, top: 0, bottom: 0, width: 28,
-            display: "flex", flexDirection: "column", justifyContent: "space-around",
-            paddingBlock: 20, opacity: 0.12,
-          }}>
+          <div className="land-perforations land-perf-right">
             {Array.from({ length: 24 }).map((_, i) => (
-              <div key={i} style={{
-                width: 16, height: 12, borderRadius: 3, background: "#C9933A", marginRight: 6,
-              }} />
+              <div key={i} style={{ width: 14, height: 11, borderRadius: 3, background: "#C9933A", marginRight: 6 }} />
             ))}
           </div>
 
           {/* Content */}
-          <div style={{ textAlign: "center", maxWidth: 820, padding: "0 24px", position: "relative", zIndex: 1 }}>
-            <p ref={taglineRef} style={{
-              display: "inline-flex", alignItems: "center", gap: 8,
-              fontSize: 12, fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase",
-              color: "#C9933A", marginBottom: 24,
-              padding: "6px 16px", borderRadius: 999,
-              border: "1px solid rgba(201,147,58,0.25)",
-              background: "rgba(201,147,58,0.06)",
-            }}>
-              <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#C9933A", animation: "pulse 2s ease-in-out infinite" }} />
+          <div className="land-hero-content">
+            <p ref={taglineRef} className="land-tagline">
+              <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#C9933A", animation: "pulse 2s ease-in-out infinite", display: "inline-block", flexShrink: 0 }} />
               Sri Lanka&apos;s First Fully Automated Private Theater
             </p>
 
-            <h1 ref={h1Ref} style={{
-              fontFamily: "var(--font-display)",
-              fontSize: "clamp(48px, 8vw, 96px)",
-              fontWeight: 800, lineHeight: 1.0,
-              marginBottom: 28, letterSpacing: "-2px",
-            }}>
+            <h1 ref={h1Ref} className="land-h1">
               Your Private<br />
               <span style={{
                 background: "linear-gradient(90deg, #C9933A, #F0C060, #C9933A)",
@@ -466,62 +433,28 @@ export default function LandingPage() {
               </span>
             </h1>
 
-            <p ref={subRef} style={{
-              fontSize: "clamp(15px, 2vw, 19px)", lineHeight: 1.7,
-              color: "var(--text-secondary)", marginBottom: 44, maxWidth: 600, margin: "0 auto 44px",
-            }}>
+            <p ref={subRef} className="land-sub">
               Book an exclusive private movie theater session. Walk in, press play, and lose yourself in 4K + Dolby surround sound — completely alone, on your terms.
             </p>
 
-            <div ref={ctaRef} style={{ display: "flex", gap: 14, justifyContent: "center", flexWrap: "wrap" }}>
-              <Link href="/register" style={{
-                display: "inline-flex", alignItems: "center", gap: 10,
-                padding: "16px 36px", borderRadius: 14, fontSize: 16, fontWeight: 700,
-                background: "linear-gradient(135deg, #C9933A, #A87828)",
-                color: "#0A0A0B", textDecoration: "none",
-                boxShadow: "0 8px 40px rgba(201,147,58,0.35), 0 0 0 1px rgba(201,147,58,0.2)",
-                transition: "all 0.25s",
-              }}
-                onMouseEnter={e => { e.currentTarget.style.boxShadow = "0 12px 60px rgba(201,147,58,0.55), 0 0 0 1px rgba(201,147,58,0.4)"; e.currentTarget.style.transform = "translateY(-2px) scale(1.02)"; }}
-                onMouseLeave={e => { e.currentTarget.style.boxShadow = "0 8px 40px rgba(201,147,58,0.35), 0 0 0 1px rgba(201,147,58,0.2)"; e.currentTarget.style.transform = "translateY(0) scale(1)"; }}
-              >
-                <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+            <div ref={ctaRef} className="land-cta">
+              <Link href="/register" className="land-cta-primary">
+                <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.347a1.125 1.125 0 010 1.972l-11.54 6.347a1.125 1.125 0 01-1.667-.986V5.653z" />
                 </svg>
                 Book Your Session
               </Link>
-              <Link href="/login" style={{
-                display: "inline-flex", alignItems: "center", gap: 8,
-                padding: "16px 32px", borderRadius: 14, fontSize: 15, fontWeight: 600,
-                color: "var(--text-secondary)", textDecoration: "none",
-                border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.03)",
-                backdropFilter: "blur(12px)",
-                transition: "all 0.25s",
-              }}
-                onMouseEnter={e => { e.currentTarget.style.borderColor = "rgba(201,147,58,0.3)"; e.currentTarget.style.color = "#fff"; }}
-                onMouseLeave={e => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)"; e.currentTarget.style.color = "var(--text-secondary)"; }}
-              >
+              <Link href="/login" className="land-cta-secondary">
                 Sign In →
               </Link>
             </div>
 
             {/* Stats row */}
-            <div ref={statsRef} style={{
-              display: "flex", gap: 0, justifyContent: "center", marginTop: 72,
-              flexWrap: "wrap",
-            }}>
+            <div ref={statsRef} className="land-stats">
               {stats.map((s, i) => (
-                <div key={i} style={{
-                  textAlign: "center", padding: "0 32px",
-                  borderRight: i < stats.length - 1 ? "1px solid rgba(255,255,255,0.08)" : "none",
-                }}>
-                  <p style={{
-                    fontFamily: "var(--font-display)", fontSize: "clamp(28px, 4vw, 40px)",
-                    fontWeight: 800, lineHeight: 1, marginBottom: 6,
-                    background: "linear-gradient(135deg, #C9933A, #F0C060)",
-                    WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
-                  }}>{s.value}</p>
-                  <p style={{ fontSize: 12, color: "var(--text-muted)", letterSpacing: "0.5px" }}>{s.label}</p>
+                <div key={i} className="land-stat-item">
+                  <p className="land-stat-value">{s.value}</p>
+                  <p className="land-stat-label">{s.label}</p>
                 </div>
               ))}
             </div>
@@ -529,7 +462,7 @@ export default function LandingPage() {
 
           {/* Scroll indicator */}
           <div ref={scrollIndicatorRef} style={{
-            position: "absolute", bottom: 32, left: "50%", transform: "translateX(-50%)",
+            position: "absolute", bottom: 28, left: "50%", transform: "translateX(-50%)",
             display: "flex", flexDirection: "column", alignItems: "center", gap: 8,
             color: "var(--text-muted)", fontSize: 11, letterSpacing: "2px", textTransform: "uppercase",
           }}>
@@ -547,35 +480,21 @@ export default function LandingPage() {
         </section>
 
         {/* ─── Features ───────────────────────────────────────────────── */}
-        <section style={{ padding: "120px 48px", maxWidth: 1200, margin: "0 auto" }}>
-          <div className="scroll-reveal" style={{ textAlign: "center", marginBottom: 72 }}>
-            <p style={{
-              fontSize: 12, fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase",
-              color: "#C9933A", marginBottom: 16,
-            }}>Why SmartView</p>
-            <h2 style={{
-              fontFamily: "var(--font-display)", fontSize: "clamp(32px, 5vw, 56px)",
-              fontWeight: 800, letterSpacing: "-1px", marginBottom: 20,
-            }}>
+        <section className="land-section">
+          <div className="scroll-reveal land-section-header">
+            <p className="land-eyebrow">Why SmartView</p>
+            <h2 className="land-section-title">
               A theater built around{" "}
               <span style={{ fontStyle: "italic", color: "#C9933A" }}>you</span>
             </h2>
-            <p style={{ fontSize: 17, color: "var(--text-secondary)", maxWidth: 520, margin: "0 auto" }}>
+            <p className="land-section-sub">
               Every detail was designed for one purpose — your perfect private cinema experience.
             </p>
           </div>
 
-          <div ref={featureCardsRef} style={{
-            display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 20,
-          }}>
+          <div ref={featureCardsRef} className="land-feature-grid">
             {features.map((f, i) => (
-              <div key={i} className="feature-card" style={{
-                background: "rgba(255,255,255,0.02)",
-                border: "1px solid rgba(255,255,255,0.06)",
-                borderRadius: 20, padding: "32px 28px",
-                transition: "all 0.3s ease",
-                cursor: "default", position: "relative", overflow: "hidden",
-              }}
+              <div key={i} className="feature-card land-feature-card"
                 onMouseEnter={e => {
                   const el = e.currentTarget;
                   el.style.background = "rgba(255,255,255,0.04)";
@@ -592,11 +511,11 @@ export default function LandingPage() {
                 }}
               >
                 <div style={{
-                  width: 52, height: 52, borderRadius: 14,
+                  width: 48, height: 48, borderRadius: 14,
                   background: `${f.color}15`,
                   border: `1px solid ${f.color}25`,
                   display: "flex", alignItems: "center", justifyContent: "center",
-                  marginBottom: 20,
+                  marginBottom: 18, flexShrink: 0,
                 }}>
                   {f.icon === "lock" && <IconLock color={f.color} />}
                   {f.icon === "card" && <IconCard color={f.color} />}
@@ -606,11 +525,10 @@ export default function LandingPage() {
                   {f.icon === "gift" && <IconGift color={f.color} />}
                 </div>
                 <h3 style={{
-                  fontFamily: "var(--font-display)", fontSize: 20, fontWeight: 700,
-                  marginBottom: 10, letterSpacing: "-0.3px",
+                  fontFamily: "var(--font-display)", fontSize: 18, fontWeight: 700,
+                  marginBottom: 8, letterSpacing: "-0.3px",
                 }}>{f.title}</h3>
                 <p style={{ fontSize: 14, lineHeight: 1.7, color: "var(--text-secondary)" }}>{f.desc}</p>
-                {/* corner accent */}
                 <div style={{
                   position: "absolute", top: 0, right: 0, width: 80, height: 80,
                   background: `radial-gradient(circle at top right, ${f.color}08, transparent)`,
@@ -622,35 +540,19 @@ export default function LandingPage() {
         </section>
 
         {/* ─── How It Works ───────────────────────────────────────────── */}
-        <section style={{
-          padding: "120px 48px",
-          background: "radial-gradient(ellipse 80% 60% at 50% 50%, rgba(201,147,58,0.05) 0%, transparent 70%)",
-          borderTop: "1px solid rgba(255,255,255,0.05)",
-          borderBottom: "1px solid rgba(255,255,255,0.05)",
-        }}>
-          <div style={{ maxWidth: 900, margin: "0 auto" }}>
-            <div className="scroll-reveal" style={{ textAlign: "center", marginBottom: 72 }}>
-              <p style={{ fontSize: 12, fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", color: "#C9933A", marginBottom: 16 }}>
-                Simple Process
-              </p>
-              <h2 style={{
-                fontFamily: "var(--font-display)", fontSize: "clamp(32px, 5vw, 56px)",
-                fontWeight: 800, letterSpacing: "-1px", marginBottom: 16,
-              }}>
+        <section className="land-section land-section-alt">
+          <div style={{ maxWidth: 860, margin: "0 auto" }}>
+            <div className="scroll-reveal land-section-header">
+              <p className="land-eyebrow">Simple Process</p>
+              <h2 className="land-section-title">
                 From signup to showtime in{" "}
                 <span style={{ color: "#C9933A" }}>4 steps</span>
               </h2>
             </div>
 
-            <div ref={stepsRef} style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+            <div ref={stepsRef} style={{ display: "flex", flexDirection: "column", gap: 4 }}>
               {steps.map((s, i) => (
-                <div key={i} className="step-item" style={{
-                  display: "flex", gap: 28, alignItems: "flex-start",
-                  padding: "32px 36px", borderRadius: 18,
-                  background: "rgba(255,255,255,0.02)",
-                  border: "1px solid rgba(255,255,255,0.05)",
-                  transition: "all 0.25s",
-                }}
+                <div key={i} className="step-item land-step-item"
                   onMouseEnter={e => {
                     e.currentTarget.style.background = "rgba(201,147,58,0.04)";
                     e.currentTarget.style.borderColor = "rgba(201,147,58,0.15)";
@@ -662,7 +564,7 @@ export default function LandingPage() {
                 >
                   <div style={{ flexShrink: 0 }}>
                     <div style={{
-                      width: 56, height: 56, borderRadius: 16,
+                      width: 50, height: 50, borderRadius: 14,
                       background: "linear-gradient(135deg, rgba(201,147,58,0.15), rgba(201,147,58,0.05))",
                       border: "1px solid rgba(201,147,58,0.2)",
                       display: "flex", alignItems: "center", justifyContent: "center",
@@ -673,25 +575,18 @@ export default function LandingPage() {
                       {s.icon === "play" && <IconPlay color="#C9933A" />}
                     </div>
                   </div>
-                  <div style={{ flex: 1, paddingTop: 4 }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 8 }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6, flexWrap: "wrap" }}>
                       <span style={{
                         fontSize: 11, fontWeight: 800, letterSpacing: "2px",
                         color: "#C9933A", opacity: 0.7,
                       }}>{s.num}</span>
                       <h3 style={{
-                        fontFamily: "var(--font-display)", fontSize: 20, fontWeight: 700, letterSpacing: "-0.3px",
+                        fontFamily: "var(--font-display)", fontSize: 18, fontWeight: 700, letterSpacing: "-0.3px",
                       }}>{s.title}</h3>
                     </div>
-                    <p style={{ fontSize: 15, lineHeight: 1.7, color: "var(--text-secondary)" }}>{s.desc}</p>
+                    <p style={{ fontSize: 14, lineHeight: 1.7, color: "var(--text-secondary)" }}>{s.desc}</p>
                   </div>
-                  {i < steps.length - 1 && (
-                    <div style={{
-                      position: "absolute", left: 72, marginTop: 88,
-                      width: 1, height: 28, background: "rgba(201,147,58,0.15)",
-                      pointerEvents: "none",
-                    }} />
-                  )}
                 </div>
               ))}
             </div>
@@ -699,60 +594,25 @@ export default function LandingPage() {
         </section>
 
         {/* ─── CTA Section ────────────────────────────────────────────── */}
-        <section className="scroll-reveal" style={{
-          padding: "120px 48px", textAlign: "center",
-          maxWidth: 800, margin: "0 auto",
-        }}>
-          <div style={{
-            position: "relative",
-            background: "radial-gradient(ellipse 100% 120% at 50% 100%, rgba(201,147,58,0.12) 0%, rgba(201,147,58,0.04) 50%, transparent 70%)",
-            border: "1px solid rgba(201,147,58,0.15)",
-            borderRadius: 28, padding: "72px 48px",
-            overflow: "hidden",
-          }}>
-            {/* Cinema screen glow at top */}
+        <section className="scroll-reveal land-cta-section">
+          <div className="land-cta-box">
             <div style={{
-              position: "absolute", top: -1, left: "15%", right: "15%", height: 2,
+              position: "absolute", top: -1, left: "10%", right: "10%", height: 2,
               background: "linear-gradient(90deg, transparent, #C9933A, #F0C060, #C9933A, transparent)",
               borderRadius: 999,
             }} />
-            <p style={{ fontSize: 12, fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", color: "#C9933A", marginBottom: 20 }}>
-              Ready to Watch?
-            </p>
-            <h2 style={{
-              fontFamily: "var(--font-display)",
-              fontSize: "clamp(32px, 5vw, 60px)", fontWeight: 800, letterSpacing: "-1.5px",
-              marginBottom: 24, lineHeight: 1.1,
-            }}>
+            <p className="land-eyebrow">Ready to Watch?</p>
+            <h2 className="land-cta-title">
               Your private screening<br />awaits
             </h2>
-            <p style={{ fontSize: 17, color: "var(--text-secondary)", maxWidth: 480, margin: "0 auto 44px", lineHeight: 1.7 }}>
+            <p className="land-cta-sub">
               Join hundreds of guests who have already discovered the SmartView experience. Your perfect private night starts here.
             </p>
-            <div style={{ display: "flex", gap: 14, justifyContent: "center", flexWrap: "wrap" }}>
-              <Link href="/register" style={{
-                display: "inline-flex", alignItems: "center", gap: 10,
-                padding: "16px 40px", borderRadius: 14, fontSize: 16, fontWeight: 700,
-                background: "linear-gradient(135deg, #C9933A, #A87828)",
-                color: "#0A0A0B", textDecoration: "none",
-                boxShadow: "0 8px 40px rgba(201,147,58,0.4)",
-                transition: "all 0.25s",
-              }}
-                onMouseEnter={e => { e.currentTarget.style.boxShadow = "0 12px 60px rgba(201,147,58,0.6)"; e.currentTarget.style.transform = "translateY(-2px)"; }}
-                onMouseLeave={e => { e.currentTarget.style.boxShadow = "0 8px 40px rgba(201,147,58,0.4)"; e.currentTarget.style.transform = "translateY(0)"; }}
-              >
+            <div className="land-cta">
+              <Link href="/register" className="land-cta-primary">
                 Create Free Account
               </Link>
-              <Link href="/login" style={{
-                display: "inline-flex", alignItems: "center",
-                padding: "16px 32px", borderRadius: 14, fontSize: 15, fontWeight: 600,
-                color: "var(--text-secondary)", textDecoration: "none",
-                border: "1px solid rgba(255,255,255,0.1)",
-                transition: "all 0.25s",
-              }}
-                onMouseEnter={e => { e.currentTarget.style.borderColor = "rgba(201,147,58,0.3)"; e.currentTarget.style.color = "#fff"; }}
-                onMouseLeave={e => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)"; e.currentTarget.style.color = "var(--text-secondary)"; }}
-              >
+              <Link href="/login" className="land-cta-secondary">
                 Already have an account? Sign in →
               </Link>
             </div>
@@ -760,27 +620,10 @@ export default function LandingPage() {
         </section>
 
         {/* ─── Footer ─────────────────────────────────────────────────── */}
-        <footer style={{
-          padding: "28px 48px",
-          borderTop: "1px solid rgba(255,255,255,0.06)",
-          display: "flex", alignItems: "center", justifyContent: "space-between",
-          flexWrap: "wrap", gap: 12,
-        }}>
-          <span style={{
-            fontFamily: "var(--font-display)",
-            fontWeight: 700,
-            fontSize: 15,
-            color: "var(--text-primary)",
-            letterSpacing: "-0.2px",
-          }}>
-            SmartView Lounge
-          </span>
-
-          <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
-            <span style={{ fontSize: 13, color: "var(--text-muted)" }}>
-              © 2026 SmartView Lounge
-            </span>
-            <span style={{ fontSize: 13, color: "var(--text-muted)", opacity: 0.4 }}>·</span>
+        <footer className="land-footer">
+          <span className="land-footer-brand">SmartView Lounge</span>
+          <div className="land-footer-links">
+            <span style={{ fontSize: 12, color: "var(--text-muted)" }}>© 2026 SmartView Lounge</span>
             {[
               { label: "Return Policy", href: "/return-policy" },
               { label: "Privacy Policy", href: "/privacy-policy" },
@@ -789,22 +632,15 @@ export default function LandingPage() {
               { label: "Built by AviterX", href: "#" },
             ].map((item, i, arr) => (
               <span key={item.label} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <span style={{ fontSize: 12, color: "var(--text-muted)", opacity: 0.4 }}>·</span>
                 <Link
                   href={item.href}
-                  style={{
-                    fontSize: 13,
-                    color: "var(--text-muted)",
-                    textDecoration: "none",
-                    transition: "color 0.18s",
-                  }}
+                  style={{ fontSize: 12, color: "var(--text-muted)", textDecoration: "none", transition: "color 0.18s" }}
                   onMouseEnter={e => e.currentTarget.style.color = "var(--text-primary)"}
                   onMouseLeave={e => e.currentTarget.style.color = "var(--text-muted)"}
                 >
                   {item.label}
                 </Link>
-                {i < arr.length - 1 && (
-                  <span style={{ fontSize: 13, color: "var(--text-muted)", opacity: 0.4 }}>·</span>
-                )}
               </span>
             ))}
           </div>
@@ -812,6 +648,274 @@ export default function LandingPage() {
       </div>
 
       <style>{`
+        /* ── Navbar ─────────────────────────────────────────────── */
+        .land-nav {
+          position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+          padding: 14px 24px;
+          display: flex; align-items: center; justify-content: space-between;
+          background: rgba(10,10,11,0.8); backdrop-filter: blur(24px);
+          border-bottom: 1px solid rgba(201,147,58,0.08);
+          gap: 12px;
+        }
+        .land-nav-brand {
+          font-family: var(--font-display); font-weight: 700; font-size: 17px;
+          letter-spacing: -0.3px; white-space: nowrap; overflow: hidden;
+          text-overflow: ellipsis;
+        }
+        .land-nav-links {
+          display: flex; gap: 10px; align-items: center; flex-shrink: 0;
+        }
+        .land-nav-signin {
+          padding: 8px 18px; border-radius: 10px; font-size: 14px; font-weight: 500;
+          color: var(--text-secondary); text-decoration: none;
+          border: 1px solid rgba(255,255,255,0.06); transition: all 0.2s; white-space: nowrap;
+        }
+        .land-nav-signin:hover { color: #fff; border-color: rgba(201,147,58,0.3); }
+        .land-nav-book {
+          padding: 8px 20px; border-radius: 10px; font-size: 14px; font-weight: 600;
+          background: linear-gradient(135deg, #C9933A, #A87828);
+          color: #0A0A0B; text-decoration: none; white-space: nowrap;
+          box-shadow: 0 0 20px rgba(201,147,58,0.25); transition: all 0.2s;
+        }
+        .land-nav-book:hover { box-shadow: 0 0 36px rgba(201,147,58,0.5); transform: translateY(-1px); }
+        .land-nav-hamburger {
+          display: none; background: none; border: 1px solid rgba(255,255,255,0.1);
+          border-radius: 8px; padding: 6px; cursor: pointer; color: var(--text-secondary);
+          align-items: center; justify-content: center; flex-shrink: 0;
+          transition: all 0.2s;
+        }
+        .land-nav-hamburger:hover { color: #fff; border-color: rgba(201,147,58,0.3); }
+
+        /* Mobile menu drawer */
+        .land-mobile-menu {
+          position: fixed; top: 65px; left: 0; right: 0; z-index: 99;
+          background: rgba(10,10,11,0.97); backdrop-filter: blur(24px);
+          border-bottom: 1px solid rgba(201,147,58,0.1);
+          padding: 16px 24px; display: flex; flex-direction: column; gap: 10px;
+        }
+        .land-mobile-link {
+          display: block; padding: 12px 16px; border-radius: 10px; font-size: 15px;
+          font-weight: 500; color: var(--text-secondary); text-decoration: none;
+          border: 1px solid rgba(255,255,255,0.06); text-align: center;
+          transition: all 0.2s;
+        }
+        .land-mobile-link:hover { color: #fff; border-color: rgba(201,147,58,0.3); }
+        .land-mobile-book {
+          display: block; padding: 13px 16px; border-radius: 10px; font-size: 15px;
+          font-weight: 700; background: linear-gradient(135deg, #C9933A, #A87828);
+          color: #0A0A0B; text-decoration: none; text-align: center;
+          box-shadow: 0 4px 24px rgba(201,147,58,0.3);
+        }
+
+        /* ── Hero ───────────────────────────────────────────────── */
+        .land-hero-content {
+          text-align: center; width: 100%; max-width: 820px;
+          padding: 0 20px; position: relative; z-index: 1;
+        }
+        .land-tagline {
+          display: inline-flex; align-items: center; gap: 8px;
+          font-size: 11px; font-weight: 700; letter-spacing: 2.5px; text-transform: uppercase;
+          color: #C9933A; margin-bottom: 20px;
+          padding: 6px 14px; border-radius: 999px;
+          border: 1px solid rgba(201,147,58,0.25); background: rgba(201,147,58,0.06);
+          max-width: 100%; flex-wrap: wrap; justify-content: center;
+        }
+        .land-h1 {
+          font-family: var(--font-display);
+          font-size: clamp(40px, 10vw, 96px);
+          font-weight: 800; line-height: 1.05;
+          margin-bottom: 20px; letter-spacing: -1.5px;
+        }
+        .land-sub {
+          font-size: clamp(14px, 2vw, 18px); line-height: 1.7;
+          color: var(--text-secondary); margin-bottom: 36px;
+          max-width: 560px; margin-left: auto; margin-right: auto;
+        }
+        .land-cta {
+          display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;
+        }
+        .land-cta-primary {
+          display: inline-flex; align-items: center; gap: 8px;
+          padding: 14px 28px; border-radius: 14px; font-size: 15px; font-weight: 700;
+          background: linear-gradient(135deg, #C9933A, #A87828);
+          color: #0A0A0B; text-decoration: none;
+          box-shadow: 0 8px 36px rgba(201,147,58,0.35), 0 0 0 1px rgba(201,147,58,0.2);
+          transition: all 0.25s; white-space: nowrap;
+        }
+        .land-cta-primary:hover { box-shadow: 0 12px 56px rgba(201,147,58,0.55), 0 0 0 1px rgba(201,147,58,0.4); transform: translateY(-2px) scale(1.02); }
+        .land-cta-secondary {
+          display: inline-flex; align-items: center; gap: 8px;
+          padding: 14px 24px; border-radius: 14px; font-size: 14px; font-weight: 600;
+          color: var(--text-secondary); text-decoration: none;
+          border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.03);
+          backdrop-filter: blur(12px); transition: all 0.25s; white-space: nowrap;
+        }
+        .land-cta-secondary:hover { border-color: rgba(201,147,58,0.3); color: #fff; }
+
+        /* Stats */
+        .land-stats {
+          display: flex; gap: 0; justify-content: center; margin-top: 52px;
+          flex-wrap: wrap; row-gap: 20px;
+        }
+        .land-stat-item {
+          text-align: center; padding: 0 20px;
+          border-right: 1px solid rgba(255,255,255,0.08);
+        }
+        .land-stat-item:last-child { border-right: none; }
+        .land-stat-value {
+          font-family: var(--font-display); font-size: clamp(24px, 5vw, 40px);
+          font-weight: 800; line-height: 1; margin-bottom: 4px;
+          background: linear-gradient(135deg, #C9933A, #F0C060);
+          -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+        .land-stat-label { font-size: 11px; color: var(--text-muted); letter-spacing: 0.5px; }
+
+        /* Orbs */
+        .land-orb-left {
+          position: absolute; top: 15%; left: 5%; width: 280px; height: 280px; border-radius: 50%;
+          background: radial-gradient(circle, rgba(201,147,58,0.08) 0%, transparent 70%);
+          filter: blur(40px); animation: float 7s ease-in-out infinite; pointer-events: none;
+        }
+        .land-orb-right {
+          position: absolute; bottom: 20%; right: 4%; width: 220px; height: 220px; border-radius: 50%;
+          background: radial-gradient(circle, rgba(124,106,255,0.08) 0%, transparent 70%);
+          filter: blur(40px); animation: float 9s ease-in-out infinite reverse; pointer-events: none;
+        }
+
+        /* Film perforations */
+        .land-perforations {
+          position: absolute; top: 0; bottom: 0; width: 24px;
+          display: flex; flex-direction: column; justify-content: space-around;
+          padding-block: 20px; opacity: 0.12; pointer-events: none;
+        }
+        .land-perf-left { left: 0; }
+        .land-perf-right { right: 0; }
+
+        /* ── Sections ───────────────────────────────────────────── */
+        .land-section {
+          padding: clamp(60px, 10vw, 120px) clamp(16px, 5vw, 48px);
+          max-width: 1200px; margin: 0 auto;
+        }
+        .land-section-alt {
+          max-width: 100%;
+          background: radial-gradient(ellipse 80% 60% at 50% 50%, rgba(201,147,58,0.05) 0%, transparent 70%);
+          border-top: 1px solid rgba(255,255,255,0.05);
+          border-bottom: 1px solid rgba(255,255,255,0.05);
+          padding-left: clamp(16px, 5vw, 48px);
+          padding-right: clamp(16px, 5vw, 48px);
+        }
+        .land-section-header { text-align: center; margin-bottom: 52px; }
+        .land-eyebrow {
+          font-size: 11px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase;
+          color: #C9933A; margin-bottom: 14px;
+        }
+        .land-section-title {
+          font-family: var(--font-display); font-size: clamp(28px, 5vw, 52px);
+          font-weight: 800; letter-spacing: -1px; margin-bottom: 16px; line-height: 1.1;
+        }
+        .land-section-sub {
+          font-size: 16px; color: var(--text-secondary); max-width: 500px; margin: 0 auto;
+          line-height: 1.7;
+        }
+
+        /* Feature grid */
+        .land-feature-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+          gap: 16px;
+        }
+        .land-feature-card {
+          background: rgba(255,255,255,0.02);
+          border: 1px solid rgba(255,255,255,0.06);
+          border-radius: 20px; padding: 28px 22px;
+          transition: all 0.3s ease; cursor: default;
+          position: relative; overflow: hidden;
+        }
+
+        /* Step items */
+        .land-step-item {
+          display: flex; gap: 20px; align-items: flex-start;
+          padding: clamp(18px, 3vw, 28px) clamp(16px, 3vw, 28px);
+          border-radius: 16px;
+          background: rgba(255,255,255,0.02);
+          border: 1px solid rgba(255,255,255,0.05);
+          transition: all 0.25s;
+        }
+
+        /* CTA section */
+        .land-cta-section {
+          padding: clamp(40px, 8vw, 100px) clamp(16px, 5vw, 48px);
+          max-width: 800px; margin: 0 auto; text-align: center;
+        }
+        .land-cta-box {
+          position: relative;
+          background: radial-gradient(ellipse 100% 120% at 50% 100%, rgba(201,147,58,0.12) 0%, rgba(201,147,58,0.04) 50%, transparent 70%);
+          border: 1px solid rgba(201,147,58,0.15);
+          border-radius: 24px; padding: clamp(36px, 6vw, 64px) clamp(20px, 5vw, 48px);
+          overflow: hidden;
+        }
+        .land-cta-title {
+          font-family: var(--font-display);
+          font-size: clamp(28px, 5vw, 56px); font-weight: 800; letter-spacing: -1.5px;
+          margin-bottom: 20px; line-height: 1.1;
+        }
+        .land-cta-sub {
+          font-size: 16px; color: var(--text-secondary);
+          max-width: 460px; margin: 0 auto 36px; line-height: 1.7;
+        }
+
+        /* Footer */
+        .land-footer {
+          padding: clamp(20px, 3vw, 28px) clamp(16px, 5vw, 48px);
+          border-top: 1px solid rgba(255,255,255,0.06);
+          display: flex; align-items: center; justify-content: space-between;
+          flex-wrap: wrap; gap: 12px;
+        }
+        .land-footer-brand {
+          font-family: var(--font-display); font-weight: 700; font-size: 14px;
+          color: var(--text-primary); letter-spacing: -0.2px; white-space: nowrap;
+        }
+        .land-footer-links {
+          display: flex; align-items: center; gap: 4px; flex-wrap: wrap;
+        }
+
+        /* ── Responsive breakpoints ─────────────────────────────── */
+        @media (max-width: 640px) {
+          .land-nav { padding: 12px 16px; }
+          .land-nav-links { display: none; }
+          .land-nav-hamburger { display: flex; }
+          .land-nav-brand { font-size: 15px; }
+
+          .land-orb-left { width: 180px; height: 180px; left: -20px; }
+          .land-orb-right { width: 140px; height: 140px; right: -20px; }
+          .land-perforations { display: none; }
+
+          .land-tagline { font-size: 10px; letter-spacing: 1.5px; padding: 5px 12px; }
+          .land-h1 { letter-spacing: -0.5px; margin-bottom: 16px; }
+          .land-sub { margin-bottom: 28px; }
+
+          .land-stat-item { padding: 0 14px; }
+          .land-stats { margin-top: 40px; }
+
+          .land-cta-primary { padding: 13px 22px; font-size: 14px; width: 100%; justify-content: center; }
+          .land-cta-secondary { padding: 13px 20px; font-size: 13px; width: 100%; justify-content: center; }
+          .land-cta { flex-direction: column; align-items: stretch; }
+
+          .land-step-item { gap: 14px; }
+
+          .land-footer { flex-direction: column; align-items: flex-start; gap: 8px; }
+          .land-footer-links { gap: 2px; }
+
+          .land-cta-sub { font-size: 14px; }
+          .land-section-sub { font-size: 14px; }
+        }
+
+        @media (max-width: 400px) {
+          .land-stat-item { padding: 0 10px; }
+          .land-cta-box { padding: 28px 16px; }
+        }
+
+        /* ── Animations ─────────────────────────────────────────── */
         @keyframes float {
           0%, 100% { transform: translateY(0px); }
           50% { transform: translateY(-24px); }
