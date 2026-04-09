@@ -31,6 +31,9 @@ export default function AdminSettingsPage() {
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState("");
 
+  // Track "dirty" state — true when local values differ from what's in DB
+  const [dirty, setDirty] = useState(false);
+
   // Device states
   const [deviceStatus, setDeviceStatus] = useState<DeviceStatus>({
     ac: "idle", projector: "idle", light: "idle", doorPin: "idle",
@@ -46,6 +49,7 @@ export default function AdminSettingsPage() {
       setMinDuration(Number(data.settings.min_duration_minutes) || 60);
       setTimeIncrement(Number(data.settings.time_increment_minutes) || 30);
       setIncrementPrice(Number(data.settings.time_increment_price) || 1250);
+      setDirty(false); // reset dirty on fresh load
     }
   }, [data]);
 
@@ -65,7 +69,8 @@ export default function AdminSettingsPage() {
       });
       mutate();
       setSaved(true);
-      setTimeout(() => setSaved(false), 3000);
+      setDirty(false);
+      setTimeout(() => setSaved(false), 4000);
     } catch (err: any) {
       setError(err.message || "Failed to save settings");
     } finally {
@@ -133,10 +138,25 @@ export default function AdminSettingsPage() {
 
       {/* Pricing & Session */}
       <section className="card" style={{ padding: "24px", marginBottom: 20 }}>
-        <h2 style={{ fontWeight: 700, fontSize: 17, marginBottom: 6 }}>Pricing &amp; Session Configuration</h2>
-        <p style={{ fontSize: 13, color: "var(--text-muted)", marginBottom: 24 }}>Changes apply to all new bookings immediately.</p>
+        {/* Section header */}
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 6 }}>
+          <div>
+            <h2 style={{ fontWeight: 700, fontSize: 17, marginBottom: 4 }}>Pricing &amp; Session Configuration</h2>
+            <p style={{ fontSize: 13, color: "var(--text-muted)" }}>Changes apply to all new bookings immediately.</p>
+          </div>
+          {dirty && !saved && (
+            <span style={{
+              fontSize: 11, fontWeight: 600, letterSpacing: "0.4px",
+              color: "var(--warning)", background: "rgba(255,159,10,0.1)",
+              border: "1px solid rgba(255,159,10,0.25)",
+              padding: "3px 10px", borderRadius: 999, whiteSpace: "nowrap",
+            }}>
+              ● Unsaved changes
+            </span>
+          )}
+        </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, marginTop: 24 }}>
           {/* Hourly Rate */}
           <div>
             <label className="label">Hourly Rate (LKR)</label>
@@ -144,7 +164,7 @@ export default function AdminSettingsPage() {
               type="number"
               className="input"
               value={hourlyRate}
-              onChange={(e) => setHourlyRate(Number(e.target.value))}
+              onChange={(e) => { setHourlyRate(Number(e.target.value)); setDirty(true); }}
               min={500}
               step={250}
             />
@@ -160,7 +180,7 @@ export default function AdminSettingsPage() {
               type="number"
               className="input"
               value={bufferMins}
-              onChange={(e) => setBufferMins(Number(e.target.value))}
+              onChange={(e) => { setBufferMins(Number(e.target.value)); setDirty(true); }}
               min={5}
               step={5}
             />
@@ -176,7 +196,7 @@ export default function AdminSettingsPage() {
               type="number"
               className="input"
               value={minDuration}
-              onChange={(e) => setMinDuration(Number(e.target.value))}
+              onChange={(e) => { setMinDuration(Number(e.target.value)); setDirty(true); }}
               min={30}
               step={30}
             />
@@ -192,7 +212,7 @@ export default function AdminSettingsPage() {
               type="number"
               className="input"
               value={timeIncrement}
-              onChange={(e) => setTimeIncrement(Number(e.target.value))}
+              onChange={(e) => { setTimeIncrement(Number(e.target.value)); setDirty(true); }}
               min={15}
               step={15}
             />
@@ -208,7 +228,7 @@ export default function AdminSettingsPage() {
               type="number"
               className="input"
               value={incrementPrice}
-              onChange={(e) => setIncrementPrice(Number(e.target.value))}
+              onChange={(e) => { setIncrementPrice(Number(e.target.value)); setDirty(true); }}
               min={0}
               step={250}
               style={{ maxWidth: 280 }}
@@ -217,6 +237,31 @@ export default function AdminSettingsPage() {
               Extra charge per {timeIncrement}-minute time increment. Current: LKR {incrementPrice.toLocaleString()}
             </p>
           </div>
+        </div>
+
+        {/* Inline save feedback + button */}
+        <div style={{ marginTop: 24, paddingTop: 20, borderTop: "1px solid var(--border-subtle)", display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
+          <button
+            id="btn-save-pricing"
+            className="btn btn-primary"
+            onClick={handleSave}
+            disabled={saving}
+            style={{ minWidth: 180 }}
+          >
+            {saving ? <span className="spinner" /> : null}
+            {saving ? "Saving..." : "Save Configuration"}
+          </button>
+
+          {saved && !saving && (
+            <span style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, fontWeight: 600, color: "var(--success)" }}>
+              <Check size={15} /> Saved — booking page will reflect new values immediately.
+            </span>
+          )}
+          {error && !saving && (
+            <span style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, fontWeight: 600, color: "var(--danger)" }}>
+              <AlertTriangle size={15} /> {error}
+            </span>
+          )}
         </div>
       </section>
 
@@ -426,26 +471,7 @@ export default function AdminSettingsPage() {
         </div>
       </section>
 
-      {/* Save */}
-      {error && (
-        <div className="alert alert-error animate-fade-up" style={{ marginBottom: 16 }}>
-          <span style={{ display: "flex", alignItems: "center" }}><AlertTriangle size={16} /></span> {error}
-        </div>
-      )}
-      {saved && (
-        <div className="alert alert-success animate-fade-up" style={{ marginBottom: 16 }}>
-          <span style={{ display: "flex", alignItems: "center" }}><Check size={16} /></span> Settings saved successfully!
-        </div>
-      )}
-
-      <button
-        className="btn btn-primary btn-lg"
-        onClick={handleSave}
-        disabled={saving}
-      >
-        {saving ? <span className="spinner" /> : null}
-        {saving ? "Saving..." : "Save Settings"}
-      </button>
+      {/* The save button is now inside the Pricing section above — nothing needed here */
     </div>
   );
 }
