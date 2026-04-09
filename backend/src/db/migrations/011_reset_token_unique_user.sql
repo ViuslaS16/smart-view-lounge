@@ -13,6 +13,14 @@ WHERE id NOT IN (
   ORDER BY user_id, created_at DESC
 );
 
--- Add the unique constraint
-ALTER TABLE password_reset_tokens
-  ADD CONSTRAINT password_reset_tokens_user_id_key UNIQUE (user_id);
+-- Add the unique constraint (idempotent)
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint
+    WHERE conname = 'password_reset_tokens_user_id_key'
+  ) THEN
+    ALTER TABLE password_reset_tokens
+      ADD CONSTRAINT password_reset_tokens_user_id_key UNIQUE (user_id);
+  END IF;
+END$$;

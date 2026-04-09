@@ -5,6 +5,9 @@
 
 set -e
 
+# Resolve the directory containing this script — works regardless of cwd
+ROOT_DIR="$(cd "$(dirname "$0")" && pwd)"
+
 # DO NOT HARDCODE PASSWORDS HERE. WE NOW USE SSH KEYS.
 VPS="root@157.230.36.140"
 SSH_KEY="~/.ssh/id_ed25519_smartview"
@@ -16,8 +19,8 @@ echo "🚀 SmartView Deploy — mode: $MODE"
 if [[ "$MODE" == "backend" || "$MODE" == "all" ]]; then
   echo ""
   echo "▶ Building backend locally..."
-  cd "$(dirname "$0")/backend"
-  npx tsc
+  cd "$ROOT_DIR/backend"
+  npm exec tsc
   echo "✅ Backend compiled"
 
   echo "▶ Uploading dist/ to VPS..."
@@ -30,6 +33,9 @@ if [[ "$MODE" == "backend" || "$MODE" == "all" ]]; then
     cd $VPS_APP_DIR && git pull origin main
     cd backend && rm -rf dist && tar xzf /tmp/sv-backend-dist.tar.gz
     chown -R smartviewlounge:smartviewlounge dist
+    echo '▶ Running database migrations...'
+    su - smartviewlounge -c 'cd $VPS_APP_DIR/backend && npm run migrate'
+    echo '✅ Migrations applied'
     su - smartviewlounge -c 'pm2 restart smartview-backend'
     echo '✅ Backend deployed and restarted'
   "
@@ -38,7 +44,7 @@ fi
 if [[ "$MODE" == "frontend" || "$MODE" == "all" ]]; then
   echo ""
   echo "▶ Building frontend locally (with production env)..."
-  cd "$(dirname "$0")/frontend"
+  cd "$ROOT_DIR/frontend"
   NEXT_PUBLIC_API_URL=https://smartviewlounge.com/api \
   NEXT_PUBLIC_APP_URL=https://smartviewlounge.com \
   npm run build
