@@ -390,7 +390,7 @@ export async function verifyAndSetAdminMobile(req: Request, res: Response): Prom
   }
 
   const { rows } = await db.query(
-    `SELECT id FROM otp_verifications WHERE mobile = $1 AND otp_code = $2 AND expires_at > NOW()`,
+    `SELECT mobile FROM otp_verifications WHERE mobile = $1 AND otp_code = $2 AND expires_at > NOW()`,
     [mobile, otp]
   );
   if (rows.length === 0) {
@@ -429,7 +429,7 @@ export async function verifyAndRemoveAdminMobile(req: Request, res: Response): P
   }
 
   const { rows } = await db.query(
-    `SELECT id FROM otp_verifications WHERE mobile = $1 AND otp_code = $2 AND expires_at > NOW()`,
+    `SELECT mobile FROM otp_verifications WHERE mobile = $1 AND otp_code = $2 AND expires_at > NOW()`,
     [currentMobile, otp]
   );
   if (rows.length === 0) {
