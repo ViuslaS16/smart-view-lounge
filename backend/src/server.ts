@@ -19,6 +19,10 @@ import webhooksRoutes from './routes/webhooks.routes';
 const app = express();
 const origin = process.env.CORS_ORIGIN || 'http://localhost:3000';
 
+// Trust the nginx reverse proxy — required for express-rate-limit to read
+// X-Forwarded-For correctly and avoid ERR_ERL_UNEXPECTED_X_FORWARDED_FOR
+app.set('trust proxy', 1);
+
 app.use(helmet());
 app.use(cors({ origin, credentials: true }));
 
