@@ -1,8 +1,7 @@
 import { Request, Response } from 'express';
 import db from '../db';
 import { getSetting, sendSMS } from '../services/sms.service';
-import { revokeSessionPin, extendSessionPin } from '../services/tuya.service';
-import { createSessionPin } from '../services/tuya.service';
+import { revokeSessionPin, extendPinValidity, createSessionPin } from '../services/tuya.service';
 
 // GET /api/bookings/settings
 export async function getBookingSettings(req: Request, res: Response): Promise<void> {
@@ -141,9 +140,9 @@ export async function getBooking(req: Request, res: Response): Promise<void> {
   res.json({ booking: rows[0] });
 }
 
-// POST /api/bookings/:id/extend
-export async function extendBooking(req: Request, res: Response): Promise<void> {
-  const { additional_minutes } = req.body;
+// GET /api/bookings/:id/extend-check
+// Reads dynamic settings, checks if the next time increment is free.
+export async function checkExtension(req: Request, res: Response): Promise<void> {
   const bookingId = req.params.id;
   const userId = req.user!.id;
 
@@ -158,12 +157,64 @@ export async function extendBooking(req: Request, res: Response): Promise<void> 
     return;
   }
 
-  const currentEnd = new Date(booking.end_time);
-  const newEnd = new Date(currentEnd.getTime() + additional_minutes * 60000);
-  const bufferMins = parseInt(await getSetting('buffer_minutes')) || 15;
-  const bufferedNewEnd = new Date(newEnd.getTime() + bufferMins * 60000);
+  // Read dynamic settings
+  const additionalMins  = parseInt(await getSetting('time_increment_minutes')) || 30;
+  const incrementPrice  = parseFloat(await getSetting('time_increment_price'))  || 1250;
+  const bufferMins      = parseInt(await getSetting('buffer_minutes'))           || 15;
 
-  // Check if extension hits another booking
+  const currentEnd      = new Date(booking.end_time);
+  const newEnd          = new Date(currentEnd.getTime() + additionalMins * 60000);
+  const bufferedNewEnd  = new Date(newEnd.getTime() + bufferMins * 60000);
+
+  // Check availability — includes buffer on existing bookings
+  const overlapCheck = await db.query(
+    `SELECT id FROM bookings
+     WHERE status NOT IN ('cancelled')
+       AND id != $1
+       AND tstzrange($2, $3, '[)') && tstzrange(start_time, end_time + ($4 * interval '1 minute'), '[)')`,
+    [bookingId, currentEnd.toISOString(), bufferedNewEnd.toISOString(), bufferMins]
+  );
+
+  const available = overlapCheck.rows.length === 0;
+
+  res.json({
+    available,
+    additional_minutes: additionalMins,
+    additional_amount:  additionalMins / 60 * (parseFloat(await getSetting('price_per_hour')) || 2500),
+    increment_price:    incrementPrice,
+    new_end_time:       newEnd.toISOString(),
+    reason:             available ? null : 'Another booking starts soon after your session.',
+  });
+}
+
+// POST /api/bookings/:id/extend-confirm
+// Atomically commits the extension: DB update + Tuya PIN re-register + SMS.
+export async function confirmExtension(req: Request, res: Response): Promise<void> {
+  const bookingId = req.params.id;
+  const userId    = req.user!.id;
+
+  const { rows: bRows } = await db.query(
+    `SELECT * FROM bookings WHERE id = $1 AND user_id = $2 AND status = 'confirmed'`,
+    [bookingId, userId]
+  );
+
+  const booking = bRows[0];
+  if (!booking) {
+    res.status(404).json({ error: 'Active booking not found or not confirmed.' });
+    return;
+  }
+
+  // Read dynamic settings
+  const additionalMins  = parseInt(await getSetting('time_increment_minutes')) || 30;
+  const bufferMins      = parseInt(await getSetting('buffer_minutes'))           || 15;
+  const pricePerHour    = parseFloat(await getSetting('price_per_hour'))         || 2500;
+  const additionalAmt   = additionalMins / 60 * pricePerHour;
+
+  const currentEnd      = new Date(booking.end_time);
+  const newEnd          = new Date(currentEnd.getTime() + additionalMins * 60000);
+  const bufferedNewEnd  = new Date(newEnd.getTime() + bufferMins * 60000);
+
+  // Re-validate availability (race-condition safe)
   const overlapCheck = await db.query(
     `SELECT id FROM bookings
      WHERE status NOT IN ('cancelled')
@@ -173,21 +224,79 @@ export async function extendBooking(req: Request, res: Response): Promise<void> 
   );
 
   if (overlapCheck.rows.length > 0) {
-    res.status(409).json({ error: 'Cannot extend, another booking starts soon.' });
+    res.status(409).json({ error: 'Cannot extend — another booking starts soon after your session.' });
     return;
   }
 
-  const pricePerHour = parseFloat(await getSetting('price_per_hour')) || 2500;
-  const additionalAmount = (additional_minutes / 60) * pricePerHour;
+  // Commit DB update — reset scheduler flags so cron jobs re-fire at new end_time
+  await db.query(
+    `UPDATE bookings SET
+       end_time          = $1,
+       duration_minutes  = duration_minutes + $2,
+       total_amount      = total_amount + $3,
+       sms_15min_sent    = FALSE,
+       sms_end_sent      = FALSE,
+       sms_admin_off_sent = FALSE,
+       devices_stopped   = FALSE,
+       updated_at        = NOW()
+     WHERE id = $4`,
+    [newEnd.toISOString(), additionalMins, additionalAmt, bookingId]
+  );
 
-  // In a real flow, you don't update end_time yet, you create a pending payment.
-  // But for API scope right now, we'll return what needs to be paid.
+  // Extend Tuya door PIN validity (same digits, new Tuya ticket)
+  if (booking.tuya_ticket_id && booking.door_pin) {
+    try {
+      const { ticketId: newTicketId } = await extendPinValidity(
+        booking.tuya_ticket_id,
+        booking.door_pin,
+        bookingId,
+        new Date(booking.start_time),
+        newEnd
+      );
+      await db.query(
+        `UPDATE bookings SET tuya_ticket_id = $1 WHERE id = $2`,
+        [newTicketId, bookingId]
+      );
+    } catch (err: any) {
+      // Non-fatal — session is still extended in DB; admin can re-issue PIN manually
+      console.error(`[Extend] ⚠️  Tuya PIN extension failed for booking ${bookingId}:`, err.message);
+    }
+  }
+
+  // Send extension SMS
+  try {
+    const { rows: uRows } = await db.query('SELECT mobile FROM users WHERE id = $1', [userId]);
+    const mobile = uRows[0]?.mobile;
+    if (mobile) {
+      const newEndFmt = newEnd.toLocaleString('en-LK', {
+        timeZone: 'Asia/Colombo', timeStyle: 'short'
+      });
+      await sendSMS(
+        mobile,
+        `SmartView Lounge: Your session has been extended to ${newEndFmt}. Keep using your same door PIN.`,
+        'session_extended',
+        bookingId
+      );
+    }
+  } catch (err: any) {
+    console.warn(`[Extend] SMS failed for booking ${bookingId}:`, err.message);
+  }
+
+  // Return updated booking
+  const { rows: updatedRows } = await db.query(
+    `SELECT * FROM bookings WHERE id = $1`,
+    [bookingId]
+  );
+
   res.json({
-    message: 'Time is available',
-    additional_amount: additionalAmount,
-    new_end_time: newEnd.toISOString()
+    message: `Session extended by ${additionalMins} minutes.`,
+    booking: updatedRows[0],
+    additional_minutes: additionalMins,
+    additional_amount:  additionalAmt,
+    new_end_time:       newEnd.toISOString(),
   });
 }
+
 
 // POST /api/bookings/:id/cancel
 export async function cancelBooking(req: Request, res: Response): Promise<void> {

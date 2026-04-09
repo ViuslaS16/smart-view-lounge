@@ -251,22 +251,65 @@ export async function revokeSessionPin(ticketId: string): Promise<void> {
 }
 
 /**
- * Extend the session password by deleting the old one and creating a new one
- * that covers the original start time → new end time.
- * ticketId = Tuya password_id, bookingId = UUID, originalStartTime = original session start.
+ * Extend the session door PIN validity without changing the PIN digits.
  *
- * Returns the new { pin, ticketId } so the caller can update the DB.
+ * Tuya has no "update" endpoint for temp-passwords. The workaround:
+ *   1. Get a fresh ticket (new ticket_key)
+ *   2. Re-encrypt the SAME existing PIN digits with the new ticket
+ *   3. POST a new temp-password covering [originalStart → newEnd]
+ *   4. Revoke the old password_id (best-effort — if the lock is offline it's fine,
+ *      the old entry will expire at the original end_time anyway)
+ *
+ * Result: the customer keeps tapping the exact same PIN on the keypad.
+ * No new PIN SMS needed — just send a "session extended" SMS.
  */
-export async function extendSessionPin(
-  ticketId: string,
-  newEndTime: Date,
+export async function extendPinValidity(
+  oldTicketId: string,      // Tuya password_id to revoke after re-registration
+  existingPin: string,      // Raw PIN digits stored in bookings.door_pin
   bookingId: string,
-  originalStartTime: Date
-): Promise<{ pin: string; ticketId: string }> {
-  // Delete the old password first
-  await revokeSessionPin(ticketId);
-  // Create a new one with the extended window
-  return createSessionPin(bookingId, originalStartTime, newEndTime);
+  originalStartTime: Date,  // Keep original session start (not "now")
+  newEndTime: Date
+): Promise<{ ticketId: string }> {
+  const deviceId = process.env.TUYA_DOOR_DEVICE_ID;
+  if (!deviceId) throw new Error('[Tuya] TUYA_DOOR_DEVICE_ID is not set in .env');
+
+  // Step 1: Get a fresh ticket to re-encrypt the PIN
+  const { ticket_id, ticket_key } = await tuyaRequest<{ ticket_id: string; ticket_key: string }>(
+    'POST',
+    `/v1.0/devices/${deviceId}/door-lock/password-ticket`
+  );
+
+  // Step 2: Re-encrypt the same PIN digits with the new ticket key
+  const decKey = decryptTicketKey(ticket_key);
+  const encPin = encryptPin(existingPin, decKey);
+
+  // Step 3: Register new temp-password with extended window
+  const effectiveTime = Math.floor(originalStartTime.getTime() / 1000);
+  const invalidTime   = Math.floor(newEndTime.getTime() / 1000);
+
+  const result = await tuyaRequest<{ id: number }>(
+    'POST',
+    `/v1.0/devices/${deviceId}/door-lock/temp-password`,
+    {
+      password:       encPin,
+      password_type:  'ticket',
+      ticket_id,
+      effective_time: effectiveTime,
+      invalid_time:   invalidTime,
+      type:           0, // multi-use within validity window
+      name:           `Booking-${bookingId.slice(0, 8)}-ext`,
+    }
+  );
+
+  const newPasswordId = String(result.id);
+  console.log(`[Tuya] ✅ PIN validity extended for booking ${bookingId} | same digits | valid until ${newEndTime.toISOString()} | new id: ${newPasswordId}`);
+
+  // Step 4: Revoke old password entry (best-effort — don't fail if offline)
+  revokeSessionPin(oldTicketId).catch((err: any) => {
+    console.warn(`[Tuya] ⚠️  Could not revoke old PIN entry ${oldTicketId} after extension:`, err.message);
+  });
+
+  return { ticketId: newPasswordId };
 }
 
 

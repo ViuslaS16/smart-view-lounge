@@ -14,9 +14,7 @@ const createBookingSchema = z.object({
   duration_minutes: z.number().int().min(1).max(720),
 });
 
-const extendSchema = z.object({
-  additional_minutes: z.number().int().min(15).refine(d => d % 5 === 0, 'Must be valid increment'),
-});
+// No extendSchema needed — additional_minutes is always read from admin settings server-side
 
 router.use(authMiddleware);
 router.use(apiLimiter);
@@ -27,7 +25,8 @@ router.get('/:id', bookings.getBooking);
 
 // Require NIC verification (active status) to create or edit bookings
 router.post('/create', requireActive, validate(createBookingSchema), bookings.createBooking);
-router.post('/:id/extend', requireActive, validate(extendSchema), bookings.extendBooking);
+router.get('/:id/extend-check', requireActive, bookings.checkExtension);       // Check if next increment is available
+router.post('/:id/extend-confirm', requireActive, bookings.confirmExtension);   // Commit extension: DB + Tuya + SMS
 router.post('/:id/cancel', requireActive, bookings.cancelBooking);
 router.post('/:id/resend-pin', requireActive, bookings.resendDoorPin);     // 🔐 Tuya — resend door PIN via SMS
 router.post('/:id/refresh-pin', requireActive, bookings.refreshDoorPin);    // 🔐 Tuya — generate totally new pin

@@ -5,7 +5,7 @@ import Link from "next/link";
 import { formatLKR, formatDate, formatTime, isSessionActive } from "@/lib/utils";
 import { useApi } from "@/lib/hooks";
 import { apiFetch } from "@/lib/api";
-import { AlertTriangle, Check } from "lucide-react";
+import { AlertTriangle, Check, Clock, XCircle } from "lucide-react";
 
 interface TimeLeft {
   hours: number;
@@ -16,12 +16,17 @@ interface TimeLeft {
 }
 
 export default function SessionPage() {
-  const { data, isLoading } = useApi<{bookings: any[]}>('/users/bookings');
+  const { data, isLoading, mutate } = useApi<{ bookings: any[] }>('/users/bookings');
 
   // Active booking (in progress right now)
   const booking = data?.bookings?.find(
     (b) => b.status === "confirmed" && isSessionActive(b.start_time, b.end_time)
   );
+
+  // Dynamic settings from admin
+  const { data: settingsData } = useApi<{ settings: Record<string, string> }>('/bookings/settings');
+  const incrementMins  = Number(settingsData?.settings?.time_increment_minutes) || 30;
+  const incrementPrice = Number(settingsData?.settings?.time_increment_price)   || 1250;
 
   const totalDurationMs = booking ? booking.duration_minutes * 60 * 1000 : 0;
 
@@ -43,9 +48,18 @@ export default function SessionPage() {
   }, [booking?.end_time, booking?.start_time, totalDurationMs]);
 
   const [timeLeft, setTimeLeft] = useState<TimeLeft>(calcTimeLeft());
-  const [showExtend, setShowExtend] = useState(false);
-  const [extending, setExtending] = useState(false);
-  const [extendDone, setExtendDone] = useState(false);
+  const [showExtend, setShowExtend]   = useState(false);
+  const [extending, setExtending]     = useState(false);
+  const [extendDone, setExtendDone]   = useState(false);
+  const [extendError, setExtendError] = useState("");
+
+  // Availability check result from server
+  const [checkResult, setCheckResult] = useState<{
+    available: boolean;
+    new_end_time: string;
+    reason: string | null;
+  } | null>(null);
+  const [checking, setChecking] = useState(false);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -54,31 +68,46 @@ export default function SessionPage() {
     return () => clearInterval(interval);
   }, [calcTimeLeft]);
 
+  // Run availability check when user opens the extend card
+  const openExtend = useCallback(async () => {
+    if (!booking) return;
+    setShowExtend(true);
+    setCheckResult(null);
+    setExtendError("");
+    setChecking(true);
+    try {
+      const result = await apiFetch(`/bookings/${booking.id}/extend-check`);
+      setCheckResult(result);
+    } catch (err: any) {
+      setExtendError(err.message || "Failed to check availability");
+    } finally {
+      setChecking(false);
+    }
+  }, [booking?.id]);
+
+  async function handleExtend() {
+    if (!booking || !checkResult?.available) return;
+    setExtending(true);
+    setExtendError("");
+    try {
+      await apiFetch(`/bookings/${booking.id}/extend-confirm`, { method: "POST" });
+      setExtendDone(true);
+      setShowExtend(false);
+      setCheckResult(null);
+      // Refetch booking so the timer picks up the new end_time
+      mutate();
+    } catch (err: any) {
+      setExtendError(err.message || "Failed to extend session");
+    } finally {
+      setExtending(false);
+    }
+  }
   const radius = 88;
   const circumference = 2 * Math.PI * radius;
   const dashOffset = circumference - (timeLeft.progress / 100) * circumference;
 
   const isWarning = timeLeft.minutes < 15 && timeLeft.hours === 0;
   const accentColor = isWarning ? "var(--warning)" : "var(--success)";
-
-  async function handleExtend() {
-    if (!booking) return;
-    setExtending(true);
-    try {
-      await apiFetch(`/bookings/${booking.id}/extend`, {
-        method: "POST",
-        body: JSON.stringify({ additional_minutes: 30 })
-      });
-      setExtendDone(true);
-      setShowExtend(false);
-    } catch (err: any) {
-      alert(err.message || 'Failed to check extension');
-    } finally {
-      setExtending(false);
-    }
-  }
-
-
 
   if (isLoading) {
     return <div style={{ padding: 80, textAlign: "center" }}>Loading session...</div>;
@@ -200,7 +229,10 @@ export default function SessionPage() {
         {extendDone && (
           <div className="alert alert-success animate-fade-up" style={{ marginBottom: 20 }}>
             <span style={{ display: "flex", alignItems: "center" }}><Check size={18} /></span>
-            <div>Your session has been extended by 30 minutes! New end time updated.</div>
+            <div>
+              <strong>Session extended!</strong><br />
+              <span style={{ fontSize: 13 }}>New end time: {formatTime(booking.end_time)} — your door PIN stays the same.</span>
+            </div>
           </div>
         )}
 
@@ -210,7 +242,7 @@ export default function SessionPage() {
         {!showExtend ? (
           <button
             className="btn btn-secondary btn-full btn-lg"
-            onClick={() => setShowExtend(true)}
+            onClick={openExtend}
             disabled={timeLeft.totalMs === 0}
           >
             <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -221,20 +253,50 @@ export default function SessionPage() {
         ) : (
           <div className="card animate-fade-up" style={{ padding: "20px" }}>
             <h3 style={{ fontWeight: 700, fontSize: 16, marginBottom: 6 }}>Extend Your Session</h3>
-            <p style={{ fontSize: 13, color: "var(--text-secondary)", marginBottom: 18 }}>
-              Checking availability for the next slot... Next slot is <strong style={{ color: "var(--success)", display: "inline-flex", alignItems: "center", gap: 4 }}>available <Check size={14} /></strong>
-            </p>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 18, padding: "12px 16px", background: "var(--bg-subtle)", borderRadius: 10 }}>
-              <span style={{ fontSize: 14, color: "var(--text-secondary)" }}>+30 minutes extension</span>
-              <span style={{ fontFamily: "var(--font-display)", fontSize: 18, fontWeight: 700, color: "var(--accent)" }}>
-                {formatLKR(1250)}
-              </span>
-            </div>
+
+            {/* Availability status */}
+            {checking && (
+              <p style={{ fontSize: 13, color: "var(--text-secondary)", marginBottom: 18, display: "flex", alignItems: "center", gap: 8 }}>
+                <span className="spinner" style={{ width: 13, height: 13, borderWidth: 1.5 }} />
+                Checking availability for the next slot...
+              </p>
+            )}
+            {!checking && checkResult?.available && (
+              <p style={{ fontSize: 13, color: "var(--text-secondary)", marginBottom: 18, display: "flex", alignItems: "center", gap: 6 }}>
+                Next slot is <strong style={{ color: "var(--success)", display: "inline-flex", alignItems: "center", gap: 4 }}>available <Check size={14} /></strong>
+              </p>
+            )}
+            {!checking && checkResult && !checkResult.available && (
+              <p style={{ fontSize: 13, color: "var(--danger)", marginBottom: 18, display: "flex", alignItems: "center", gap: 6 }}>
+                <XCircle size={15} /> {checkResult.reason || "Next slot is not available."}
+              </p>
+            )}
+            {!checking && extendError && (
+              <p style={{ fontSize: 13, color: "var(--danger)", marginBottom: 18 }}>{extendError}</p>
+            )}
+
+            {/* Price row — only shown while available */}
+            {checkResult?.available && (
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 18, padding: "12px 16px", background: "var(--bg-subtle)", borderRadius: 10 }}>
+                <span style={{ fontSize: 14, color: "var(--text-secondary)", display: "flex", alignItems: "center", gap: 6 }}>
+                  <Clock size={14} /> +{incrementMins} minutes extension
+                </span>
+                <span style={{ fontFamily: "var(--font-display)", fontSize: 18, fontWeight: 700, color: "var(--accent)" }}>
+                  {formatLKR(incrementPrice)}
+                </span>
+              </div>
+            )}
+
             <div style={{ display: "flex", gap: 10 }}>
-              <button className="btn btn-ghost btn-sm" onClick={() => setShowExtend(false)} style={{ flex: 1 }}>
+              <button className="btn btn-ghost btn-sm" onClick={() => { setShowExtend(false); setCheckResult(null); setExtendError(""); }} style={{ flex: 1 }}>
                 Cancel
               </button>
-              <button className="btn btn-primary btn-sm" onClick={handleExtend} disabled={extending} style={{ flex: 2 }}>
+              <button
+                className="btn btn-primary btn-sm"
+                onClick={handleExtend}
+                disabled={extending || !checkResult?.available}
+                style={{ flex: 2, opacity: (!checkResult?.available && !extending) ? 0.5 : 1 }}
+              >
                 {extending ? <span className="spinner" style={{ width: 14, height: 14, borderWidth: 1.5 }} /> : null}
                 {extending ? "Processing..." : "Pay & Extend"}
               </button>
