@@ -193,25 +193,7 @@ function BookingForm() {
         </div>
 
         {/* TEST MODE notice — replace with PayHere notice when ready */}
-        <div style={{
-          background: 'rgba(201,147,58,0.1)',
-          border: '1px solid rgba(201,147,58,0.3)',
-          borderRadius: 12,
-          padding: '12px 16px',
-          marginBottom: 20,
-          fontSize: 13,
-          display: 'flex',
-          gap: 10,
-          alignItems: 'flex-start'
-        }}>
-          <span style={{ fontSize: 16 }}>🧪</span>
-          <div>
-            <strong style={{ color: 'var(--text-gold)' }}>Test Mode</strong>
-            {' '}— Booking will be confirmed instantly.
-            SMS with door PIN + device automation will trigger automatically.
-            {' '}<span style={{ color: 'var(--text-muted)' }}>(PayHere payment will be added later)</span>
-          </div>
-        </div>
+
 
         <button
           id="btn-confirm-booking"
