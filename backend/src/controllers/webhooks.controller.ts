@@ -42,17 +42,7 @@ async function runPostConfirmTriggers(
     amount: Number(booking.total_amount)
   }).catch((err: any) => console.error('[Email] Failed:', err.message));
 
-  // ── B. Admin Notification SMS ────────────────────────────────────
-  const adminMobile = process.env.ADMIN_MOBILE;
-  if (adminMobile) {
-    const adminOnTemplate = await getSetting('sms_admin_on');
-    sendSMS(
-      adminMobile,
-      `${adminOnTemplate} (Ref: ${booking.id.slice(0, 8)})`,
-      'admin_on',
-      booking.id
-    ).catch((err: any) => console.error('[SMS] Admin notify failed:', err.message));
-  }
+  // ── B. Admin Notification SMS — removed (Tuya automation handles device startup) ──
 
   // ── C. Google Calendar Event ─────────────────────────────────────
   createCalendarEvent({

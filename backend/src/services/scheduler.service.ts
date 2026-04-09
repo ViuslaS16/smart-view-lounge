@@ -12,7 +12,6 @@ export function startScheduler(): void {
       // ── SMS Notifications ───────────────────────────────────────────────
       await checkUpcomingEndReminders();
       await checkSessionEndAlerts();
-      await checkAdminOffAlerts();
       await markCompletedBookings();
 
       // ── Tuya Device Automation ──────────────────────────────────────────
@@ -66,27 +65,6 @@ async function checkSessionEndAlerts() {
   }
 }
 
-/** Send admin off-alert 5 minutes after session ends */
-async function checkAdminOffAlerts() {
-  const adminMobile = process.env.ADMIN_MOBILE;
-  if (!adminMobile) return;
-
-  const { rows } = await db.query(`
-    SELECT b.id, b.end_time, u.full_name
-    FROM bookings b
-    JOIN users u ON b.user_id = u.id
-    WHERE b.status IN ('confirmed', 'completed')
-      AND b.sms_admin_off_sent = FALSE
-      AND b.end_time <= NOW() - INTERVAL '5 minutes'
-      AND b.end_time >= NOW() - INTERVAL '1 hour'
-  `);
-
-  for (const row of rows) {
-    const template = await getSetting('sms_admin_off');
-    await sendSMS(adminMobile, template, 'admin_off', row.id);
-    await db.query('UPDATE bookings SET sms_admin_off_sent = TRUE WHERE id = $1', [row.id]);
-  }
-}
 
 /** Mark past confirmed bookings as completed */
 async function markCompletedBookings() {
@@ -124,7 +102,7 @@ async function checkTuyaSessionStart() {
       console.log(`[Tuya] ✅ Devices started (AC + Projector + Lights) for booking ${row.id}`);
     } catch (err: any) {
       console.error(`[Tuya] ❌ Failed to start devices for booking ${row.id}:`, err.message);
-      const adminMobile = process.env.ADMIN_MOBILE;
+      const adminMobile = await getSetting('admin_mobile');
       if (adminMobile) {
         sendSMS(
           adminMobile,
@@ -162,7 +140,7 @@ async function checkTuyaSessionEnd() {
       console.log(`[Tuya] ✅ All devices powered OFF for booking ${row.id}`);
     } catch (err: any) {
       console.error(`[Tuya] ❌ Failed to stop devices for booking ${row.id}:`, err.message);
-      const adminMobile = process.env.ADMIN_MOBILE;
+      const adminMobile = await getSetting('admin_mobile');
       if (adminMobile) {
         sendSMS(
           adminMobile,
@@ -222,7 +200,7 @@ async function checkSessionStartPasscode() {
       console.log(`[Tuya] ✅ PIN ${pin}# sent to ${row.mobile} for session starting now (${row.id})`);
     } catch (err: any) {
       console.error(`[Tuya] ❌ PIN generation failed for booking ${row.id}:`, err.message);
-      const adminMobile = process.env.ADMIN_MOBILE;
+      const adminMobile = await getSetting('admin_mobile');
       if (adminMobile) {
         sendSMS(
           adminMobile,

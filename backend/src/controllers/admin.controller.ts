@@ -182,17 +182,7 @@ export async function manualBooking(req: Request, res: Response): Promise<void> 
       amount: Number(booking.total_amount)
     }).catch((err: any) => console.error('[Admin/Email] Failed:', err.message));
 
-    // B. Admin SMS notification
-    const adminMobile = process.env.ADMIN_MOBILE;
-    if (adminMobile) {
-      const adminOnTemplate = await getSetting('sms_admin_on').catch(() => 'New booking confirmed.');
-      sendSMS(
-        adminMobile,
-        `${adminOnTemplate} (Ref: ${booking.id.slice(0, 8)})`,
-        'admin_on',
-        booking.id
-      ).catch((err: any) => console.error('[Admin/SMS] Admin notify failed:', err.message));
-    }
+    // B. Admin SMS notification — removed (Tuya automation handles device startup)
 
     // C. Door PIN — generate immediately if session starts within 2 hours
     //    (otherwise the scheduler will pick it up at session start time)
@@ -353,4 +343,108 @@ export async function generateAdminDoorPin(req: Request, res: Response): Promise
     console.error('[Admin] Door PIN generation error:', err.message);
     res.status(500).json({ error: 'Failed to generate door PIN: ' + err.message });
   }
+}
+
+// ── Admin Mobile Management ───────────────────────────────────────────────────
+
+/** GET /admin/mobile — returns the current admin mobile (masked) */
+export async function getAdminMobile(req: Request, res: Response): Promise<void> {
+  const { rows } = await db.query(`SELECT value FROM settings WHERE key = 'admin_mobile'`);
+  const mobile: string = rows[0]?.value ?? '';
+  // Mask for display: 077*****89
+  const masked = mobile.length >= 6
+    ? mobile.slice(0, 3) + '*'.repeat(mobile.length - 5) + mobile.slice(-2)
+    : mobile;
+  res.json({ mobile: mobile ? masked : null, has_mobile: !!mobile });
+}
+
+/** POST /admin/mobile/send-otp — sends OTP to the given mobile */
+export async function sendAdminMobileOtp(req: Request, res: Response): Promise<void> {
+  const { mobile } = req.body;
+  if (!mobile || typeof mobile !== 'string') {
+    res.status(400).json({ error: 'Mobile number is required.' });
+    return;
+  }
+
+  const otpCode  = Math.floor(100000 + Math.random() * 900000).toString();
+  const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+  await db.query(
+    `INSERT INTO otp_verifications (mobile, otp_code, expires_at)
+     VALUES ($1, $2, $3)
+     ON CONFLICT (mobile) DO UPDATE
+     SET otp_code = EXCLUDED.otp_code, expires_at = EXCLUDED.expires_at`,
+    [mobile, otpCode, expiresAt]
+  );
+
+  await sendSMS(mobile, `SmartView Admin: Your verification code is ${otpCode}. Valid for 10 minutes.`, 'admin_mobile_otp');
+  res.json({ message: 'OTP sent successfully.' });
+}
+
+/** POST /admin/mobile/verify-set — verify OTP and save the new admin mobile */
+export async function verifyAndSetAdminMobile(req: Request, res: Response): Promise<void> {
+  const { mobile, otp } = req.body;
+  if (!mobile || !otp) {
+    res.status(400).json({ error: 'Mobile and OTP are required.' });
+    return;
+  }
+
+  const { rows } = await db.query(
+    `SELECT id FROM otp_verifications WHERE mobile = $1 AND otp_code = $2 AND expires_at > NOW()`,
+    [mobile, otp]
+  );
+  if (rows.length === 0) {
+    res.status(400).json({ error: 'Invalid or expired OTP.' });
+    return;
+  }
+
+  await db.query(
+    `INSERT INTO settings (key, value) VALUES ('admin_mobile', $1)
+     ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW()`,
+    [mobile]
+  );
+  await db.query(`DELETE FROM otp_verifications WHERE mobile = $1`, [mobile]);
+  await db.query(
+    `INSERT INTO audit_logs (actor_id, action, target_type, metadata) VALUES ($1, 'settings.admin_mobile_set', 'system', $2)`,
+    [req.user!.id, JSON.stringify({ mobile })]
+  );
+
+  res.json({ message: 'Admin mobile number saved successfully.' });
+}
+
+/** POST /admin/mobile/verify-remove — verify OTP and clear the admin mobile */
+export async function verifyAndRemoveAdminMobile(req: Request, res: Response): Promise<void> {
+  const { otp } = req.body;
+  if (!otp) {
+    res.status(400).json({ error: 'OTP is required.' });
+    return;
+  }
+
+  // Get the current mobile to validate OTP against it
+  const { rows: settingRows } = await db.query(`SELECT value FROM settings WHERE key = 'admin_mobile'`);
+  const currentMobile: string = settingRows[0]?.value ?? '';
+  if (!currentMobile) {
+    res.status(400).json({ error: 'No admin mobile set to remove.' });
+    return;
+  }
+
+  const { rows } = await db.query(
+    `SELECT id FROM otp_verifications WHERE mobile = $1 AND otp_code = $2 AND expires_at > NOW()`,
+    [currentMobile, otp]
+  );
+  if (rows.length === 0) {
+    res.status(400).json({ error: 'Invalid or expired OTP.' });
+    return;
+  }
+
+  await db.query(
+    `UPDATE settings SET value = '', updated_at = NOW() WHERE key = 'admin_mobile'`
+  );
+  await db.query(`DELETE FROM otp_verifications WHERE mobile = $1`, [currentMobile]);
+  await db.query(
+    `INSERT INTO audit_logs (actor_id, action, target_type) VALUES ($1, 'settings.admin_mobile_remove', 'system')`,
+    [req.user!.id]
+  );
+
+  res.json({ message: 'Admin mobile number removed successfully.' });
 }

@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useApi } from "@/lib/hooks";
 import { apiFetch } from "@/lib/api";
-import { Smartphone, Check, AlertTriangle, Info, Wind, Monitor, Lightbulb, KeyRound } from "lucide-react";
+import { Smartphone, Check, AlertTriangle, Info, Wind, Monitor, Lightbulb, KeyRound, ShieldCheck, Trash2 } from "lucide-react";
 
 type DeviceState = "idle" | "loading" | "success" | "error";
 
@@ -34,6 +34,17 @@ export default function AdminSettingsPage() {
   // Track "dirty" state — true when local values differ from what's in DB
   const [dirty, setDirty] = useState(false);
 
+  // Admin mobile state
+  type MobileUiState = 'idle' | 'entering' | 'otp_sent' | 'removing';
+  const [mobileUiState, setMobileUiState] = useState<MobileUiState>('idle');
+  const [hasMobile, setHasMobile]         = useState(false);
+  const [maskedMobile, setMaskedMobile]   = useState<string | null>(null);
+  const [newMobile, setNewMobile]         = useState('');
+  const [mobileOtp, setMobileOtp]         = useState('');
+  const [mobileSaving, setMobileSaving]   = useState(false);
+  const [mobileMsg, setMobileMsg]         = useState('');
+  const [mobileErr, setMobileErr]         = useState('');
+
   // Device states
   const [deviceStatus, setDeviceStatus] = useState<DeviceStatus>({
     ac: "idle", projector: "idle", light: "idle", doorPin: "idle",
@@ -52,6 +63,20 @@ export default function AdminSettingsPage() {
       setDirty(false); // reset dirty on fresh load
     }
   }, [data]);
+
+  // Load admin mobile status
+  useEffect(() => {
+    apiFetch('/admin/mobile').then((res: any) => {
+      setHasMobile(res.has_mobile);
+      setMaskedMobile(res.mobile);
+    }).catch(() => {});
+  }, []);
+
+  async function refreshAdminMobile() {
+    const res: any = await apiFetch('/admin/mobile');
+    setHasMobile(res.has_mobile);
+    setMaskedMobile(res.mobile);
+  }
 
   async function handleSave() {
     setSaving(true);
@@ -75,6 +100,56 @@ export default function AdminSettingsPage() {
       setError(err.message || "Failed to save settings");
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function handleSendMobileOtp(mobile: string) {
+    setMobileSaving(true); setMobileErr(''); setMobileMsg('');
+    try {
+      await apiFetch('/admin/mobile/send-otp', {
+        method: 'POST',
+        body: JSON.stringify({ mobile }),
+      });
+      setMobileMsg('OTP sent! Check your phone.');
+      setMobileUiState(hasMobile ? 'removing' : 'otp_sent');
+    } catch (err: any) {
+      setMobileErr(err.message || 'Failed to send OTP');
+    } finally {
+      setMobileSaving(false);
+    }
+  }
+
+  async function handleVerifySet() {
+    setMobileSaving(true); setMobileErr('');
+    try {
+      await apiFetch('/admin/mobile/verify-set', {
+        method: 'POST',
+        body: JSON.stringify({ mobile: newMobile, otp: mobileOtp }),
+      });
+      await refreshAdminMobile();
+      setMobileUiState('idle');
+      setNewMobile(''); setMobileOtp(''); setMobileMsg('');
+    } catch (err: any) {
+      setMobileErr(err.message || 'Invalid OTP');
+    } finally {
+      setMobileSaving(false);
+    }
+  }
+
+  async function handleVerifyRemove() {
+    setMobileSaving(true); setMobileErr('');
+    try {
+      await apiFetch('/admin/mobile/verify-remove', {
+        method: 'POST',
+        body: JSON.stringify({ otp: mobileOtp }),
+      });
+      await refreshAdminMobile();
+      setMobileUiState('idle');
+      setMobileOtp(''); setMobileMsg('');
+    } catch (err: any) {
+      setMobileErr(err.message || 'Invalid OTP');
+    } finally {
+      setMobileSaving(false);
     }
   }
 
@@ -265,6 +340,184 @@ export default function AdminSettingsPage() {
         </div>
       </section>
 
+      {/* Admin Alert Mobile */}
+      <section className="card" style={{ padding: "24px", marginBottom: 20 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16 }}>
+          <div>
+            <h2 style={{ fontWeight: 700, fontSize: 17, marginBottom: 4, display: "flex", alignItems: "center", gap: 8 }}>
+              <Smartphone size={18} style={{ color: "var(--accent)" }} />
+              Admin Alert Mobile
+            </h2>
+            <p style={{ fontSize: 13, color: "var(--text-muted)" }}>
+              Receives SMS when new users register and when automation fails. OTP-verified.
+            </p>
+          </div>
+          {hasMobile && (
+            <span style={{
+              fontSize: 11, fontWeight: 600, letterSpacing: "0.4px",
+              color: "var(--success)", background: "rgba(52,199,89,0.1)",
+              border: "1px solid rgba(52,199,89,0.25)",
+              padding: "3px 10px", borderRadius: 999,
+            }}>
+              ✓ Active
+            </span>
+          )}
+        </div>
+
+        {/* State: idle + has mobile */}
+        {hasMobile && mobileUiState === 'idle' && (
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between",
+            background: "var(--bg-elevated)", borderRadius: 10, padding: "12px 16px",
+            border: "1px solid var(--border-subtle)" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <ShieldCheck size={16} style={{ color: "var(--success)" }} />
+              <span style={{ fontFamily: "var(--font-mono)", fontSize: 15, fontWeight: 600, letterSpacing: 2 }}>
+                {maskedMobile}
+              </span>
+            </div>
+            <button
+              id="btn-remove-admin-mobile"
+              onClick={() => {
+                setMobileErr(''); setMobileMsg('');
+                handleSendMobileOtp(maskedMobile ?? '');
+                setMobileUiState('removing');
+              }}
+              style={{
+                display: "flex", alignItems: "center", gap: 6, fontSize: 12,
+                fontWeight: 600, color: "var(--danger)", background: "rgba(255,59,48,0.08)",
+                border: "1px solid rgba(255,59,48,0.2)", borderRadius: 8,
+                padding: "6px 12px", cursor: "pointer",
+              }}
+            >
+              <Trash2 size={13} /> Remove
+            </button>
+          </div>
+        )}
+
+        {/* State: idle + no mobile */}
+        {!hasMobile && mobileUiState === 'idle' && (
+          <div style={{ display: "flex", gap: 10, alignItems: "flex-end" }}>
+            <div style={{ flex: 1 }}>
+              <label className="label">Mobile Number</label>
+              <input
+                id="input-admin-mobile"
+                className="input"
+                type="tel"
+                placeholder="07XXXXXXXX"
+                value={newMobile}
+                onChange={(e) => setNewMobile(e.target.value)}
+              />
+            </div>
+            <button
+              id="btn-send-mobile-otp"
+              className="btn btn-primary"
+              disabled={mobileSaving || !newMobile}
+              onClick={() => { setMobileErr(''); handleSendMobileOtp(newMobile); setMobileUiState('entering'); }}
+              style={{ whiteSpace: "nowrap" }}
+            >
+              {mobileSaving ? <span className="spinner" /> : <Smartphone size={14} />}
+              {mobileSaving ? 'Sending...' : 'Send OTP'}
+            </button>
+          </div>
+        )}
+
+        {/* State: OTP sent — verify & save new mobile */}
+        {mobileUiState === 'otp_sent' || mobileUiState === 'entering' ? (
+          <div>
+            {mobileMsg && (
+              <p style={{ fontSize: 13, color: "var(--success)", marginBottom: 12, display: "flex", alignItems: "center", gap: 6 }}>
+                <Check size={14} /> {mobileMsg}
+              </p>
+            )}
+            <div style={{ display: "flex", gap: 10, alignItems: "flex-end" }}>
+              <div style={{ flex: 1 }}>
+                <label className="label">Enter OTP sent to {newMobile}</label>
+                <input
+                  id="input-admin-mobile-otp"
+                  className="input"
+                  type="text"
+                  maxLength={6}
+                  placeholder="______"
+                  value={mobileOtp}
+                  onChange={(e) => setMobileOtp(e.target.value)}
+                  style={{ fontFamily: "var(--font-mono)", letterSpacing: 4, fontSize: 18 }}
+                />
+              </div>
+              <button
+                id="btn-verify-set-mobile"
+                className="btn btn-primary"
+                disabled={mobileSaving || mobileOtp.length < 6}
+                onClick={handleVerifySet}
+              >
+                {mobileSaving ? <span className="spinner" /> : <ShieldCheck size={14} />}
+                {mobileSaving ? 'Verifying...' : 'Verify & Save'}
+              </button>
+              <button
+                onClick={() => { setMobileUiState('idle'); setMobileOtp(''); setMobileMsg(''); setMobileErr(''); }}
+                style={{ padding: "10px 14px", borderRadius: 10, border: "1px solid var(--border-subtle)",
+                  background: "var(--bg-elevated)", cursor: "pointer", fontSize: 13 }}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        ) : null}
+
+        {/* State: removing — verify OTP to remove */}
+        {mobileUiState === 'removing' && (
+          <div style={{ marginTop: 12 }}>
+            {mobileMsg && (
+              <p style={{ fontSize: 13, color: "var(--success)", marginBottom: 12, display: "flex", alignItems: "center", gap: 6 }}>
+                <Check size={14} /> {mobileMsg}
+              </p>
+            )}
+            <div style={{ display: "flex", gap: 10, alignItems: "flex-end" }}>
+              <div style={{ flex: 1 }}>
+                <label className="label">Enter OTP sent to {maskedMobile} to confirm removal</label>
+                <input
+                  id="input-remove-mobile-otp"
+                  className="input"
+                  type="text"
+                  maxLength={6}
+                  placeholder="______"
+                  value={mobileOtp}
+                  onChange={(e) => setMobileOtp(e.target.value)}
+                  style={{ fontFamily: "var(--font-mono)", letterSpacing: 4, fontSize: 18 }}
+                />
+              </div>
+              <button
+                id="btn-confirm-remove-mobile"
+                disabled={mobileSaving || mobileOtp.length < 6}
+                onClick={handleVerifyRemove}
+                style={{
+                  padding: "10px 16px", borderRadius: 10, fontWeight: 600, fontSize: 13,
+                  border: "1px solid rgba(255,59,48,0.3)", cursor: mobileSaving || mobileOtp.length < 6 ? "not-allowed" : "pointer",
+                  background: "rgba(255,59,48,0.1)", color: "var(--danger)",
+                  display: "flex", alignItems: "center", gap: 6, opacity: mobileSaving || mobileOtp.length < 6 ? 0.5 : 1,
+                }}
+              >
+                {mobileSaving ? <span className="spinner" style={{ width: 14, height: 14, borderWidth: 1.5 }} /> : <Trash2 size={13} />}
+                {mobileSaving ? 'Removing...' : 'Confirm Remove'}
+              </button>
+              <button
+                onClick={() => { setMobileUiState('idle'); setMobileOtp(''); setMobileMsg(''); setMobileErr(''); }}
+                style={{ padding: "10px 14px", borderRadius: 10, border: "1px solid var(--border-subtle)",
+                  background: "var(--bg-elevated)", cursor: "pointer", fontSize: 13 }}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Error message */}
+        {mobileErr && (
+          <p style={{ marginTop: 12, fontSize: 13, color: "var(--danger)", display: "flex", alignItems: "center", gap: 6 }}>
+            <AlertTriangle size={14} /> {mobileErr}
+          </p>
+        )}
+      </section>
+
       {/* Device Controls */}
       <section className="card" style={{ padding: "24px", marginBottom: 20 }}>
         <h2 style={{ fontWeight: 700, fontSize: 17, marginBottom: 6 }}>Device Controls</h2>
@@ -438,40 +691,8 @@ export default function AdminSettingsPage() {
         </div>
       </section>
 
-      {/* Google Calendar */}
-      <section className="card" style={{ padding: "24px", marginBottom: 20 }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-          <div>
-            <h2 style={{ fontWeight: 700, fontSize: 17, marginBottom: 6 }}>Google Calendar Integration</h2>
-            <p style={{ fontSize: 13, color: "var(--text-muted)", marginBottom: 16 }}>
-              Auto-create calendar events for every confirmed booking with 30-minute popup reminders.
-            </p>
-          </div>
-          <span className="badge badge-pending">Not Configured</span>
-        </div>
-        <div className="alert" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border-subtle)", fontSize: 13 }}>
-          <span style={{ display: "flex", alignItems: "center" }}><Info size={16} /></span>
-          <div>
-            Configure <code style={{ background: "rgba(255,255,255,0.06)", padding: "1px 5px", borderRadius: 4 }}>GOOGLE_CLIENT_EMAIL</code>, <code style={{ background: "rgba(255,255,255,0.06)", padding: "1px 5px", borderRadius: 4 }}>GOOGLE_PRIVATE_KEY</code>, and <code style={{ background: "rgba(255,255,255,0.06)", padding: "1px 5px", borderRadius: 4 }}>GOOGLE_CALENDAR_ID</code> in the backend .env to enable Google Calendar sync.
-          </div>
-        </div>
-      </section>
-
-      {/* SMS Configuration */}
-      <section className="card" style={{ padding: "24px", marginBottom: 20 }}>
-        <h2 style={{ fontWeight: 700, fontSize: 17, marginBottom: 6 }}>SMS Configuration</h2>
-        <p style={{ fontSize: 13, color: "var(--text-muted)", marginBottom: 16 }}>
-          SMS is sent via Dialog eSMS. Configure credentials in the backend .env file.
-        </p>
-        <div className="alert" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border-subtle)", fontSize: 13 }}>
-          <span style={{ display: "flex", alignItems: "center" }}><Smartphone size={16} /></span>
-          <div>
-            Set <code style={{ background: "rgba(255,255,255,0.06)", padding: "1px 5px", borderRadius: 4 }}>DIALOG_ESMS_URL</code>, <code style={{ background: "rgba(255,255,255,0.06)", padding: "1px 5px", borderRadius: 4 }}>DIALOG_ESMS_USERNAME</code>, and <code style={{ background: "rgba(255,255,255,0.06)", padding: "1px 5px", borderRadius: 4 }}>DIALOG_ESMS_PASSWORD</code> in backend .env to enable SMS notifications.
-          </div>
-        </div>
-      </section>
-
       {/* Save button is inside the Pricing & Session section above */}
+
     </div>
   );
 }

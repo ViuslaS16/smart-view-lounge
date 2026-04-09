@@ -41,4 +41,10 @@ router.post('/devices/projector', admin.controlProjector);
 router.post('/devices/light', admin.controlLight);
 router.post('/devices/door-pin', admin.generateAdminDoorPin);
 
+// Admin mobile number management (OTP-verified)
+router.get('/mobile', admin.getAdminMobile);
+router.post('/mobile/send-otp', admin.sendAdminMobileOtp);
+router.post('/mobile/verify-set', admin.verifyAndSetAdminMobile);
+router.post('/mobile/verify-remove', admin.verifyAndRemoveAdminMobile);
+
 export default router;

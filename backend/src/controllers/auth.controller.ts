@@ -5,7 +5,7 @@ import crypto from 'crypto';
 import { v4 as uuidv4 } from 'uuid';
 import db from '../db';
 import { sendWelcomeEmail, sendPasswordResetEmail } from '../services/email.service';
-import { sendSMS } from '../services/sms.service';
+import { sendSMS, getSetting } from '../services/sms.service';
 
 const ACCESS_SECRET  = process.env.JWT_ACCESS_SECRET!;
 const REFRESH_SECRET = process.env.JWT_REFRESH_SECRET!;
@@ -110,6 +110,16 @@ export async function register(req: Request, res: Response): Promise<void> {
 
   // Send welcome email (non-blocking)
   sendWelcomeEmail({ to: user.email, name: user.full_name }).catch(console.error);
+
+  // Alert admin about new registration (non-blocking)
+  getSetting('admin_mobile').then(async (adminMobile) => {
+    if (!adminMobile) return;
+    const template = await getSetting('sms_new_user_template');
+    const msg = template
+      ? `${template}: ${full_name} (${mobile})`
+      : `SmartView: New user registered — NIC verification required. Name: ${full_name}, Mobile: ${mobile}`;
+    sendSMS(adminMobile, msg, 'new_user_alert').catch(console.error);
+  }).catch(console.error);
 
   res.cookie('refresh_token', refreshToken, {
     httpOnly: true,
