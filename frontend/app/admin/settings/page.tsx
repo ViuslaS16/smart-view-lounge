@@ -471,7 +471,7 @@ export default function AdminSettingsPage() {
         </div>
       </section>
 
-      {/* The save button is now inside the Pricing section above — nothing needed here */
+      {/* Save button is inside the Pricing & Session section above */}
     </div>
   );
 }
