@@ -10,16 +10,18 @@ const router = Router();
 
 const createBookingSchema = z.object({
   start_time: z.string().datetime(),
-  duration_minutes: z.number().int().min(60).max(480).refine(d => d % 30 === 0, 'Must be 30-min increments'),
+  // Basic sanity bounds only — real min/increment enforcement happens in controller using live admin settings
+  duration_minutes: z.number().int().min(1).max(720),
 });
 
 const extendSchema = z.object({
-  additional_minutes: z.number().int().min(30).refine(d => d % 30 === 0, 'Must be 30-min increments'),
+  additional_minutes: z.number().int().min(15).refine(d => d % 5 === 0, 'Must be valid increment'),
 });
 
 router.use(authMiddleware);
 router.use(apiLimiter);
 
+router.get('/settings', bookings.getBookingSettings);
 router.get('/slots', bookings.getAvailableSlots);
 router.get('/:id', bookings.getBooking);
 

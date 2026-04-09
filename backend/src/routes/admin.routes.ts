@@ -11,7 +11,7 @@ const rejectSchema = z.object({ reason: z.string().min(3) });
 const manualBookingSchema = z.object({
   user_id: z.string().uuid(),
   start_time: z.string().datetime(),
-  duration_minutes: z.number().int().min(60),
+  duration_minutes: z.number().int().min(15),
   notes: z.string().optional()
 });
 

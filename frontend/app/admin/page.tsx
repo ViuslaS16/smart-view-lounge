@@ -26,7 +26,7 @@ export default function AdminOverviewPage() {
       </div>
 
       {/* Stat grid */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 16, marginBottom: 32 }}>
+      <div className="grid-auto" style={{ display: "grid", gap: 16, marginBottom: 32 }}>
         <StatCard
           label="Today's Revenue"
           value={formatLKR(stats.today_revenue || 0)}
@@ -71,7 +71,7 @@ export default function AdminOverviewPage() {
         />
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24 }}>
+      <div className="grid-2col" style={{ display: "grid", gap: 20 }}>
         {/* Today's bookings */}
         <div>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
@@ -135,7 +135,7 @@ export default function AdminOverviewPage() {
       </div>
 
       {/* Quick actions */}
-      <div style={{ marginTop: 32, display: "flex", gap: 12, flexWrap: "wrap" }}>
+      <div className="quick-actions" style={{ marginTop: 32, display: "flex", gap: 12, flexWrap: "wrap" }}>
         <Link href="/admin/verifications" className="btn btn-primary btn-sm">
           Review Pending NICs ({stats.pending_verifications || 0})
         </Link>

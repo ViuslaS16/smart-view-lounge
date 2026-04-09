@@ -19,7 +19,7 @@ const navItems = [
   },
   {
     href: "/admin/verifications",
-    label: "Verifications",
+    label: "Verify",
     badgeKey: "verifications",
     icon: (
       <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
@@ -70,38 +70,22 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const pathname = usePathname();
   const router = useRouter();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  
-  // ── Admin guard ─────────────────────────────────────────────────────────────
-  // On every mount, verify the stored token belongs to an admin.
-  // If not, clear it and redirect to /login immediately.
+
   useEffect(() => {
     const token = getAccessToken();
-    if (!token) {
-      router.replace('/login');
-      return;
-    }
+    if (!token) { router.replace('/login'); return; }
     apiFetch('/auth/me')
       .then((data: any) => {
-        if (data?.user?.role !== 'admin') {
-          clearAccessToken();
-          router.replace('/login');
-        }
+        if (data?.user?.role !== 'admin') { clearAccessToken(); router.replace('/login'); }
       })
-      .catch(() => {
-        clearAccessToken();
-        router.replace('/login');
-      });
+      .catch(() => { clearAccessToken(); router.replace('/login'); });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const { data: dashData } = useApi<any>('/admin/dashboard', 10000);
 
   async function handleLogout() {
-    try {
-      await apiFetch("/auth/logout", { method: "POST" });
-    } catch {
-      // ignore errors on logout
-    }
+    try { await apiFetch("/auth/logout", { method: "POST" }); } catch { /* ignore */ }
     clearAccessToken();
     router.push("/login");
   }
@@ -113,20 +97,23 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   return (
     <div className="admin-layout" style={{ background: "var(--bg-root)", minHeight: "100dvh", color: "var(--text-primary)", fontFamily: "var(--font-sans)" }}>
-      {/* Mobile Top Header */}
+
+      {/* ── Mobile Top Header ──────────────────────────────────────────── */}
       <div className="mobile-only" style={{
         position: "fixed", top: 0, left: 0, right: 0, height: 60,
         background: "var(--bg-card)", borderBottom: "1px solid var(--border-subtle)",
         display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 20px",
-        zIndex: 30
+        zIndex: 30,
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <Image src="/logo.png" alt="Logo" width={32} height={32} style={{ borderRadius: 8 }} />
+          <Image src="/logo.png" alt="Logo" width={32} height={32} style={{ borderRadius: 8, objectFit: "cover" }} />
           <span style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 16 }}>SmartView</span>
         </div>
-        <button 
+        {/* Hamburger — only to open the full sidebar (all items) on mobile if needed */}
+        <button
           onClick={() => setIsSidebarOpen(true)}
           style={{ background: "none", border: "none", color: "var(--text-primary)", cursor: "pointer", padding: 4 }}
+          aria-label="Open menu"
         >
           <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16m-7 6h7" />
@@ -134,17 +121,16 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </button>
       </div>
 
-      {/* Mobile Overlay */}
-      <div 
+      {/* ── Mobile Overlay ─────────────────────────────────────────────── */}
+      <div
         className={`mobile-overlay ${isSidebarOpen ? "open" : ""}`}
         onClick={() => setIsSidebarOpen(false)}
       />
 
-      {/* Sidebar */}
+      {/* ── Sidebar (desktop always visible, mobile slide-in) ─────────── */}
       <aside className={`sidebar ${isSidebarOpen ? "open" : ""}`}>
-        {/* Logo */}
         <div style={{ padding: "24px 20px 20px" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <Image src="/logo.png" alt="SmartView Lounge" width={48} height={48} style={{ borderRadius: 12, objectFit: "cover", flexShrink: 0 }} />
             <div>
               <p style={{ fontFamily: "var(--font-display)", fontSize: 14, fontWeight: 700, lineHeight: 1 }}>SmartView</p>
@@ -155,37 +141,32 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
         <div className="divider" style={{ margin: "0 16px 12px" }} />
 
-        {/* Nav links */}
         <nav style={{ flex: 1 }}>
           {navItems.map(({ href, label, icon, badgeKey }: any) => {
-            let badgeValue = 0;
-            if (badgeKey === "verifications" && dashData?.stats?.pending_verifications) {
-              badgeValue = dashData.stats.pending_verifications;
-            }
-
+            const badgeValue = badgeKey === "verifications" ? (dashData?.stats?.pending_verifications || 0) : 0;
             return (
-            <Link
-              key={href}
-              href={href}
-              onClick={() => setIsSidebarOpen(false)}
-              className={`sidebar-link${isActive(href) ? " active" : ""}`}
-            >
-              <span style={{ flexShrink: 0 }}>{icon}</span>
-              <span style={{ flex: 1 }}>{label}</span>
-              {badgeValue > 0 && (
-                <span style={{
-                  background: "var(--danger)", color: "white",
-                  fontSize: 10, fontWeight: 700, borderRadius: "50%",
-                  width: 18, height: 18, display: "flex", alignItems: "center", justifyContent: "center",
-                }}>{badgeValue}</span>
-              )}
-            </Link>
-          )})}
+              <Link
+                key={href}
+                href={href}
+                onClick={() => setIsSidebarOpen(false)}
+                className={`sidebar-link${isActive(href) ? " active" : ""}`}
+              >
+                <span style={{ flexShrink: 0 }}>{icon}</span>
+                <span style={{ flex: 1 }}>{label}</span>
+                {badgeValue > 0 && (
+                  <span style={{
+                    background: "var(--danger)", color: "white",
+                    fontSize: 10, fontWeight: 700, borderRadius: "50%",
+                    width: 18, height: 18, display: "flex", alignItems: "center", justifyContent: "center",
+                  }}>{badgeValue}</span>
+                )}
+              </Link>
+            );
+          })}
         </nav>
 
         <div className="divider" style={{ margin: "12px 16px" }} />
 
-        {/* Logout */}
         <div style={{ padding: "0 10px 24px" }}>
           <button
             onClick={handleLogout}
@@ -200,10 +181,43 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </div>
       </aside>
 
-      {/* Main */}
-      <main className="admin-main">
+      {/* ── Main Content ───────────────────────────────────────────────── */}
+      <main className="admin-main admin-main-with-bottom">
         {children}
       </main>
+
+      {/* ── Mobile Bottom Navigation ───────────────────────────────────── */}
+      <nav className="admin-bottom-nav">
+        {navItems.map(({ href, label, icon, badgeKey }: any) => {
+          const badgeValue = badgeKey === "verifications" ? (dashData?.stats?.pending_verifications || 0) : 0;
+          return (
+            <Link
+              key={href}
+              href={href}
+              className={`admin-nav-tab${isActive(href) ? " active" : ""}`}
+              style={{ position: "relative" }}
+            >
+              <span style={{ display: "flex" }}>{icon}</span>
+              <span>{label}</span>
+              {badgeValue > 0 && (
+                <span style={{
+                  position: "absolute", top: 2, right: 8,
+                  background: "var(--danger)", color: "white",
+                  fontSize: 9, fontWeight: 700, borderRadius: "50%",
+                  width: 14, height: 14, display: "flex", alignItems: "center", justifyContent: "center",
+                }}>{badgeValue}</span>
+              )}
+            </Link>
+          );
+        })}
+        <button onClick={handleLogout} className="admin-nav-tab" style={{ fontFamily: "var(--font-sans)" }}>
+          <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75" />
+          </svg>
+          <span>Logout</span>
+        </button>
+      </nav>
+
     </div>
   );
 }

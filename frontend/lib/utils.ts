@@ -85,7 +85,9 @@ export function formatDuration(minutes: number): string {
 export function generateTimeSlots(
   date: Date,
   bookedBlocks: { start_time: string; end_time: string }[],
-  bufferMinutes: number = 15
+  bufferMinutes: number = 15,
+  minDurationMinutes: number = 60,
+  timeIncrementMinutes: number = 30
 ) {
   const slots: { time: string; available: boolean; dateObj: Date }[] = [];
   // 24 Hour Slots: 00:00 to 24:00
@@ -98,23 +100,18 @@ export function generateTimeSlots(
   const now = new Date();
 
   while (current < endOfDay) {
-    const slotEnd = new Date(current.getTime() + 60 * 60000); // Assume 1-hour slots for the grid minimum?
-    // Wait, the grid originally just showed 30-min or 1-hour increments? Let's just do 1-hour slots as a baseline, or 30-min.
-    // The previous implementation used some generation logic. Let's do 30-minute intervals.
-    
-    // Actually, bookings are min 60 mins (in 30 min increments). The slot is just a start time.
-    
     const isPast = current <= now;
     
     let isBooked = false;
     for (const block of bookedBlocks) {
       const bStart = new Date(block.start_time).getTime();
+      // Buffer is only added after the booking ends (cleaning gap)
       const bEnd = new Date(block.end_time).getTime() + bufferMinutes * 60000;
       
-      // If this slot start time falls within a booked block (including buffer)
-      // Or if the next 60 mins of this slot would overlap with a booked block
+      // A slot is unavailable if starting here would overlap with an existing booking
+      // (considering the minimum session duration the user would book)
       const sStart = current.getTime();
-      const sEnd = current.getTime() + 60 * 60000; // Require at least 60 mins free!
+      const sEnd = current.getTime() + minDurationMinutes * 60000;
       
       if ((sStart < bEnd && sEnd > bStart)) {
         isBooked = true;
@@ -128,9 +125,10 @@ export function generateTimeSlots(
       dateObj: current,
     });
 
-    // Advance by 30 minutes
-    current = new Date(current.getTime() + 30 * 60000);
+    // Advance by the admin-configured time increment
+    current = new Date(current.getTime() + timeIncrementMinutes * 60000);
   }
 
   return slots;
 }
+

@@ -61,7 +61,7 @@ export default function AdminAnalyticsPage() {
       </div>
 
       {/* Summary stats */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16, marginBottom: 36 }}>
+      <div className="grid-4col" style={{ display: "grid", gap: 16, marginBottom: 36 }}>
         {[
           { label: "Today", value: formatLKR(stats.today_revenue || 0), sub: `${stats.today_bookings || 0} sessions` },
           { label: "This Week", value: formatLKR(stats.weekly_revenue || 0), sub: "Current week" },

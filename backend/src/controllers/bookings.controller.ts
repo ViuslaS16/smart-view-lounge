@@ -4,6 +4,20 @@ import { getSetting, sendSMS } from '../services/sms.service';
 import { revokeSessionPin, extendSessionPin } from '../services/tuya.service';
 import { createSessionPin } from '../services/tuya.service';
 
+// GET /api/bookings/settings
+export async function getBookingSettings(req: Request, res: Response): Promise<void> {
+  const keys = ['price_per_hour', 'buffer_minutes', 'min_duration_minutes', 'time_increment_minutes', 'time_increment_price'];
+  const { rows } = await db.query(
+    'SELECT key, value FROM settings WHERE key = ANY($1)',
+    [keys]
+  );
+  const settings = rows.reduce((acc: any, row: any) => {
+    acc[row.key] = row.value;
+    return acc;
+  }, {});
+  res.json({ settings });
+}
+
 // GET /api/bookings/slots?date=YYYY-MM-DD
 export async function getAvailableSlots(req: Request, res: Response): Promise<void> {
   const targetDate = req.query.date as string;
@@ -12,7 +26,12 @@ export async function getAvailableSlots(req: Request, res: Response): Promise<vo
     return;
   }
 
-  const bufferMinutes = parseInt(await getSetting('buffer_minutes')) || 15;
+  // Fetch all relevant session settings from DB
+  const [bufferMinutes, minDurationMinutes, timeIncrementMinutes] = await Promise.all([
+    getSetting('buffer_minutes').then(v => parseInt(v) || 15),
+    getSetting('min_duration_minutes').then(v => parseInt(v) || 60),
+    getSetting('time_increment_minutes').then(v => parseInt(v) || 30),
+  ]);
 
   // Get all active bookings for this date (timezone aware)
   // We include a day before and after to safely catch cross-midnight or timezone overlap
@@ -25,12 +44,11 @@ export async function getAvailableSlots(req: Request, res: Response): Promise<vo
     [targetDate]
   );
 
-  // For a real implementation, you'd calculate slots based on opening hours
-  // Let's assume 24/7 or a specific window like 08:00 to 24:00
-  // Here we just return the existing blocks so the frontend calendar config can gray them out
   res.json({
     date: targetDate,
     buffer_minutes: bufferMinutes,
+    min_duration_minutes: minDurationMinutes,
+    time_increment_minutes: timeIncrementMinutes,
     booked_blocks: rows.map(r => ({
       start_time: r.start_time,
       end_time: r.end_time
@@ -51,12 +69,33 @@ export async function createBooking(req: Request, res: Response): Promise<void> 
     return;
   }
 
-  // Add buffer to the query check (e.g. 15 mins)
-  const bufferMins = parseInt(await getSetting('buffer_minutes')) || 15;
-  const bufferedEnd = new Date(end.getTime() + bufferMins * 60000);
+  // Load all session config from DB (live admin settings)
+  const [bufferMins, minDurationMins, timeIncrementMins, pricePerHour] = await Promise.all([
+    getSetting('buffer_minutes').then(v => parseInt(v) || 15),
+    getSetting('min_duration_minutes').then(v => parseInt(v) || 60),
+    getSetting('time_increment_minutes').then(v => parseInt(v) || 30),
+    getSetting('price_per_hour').then(v => parseFloat(v) || 2500),
+  ]);
 
-  const pricePerHour = parseFloat(await getSetting('price_per_hour')) || 2500;
+  // Validate minimum duration
+  if (duration_minutes < minDurationMins) {
+    res.status(400).json({
+      error: `Minimum session duration is ${minDurationMins} minutes.`
+    });
+    return;
+  }
+
+  // Validate that duration is a multiple of the time increment
+  const baseOffset = duration_minutes - minDurationMins;
+  if (baseOffset % timeIncrementMins !== 0) {
+    res.status(400).json({
+      error: `Duration must be ${minDurationMins} minutes plus multiples of ${timeIncrementMins} minutes.`
+    });
+    return;
+  }
+
   const totalAmount = (duration_minutes / 60) * pricePerHour;
+  const bufferedEnd = new Date(end.getTime() + bufferMins * 60000);
 
   // The DB constraint `no_time_overlap` will catch overlap across the true bounds
   // But we also want to manually check with the buffer applied

@@ -14,7 +14,7 @@ export default function DashboardPage() {
   const { data: bookingsData, isLoading: isBookingsLoading } = useApi<{bookings: any[]}>('/users/bookings');
   
   const selectedDateStr = format(selectedDate, "yyyy-MM-dd");
-  const { data: slotsData } = useApi<{booked_blocks: any[], buffer_minutes: number}>(`/bookings/slots?date=${selectedDateStr}`);
+  const { data: slotsData } = useApi<{booked_blocks: any[], buffer_minutes: number, min_duration_minutes: number, time_increment_minutes: number}>(`/bookings/slots?date=${selectedDateStr}`);
 
   const bookings = bookingsData?.bookings || [];
 
@@ -31,8 +31,16 @@ export default function DashboardPage() {
   // Generate calendar days (today + 13 days)
   const calendarDays = Array.from({ length: 14 }, (_, i) => addDays(startOfDay(new Date()), i));
 
-  // Generate time slots for selected date
-  const slots = slotsData ? generateTimeSlots(selectedDate, slotsData.booked_blocks, slotsData.buffer_minutes) : [];
+  // Generate time slots for selected date using live admin settings
+  const slots = slotsData
+    ? generateTimeSlots(
+        selectedDate,
+        slotsData.booked_blocks,
+        slotsData.buffer_minutes,
+        slotsData.min_duration_minutes,
+        slotsData.time_increment_minutes
+      )
+    : [];
 
   if (isProfileLoading || isBookingsLoading) {
     return <div style={{ padding: 40, textAlign: "center" }}>Loading dashboard...</div>;

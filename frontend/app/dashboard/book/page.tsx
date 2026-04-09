@@ -1,19 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { format, parse } from "date-fns";
 import { formatLKR, formatDuration } from "@/lib/utils";
+import { useApi } from "@/lib/hooks";
 import { apiFetch } from "@/lib/api";
 
-const HOURLY_RATE = 2500;
-const MIN_DURATION_MINUTES = 60;
-const TIME_INCREMENT_MINUTES = 30;
-
-function calculatePrice(minutes: number) {
-  return (minutes / 60) * HOURLY_RATE;
+function calculatePrice(minutes: number, hourlyRate: number) {
+  return (minutes / 60) * hourlyRate;
 }
-import { Suspense } from "react";
 
 function BookingForm() {
   const params = useSearchParams();
@@ -23,18 +19,36 @@ function BookingForm() {
   const timeStr = params.get("time") || "10:00";
 
   const selectedDate = parse(dateStr, "yyyy-MM-dd", new Date());
-  const [duration, setDuration] = useState(MIN_DURATION_MINUTES); // minutes
+
+  // Fetch live settings from backend (reflects any admin changes)
+  const { data: settingsData, isLoading: settingsLoading } = useApi<{ settings: Record<string, string> }>('/bookings/settings');
+
+  const hourlyRate    = settingsData?.settings?.price_per_hour       ? Number(settingsData.settings.price_per_hour)       : 2500;
+  const minDuration   = settingsData?.settings?.min_duration_minutes  ? Number(settingsData.settings.min_duration_minutes)  : 60;
+  const timeIncrement = settingsData?.settings?.time_increment_minutes ? Number(settingsData.settings.time_increment_minutes) : 30;
+
+  const [duration, setDuration] = useState(0); // 0 = not yet initialised
   const [loading, setLoading] = useState(false);
 
-  const price = calculatePrice(duration);
+  // Set initial duration once settings have loaded
+  useEffect(() => {
+    if (settingsData && duration === 0) {
+      setDuration(minDuration);
+    }
+  }, [settingsData, duration, minDuration]);
+
+  const price = calculatePrice(duration, hourlyRate);
   const startHour = parseInt(timeStr.split(":")[0]);
-  const startMin = parseInt(timeStr.split(":")[1]);
-  const endDate = new Date(selectedDate);
+  const startMin  = parseInt(timeStr.split(":")[1]);
+  const endDate   = new Date(selectedDate);
   endDate.setHours(startHour, startMin + duration, 0, 0);
 
-  const steps = [];
-  for (let d = MIN_DURATION_MINUTES; d <= 240; d += TIME_INCREMENT_MINUTES) {
-    steps.push(d);
+  // Build duration step buttons from live config
+  const steps: number[] = [];
+  if (minDuration > 0 && timeIncrement > 0) {
+    for (let d = minDuration; d <= 480; d += timeIncrement) {
+      steps.push(d);
+    }
   }
 
   async function handleBook() {
@@ -77,6 +91,16 @@ function BookingForm() {
     }
   }
 
+  // Show loader until settings arrive and duration is initialised
+  if (settingsLoading || duration === 0) {
+    return (
+      <div className="page" style={{ paddingTop: 80, textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: 12, color: "var(--text-secondary)" }}>
+        <span className="spinner" />
+        Loading session configuration...
+      </div>
+    );
+  }
+
   return (
     <div className="page" style={{ paddingTop: 80 }}>
       <div className="animate-fade-up">
@@ -117,7 +141,7 @@ function BookingForm() {
             </div>
             <div>
               <p className="label">Rate</p>
-              <p style={{ fontWeight: 600, fontSize: 15 }}>{formatLKR(HOURLY_RATE)}/hr</p>
+              <p style={{ fontWeight: 600, fontSize: 15 }}>{formatLKR(hourlyRate)}/hr</p>
             </div>
           </div>
         </div>
@@ -157,7 +181,7 @@ function BookingForm() {
             </div>
             <div className="receipt-row">
               <span style={{ fontSize: 14, color: "var(--text-secondary)" }}>Rate</span>
-              <span style={{ fontWeight: 600 }}>{formatLKR(HOURLY_RATE)}/hr</span>
+              <span style={{ fontWeight: 600 }}>{formatLKR(hourlyRate)}/hr</span>
             </div>
             <div className="receipt-row" style={{ padding: "16px 0 0", borderBottom: "none" }}>
               <span style={{ fontWeight: 700, fontSize: 16 }}>Total</span>
