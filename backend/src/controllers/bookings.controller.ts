@@ -97,13 +97,16 @@ export async function createBooking(req: Request, res: Response): Promise<void> 
   const totalAmount = (duration_minutes / 60) * pricePerHour;
   const bufferedEnd = new Date(end.getTime() + bufferMins * 60000);
 
-  // The DB constraint `no_time_overlap` will catch overlap across the true bounds
-  // But we also want to manually check with the buffer applied
+  // Overlap check: new booking [start, bufferedEnd) must not overlap any existing
+  // booking's occupied window [start_time, end_time + buffer).
+  // This ensures the buffer gap between sessions is enforced on BOTH sides:
+  //   - bufferedEnd protects future bookings from this one
+  //   - end_time + $3 minutes protects this booking from existing ones
   const overlapCheck = await db.query(
     `SELECT id FROM bookings
      WHERE status NOT IN ('cancelled')
-       AND tstzrange($1, $2, '[)') && tstzrange(start_time, end_time, '[)')`,
-    [start.toISOString(), bufferedEnd.toISOString()]
+       AND tstzrange($1, $2, '[)') && tstzrange(start_time, end_time + ($3 * interval '1 minute'), '[)')`,
+    [start.toISOString(), bufferedEnd.toISOString(), bufferMins]
   );
 
   if (overlapCheck.rows.length > 0) {
@@ -165,8 +168,8 @@ export async function extendBooking(req: Request, res: Response): Promise<void> 
     `SELECT id FROM bookings
      WHERE status NOT IN ('cancelled')
        AND id != $1
-       AND tstzrange($2, $3, '[)') && tstzrange(start_time, end_time, '[)')`,
-    [bookingId, currentEnd.toISOString(), bufferedNewEnd.toISOString()]
+       AND tstzrange($2, $3, '[)') && tstzrange(start_time, end_time + ($4 * interval '1 minute'), '[)')`,
+    [bookingId, currentEnd.toISOString(), bufferedNewEnd.toISOString(), bufferMins]
   );
 
   if (overlapCheck.rows.length > 0) {
