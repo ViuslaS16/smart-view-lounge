@@ -1,12 +1,11 @@
--- Migration: UUID to Human-Readable IDs
--- Bookings: BK-YYYYMMDD-XXXXXX (resets daily)
--- Users: CUST-XXXXXXXX (global sequence)
+-- Migration: UUID to Human-Readable IDs (v2 — fixed ID generation)
+-- Bookings: BK-YYYYMMDD-XXXXXX (per-day counter)
+-- Users:    CUST-XXXXXXXX (global sequence)
 
 -- 1. Create sequences
 CREATE SEQUENCE IF NOT EXISTS user_readable_id_seq START WITH 1;
--- No sequence for bookings as we use MAX() daily reset logic
 
--- 2. Create functions for ID generation
+-- 2. Create functions for ID generation (used for future inserts)
 CREATE OR REPLACE FUNCTION generate_customer_id() RETURNS TEXT AS $$
 BEGIN
   RETURN 'CUST-' || LPAD(nextval('user_readable_id_seq')::TEXT, 8, '0');
@@ -19,9 +18,7 @@ DECLARE
   suffix    TEXT;
 BEGIN
   today_str := to_char(CURRENT_DATE, 'YYYYMMDD');
-  
-  -- Lock the bookings table to prevent collisions during ID generation
-  -- In a larger system we might use a dedicated counter table
+
   SELECT LPAD((COALESCE(MAX(SUBSTRING(id FROM 13)::INTEGER), 0) + 1)::TEXT, 6, '0')
   INTO suffix
   FROM bookings
@@ -41,7 +38,6 @@ ALTER TABLE sms_logs DROP CONSTRAINT IF EXISTS sms_logs_booking_id_fkey;
 ALTER TABLE audit_logs DROP CONSTRAINT IF EXISTS audit_logs_actor_id_fkey;
 
 -- 4. Convert ID columns to TEXT
--- We use a temporary column to allow smooth translation
 ALTER TABLE users ALTER COLUMN id TYPE TEXT;
 ALTER TABLE bookings ALTER COLUMN id TYPE TEXT;
 ALTER TABLE bookings ALTER COLUMN user_id TYPE TEXT;
@@ -52,17 +48,29 @@ ALTER TABLE sms_logs ALTER COLUMN booking_id TYPE TEXT;
 ALTER TABLE audit_logs ALTER COLUMN actor_id TYPE TEXT;
 ALTER TABLE audit_logs ALTER COLUMN target_id TYPE TEXT;
 
--- 5. Migrate existing data while maintaining relationships
--- Temporary mapping to keep track of conversion
-CREATE TEMP TABLE user_id_map AS 
-SELECT id as old_id, generate_customer_id() as new_id 
-FROM users 
-ORDER BY created_at ASC;
+-- 5. Migrate existing data using ROW_NUMBER() to guarantee unique IDs
+--    Users: CUST-00000001, CUST-00000002, ... ordered by created_at
+CREATE TEMP TABLE user_id_map AS
+SELECT
+  id AS old_id,
+  'CUST-' || LPAD(ROW_NUMBER() OVER (ORDER BY created_at ASC, id ASC)::TEXT, 8, '0') AS new_id
+FROM users
+WHERE id NOT LIKE 'CUST-%';  -- Skip any already-converted rows
 
-CREATE TEMP TABLE booking_id_map AS 
-SELECT id as old_id, generate_booking_id() as new_id 
-FROM bookings 
-ORDER BY created_at ASC;
+--    Bookings: BK-YYYYMMDD-000001 per day, ordered by created_at within each day
+CREATE TEMP TABLE booking_id_map AS
+SELECT
+  id AS old_id,
+  'BK-' || to_char(created_at AT TIME ZONE 'Asia/Colombo', 'YYYYMMDD') || '-' ||
+  LPAD(ROW_NUMBER() OVER (
+    PARTITION BY DATE(created_at AT TIME ZONE 'Asia/Colombo')
+    ORDER BY created_at ASC, id ASC
+  )::TEXT, 6, '0') AS new_id
+FROM bookings
+WHERE id NOT LIKE 'BK-%';  -- Skip any already-converted rows
+
+-- Advance the sequence past the number of users we are migrating
+SELECT setval('user_readable_id_seq', COALESCE((SELECT COUNT(*) FROM user_id_map), 0));
 
 -- Update Users
 UPDATE users u SET id = m.new_id FROM user_id_map m WHERE u.id = m.old_id;
@@ -82,9 +90,6 @@ UPDATE audit_logs a SET target_id = m.new_id FROM booking_id_map m WHERE a.targe
 
 -- 6. Set Defaults for future records
 ALTER TABLE users ALTER COLUMN id SET DEFAULT generate_customer_id();
-
--- Note: Booking ID default uses a function that looks at existing rows, 
--- which works perfectly for the daily reset logic.
 ALTER TABLE bookings ALTER COLUMN id SET DEFAULT generate_booking_id();
 
 -- 7. Restore Foreign Keys & Constraints

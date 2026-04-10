@@ -154,8 +154,8 @@ async function checkTuyaSessionEnd() {
 }
 
 /**
- * Generate Tuya Door PIN exactly at the session start time.
- * This guarantees the PIN closely matches the actual session period.
+ * Generate Tuya Door PIN 15 minutes before the session starts.
+ * Gives the customer enough time to arrive without being notified too early.
  */
 async function checkSessionStartPasscode() {
   const { rows } = await db.query(`
@@ -164,7 +164,7 @@ async function checkSessionStartPasscode() {
     JOIN users u ON b.user_id = u.id
     WHERE b.status = 'confirmed'
       AND b.pin_sms_sent = FALSE
-      AND b.start_time <= NOW() + INTERVAL '2 minutes'
+      AND b.start_time <= NOW() + INTERVAL '15 minutes'
       AND b.end_time > NOW()
   `);
 
