@@ -29,6 +29,7 @@ router.patch('/users/:id/suspend', admin.suspendUser);
 router.get('/bookings', admin.getBookings);
 router.post('/bookings', validate(manualBookingSchema), admin.manualBooking);
 router.patch('/bookings/:id/cancel', admin.cancelBookingAdmin);
+router.post('/bookings/:id/verify-payment', admin.verifyPayment);
 
 router.get('/analytics', admin.getAnalytics);
 router.get('/sms-logs', admin.getSmsLogs);

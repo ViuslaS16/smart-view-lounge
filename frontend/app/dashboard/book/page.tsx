@@ -69,21 +69,8 @@ function BookingForm() {
 
       const bookingId = res.booking.id;
 
-      // ── TEST MODE ─────────────────────────────────────────────────────────
-      // Step 2: Directly confirm the booking — bypasses PayHere.
-      //         This triggers: door PIN generation → SMS to customer
-      //                        + Tuya scene will auto-start 5 min before session
-      //
-      // TODO: When PayHere is ready, replace this block with:
-      //   const payRes = await apiFetch('/payments/initiate', { method: 'POST', body: JSON.stringify({ booking_id: bookingId }) })
-      //   Then redirect user to PayHere checkout with payRes.payload
-      // ─────────────────────────────────────────────────────────────────────
-      await apiFetch(`/bookings/${bookingId}/confirm-test`, { method: 'POST' });
-
-      // Redirect to success page
-      router.push(
-        `/dashboard/book/success?ref=${bookingId}&amount=${price}&date=${dateStr}&time=${timeStr}&duration=${duration}`
-      );
+      // Redirect to manual payment verification page
+      router.push(`/dashboard/book/payment?id=${bookingId}`);
     } catch (err: any) {
       alert(err.message || 'Failed to create booking. Please try again.');
     } finally {

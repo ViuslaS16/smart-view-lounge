@@ -4,6 +4,7 @@ import * as bookings from '../controllers/bookings.controller';
 import { testConfirmBooking } from '../controllers/webhooks.controller';
 import { authMiddleware, requireActive } from '../middleware/auth.middleware';
 import { validate } from '../middleware/validate.middleware';
+import { upload } from '../middleware/upload.middleware';
 import { apiLimiter } from '../middleware/rateLimit.middleware';
 
 const router = Router();
@@ -31,5 +32,6 @@ router.post('/:id/cancel', requireActive, bookings.cancelBooking);
 router.post('/:id/resend-pin', requireActive, bookings.resendDoorPin);     // 🔐 Tuya — resend door PIN via SMS
 router.post('/:id/refresh-pin', requireActive, bookings.refreshDoorPin);    // 🔐 Tuya — generate totally new pin
 router.post('/:id/confirm-test', requireActive, testConfirmBooking);        // 🦹 TEST ONLY — remove when PayHere is ready
+router.post('/:id/receipt', requireActive, upload.single('receipt'), bookings.uploadReceipt);
 
 export default router;

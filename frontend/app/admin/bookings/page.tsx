@@ -13,6 +13,7 @@ const filters: { label: string; value: Filter }[] = [
   { label: "Confirmed", value: "confirmed" },
   { label: "Completed", value: "completed" },
   { label: "Cancelled", value: "cancelled" },
+  { label: "Pending Payments", value: "pending" },
 ];
 
 export default function AdminBookingsPage() {
@@ -33,12 +34,42 @@ export default function AdminBookingsPage() {
   const ALL_CUSTOMERS = usersData?.users || [];
 
   const filtered = ALL_ADMIN_BOOKINGS
-    .filter((b: any) => filter === "all" || b.status === filter)
-    .filter((b: any) => search === "" || b.id.toLowerCase().includes(search.toLowerCase()));
+    .filter((b: any) => {
+      if (filter === "all") return true;
+      if (filter === "pending") return b.payment_status === "pending_verification";
+      return b.status === filter;
+    })
+    .filter((b: any) => search === "" || b.id.toLowerCase().includes(search.toLowerCase()) || (b.full_name && b.full_name.toLowerCase().includes(search.toLowerCase())));
 
   const sortedBookings = [...filtered].sort(
     (a: any, b: any) => new Date(b.created_at || b.start_time).getTime() - new Date(a.created_at || a.start_time).getTime()
   );
+
+  const [viewingReceipt, setViewingReceipt] = useState<any>(null);
+  const [rejectReason, setRejectReason] = useState("");
+  const [isVerifying, setIsVerifying] = useState(false);
+
+  async function handleVerifyPayment(id: string, action: 'approve' | 'reject') {
+    if (action === 'reject' && !rejectReason) {
+      alert("Please provide a reason for rejection");
+      return;
+    }
+    
+    setIsVerifying(true);
+    try {
+      await apiFetch(`/admin/bookings/${id}/verify-payment`, {
+        method: "POST",
+        body: JSON.stringify({ action, reason: rejectReason })
+      });
+      setViewingReceipt(null);
+      setRejectReason("");
+      revalidate();
+    } catch (err: any) {
+      alert(err.message || "Action failed");
+    } finally {
+      setIsVerifying(false);
+    }
+  }
 
   async function handleCancel(id: string) {
     if (!confirm(`Cancel booking ${id}? Refund will be processed.`)) return;
@@ -174,22 +205,36 @@ export default function AdminBookingsPage() {
                   </td>
                   <td style={{ fontWeight: 700, color: "var(--accent)" }}>{formatLKR(booking.total_amount)}</td>
                   <td>
-                    <span className={`badge badge-${booking.status}`}>
-                      {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
-                    </span>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 6, alignItems: "center" }}>
+                        <span className={`badge badge-${booking.status}`}>
+                            {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
+                        </span>
+                        {booking.payment_status === 'pending_verification' && (
+                            <span className="badge badge-pending">
+                                Unverified
+                            </span>
+                        )}
+                    </div>
                   </td>
                   <td>
-                    {isUpcoming && (
-                      <button
-                        className="btn btn-danger btn-sm"
-                        onClick={() => handleCancel(booking.id)}
-                      >
-                        Cancel
-                      </button>
-                    )}
-                    {booking.status === "completed" && (
-                      <span style={{ fontSize: 12, color: "var(--text-muted)" }}>—</span>
-                    )}
+                    <div style={{ display: "flex", gap: 8 }}>
+                        {booking.payment_status === 'pending_verification' && (
+                            <button 
+                                className="btn btn-primary btn-sm"
+                                onClick={() => setViewingReceipt(booking)}
+                            >
+                                Verify
+                            </button>
+                        )}
+                        {isUpcoming && (
+                            <button
+                                className="btn btn-danger btn-sm"
+                                onClick={() => handleCancel(booking.id)}
+                            >
+                                Cancel
+                            </button>
+                        )}
+                    </div>
                   </td>
                 </tr>
               );
@@ -253,6 +298,75 @@ export default function AdminBookingsPage() {
               </button>
               <button className="btn btn-primary btn-sm" style={{ flex: 2 }} onClick={handleCreate} disabled={!formUser || isSubmitting}>
                 {isSubmitting ? "Processing..." : "Create Booking"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Payment Verification Modal */}
+      {viewingReceipt && (
+        <div style={{
+          position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", zIndex: 1000,
+          display: "flex", alignItems: "center", justifyContent: "center", padding: 24,
+        }} onClick={() => setViewingReceipt(null)}>
+          <div className="card" style={{ padding: 24, maxWidth: 500, width: "100%", maxHeight: '90vh', overflowY: 'auto' }}
+            onClick={(e) => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 20 }}>
+                <h2 style={{ fontFamily: "var(--font-display)", fontSize: 20, fontWeight: 700 }}>
+                Verify Payment Receipt
+                </h2>
+                <button onClick={() => setViewingReceipt(null)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>✕</button>
+            </div>
+            
+            <div style={{ marginBottom: 20, textAlign: 'center' }}>
+                <img 
+                    src={viewingReceipt.receipt_url} 
+                    alt="Payment Receipt" 
+                    style={{ maxWidth: '100%', borderRadius: 12, border: '1px solid var(--border)' }} 
+                />
+            </div>
+
+            <div className="card-elevated" style={{ padding: 16, marginBottom: 20 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                    <div>
+                        <p className="label">Amount</p>
+                        <p style={{ fontWeight: 700, color: 'var(--accent)' }}>{formatLKR(viewingReceipt.total_amount)}</p>
+                    </div>
+                    <div>
+                        <p className="label">Customer</p>
+                        <p style={{ fontSize: 13 }}>{viewingReceipt.full_name}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div style={{ marginBottom: 20 }}>
+                <label className="label">Rejection Reason (only if rejecting)</label>
+                <textarea 
+                    className="input" 
+                    style={{ minHeight: 80, resize: 'none' }}
+                    placeholder="e.g. Receipt not clear, incorrect amount, not received in bank..."
+                    value={rejectReason}
+                    onChange={e => setRejectReason(e.target.value)}
+                />
+            </div>
+
+            <div style={{ display: "flex", gap: 10 }}>
+              <button 
+                className="btn btn-danger btn-sm" 
+                style={{ flex: 1 }} 
+                onClick={() => handleVerifyPayment(viewingReceipt.id, 'reject')}
+                disabled={isVerifying}
+              >
+                Reject & Notify
+              </button>
+              <button 
+                className="btn btn-primary btn-sm" 
+                style={{ flex: 1 }} 
+                onClick={() => handleVerifyPayment(viewingReceipt.id, 'approve')}
+                disabled={isVerifying}
+              >
+                {isVerifying ? <span className="spinner" /> : "Approve & Confirm"}
               </button>
             </div>
           </div>

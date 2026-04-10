@@ -64,3 +64,37 @@ export async function deleteNicImage(key: string): Promise<void> {
   }
   await r2!.send(new DeleteObjectCommand({ Bucket: BUCKET, Key: key }));
 }
+
+/** Upload a payment receipt buffer to R2 — returns the object key */
+export async function uploadReceiptImage(
+  fileBuffer: Buffer,
+  mimeType: string,
+  bookingId: string
+): Promise<string> {
+  const ext = mimeType === 'image/png' ? 'png' : mimeType === 'image/webp' ? 'webp' : 'jpg';
+  const key = `receipts/${bookingId}_${uuidv4()}.${ext}`;
+
+  if (isMockStorage) {
+    console.log(`[Storage Mock] Saved Receipt to local key: ${key}`);
+    return key;
+  }
+
+  await r2!.send(new PutObjectCommand({
+    Bucket:      BUCKET,
+    Key:         key,
+    Body:        fileBuffer,
+    ContentType: mimeType,
+  }));
+
+  return key;
+}
+
+/** Generate a signed URL for a payment receipt — expires in 5 minutes */
+export async function getReceiptImageSignedUrl(key: string): Promise<string> {
+  if (isMockStorage) {
+    return `https://dummyimage.com/600x400/2a2a2a/ffffff.png&text=Receipt+${key.split('/').pop()}`;
+  }
+
+  const command = new GetObjectCommand({ Bucket: BUCKET, Key: key });
+  return getSignedUrl(r2!, command, { expiresIn: 300 }); // 5 minutes for receipts
+}

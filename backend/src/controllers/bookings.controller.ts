@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import db from '../db';
 import { getSetting, sendSMS } from '../services/sms.service';
 import { revokeSessionPin, extendPinValidity, createSessionPin } from '../services/tuya.service';
+import { uploadReceiptImage } from '../services/storage.service';
 
 // GET /api/bookings/settings
 export async function getBookingSettings(req: Request, res: Response): Promise<void> {
@@ -114,8 +115,8 @@ export async function createBooking(req: Request, res: Response): Promise<void> 
   }
 
   const { rows } = await db.query(
-    `INSERT INTO bookings (user_id, start_time, end_time, duration_minutes, total_amount, status)
-     VALUES ($1, $2, $3, $4, $5, 'pending')
+    `INSERT INTO bookings (user_id, start_time, end_time, duration_minutes, total_amount, status, payment_method, payment_status)
+     VALUES ($1, $2, $3, $4, $5, 'pending', 'manual', 'pending')
      RETURNING id, start_time, end_time, total_amount`,
     [userId, start.toISOString(), end.toISOString(), duration_minutes, totalAmount]
   );
@@ -428,4 +429,62 @@ export async function refreshDoorPin(req: Request, res: Response): Promise<void>
     console.error('Refresh PIN Error:', err.message);
     res.status(500).json({ error: 'Failed to refresh pin: ' + err.message });
   }
+}
+
+// POST /api/bookings/:id/receipt
+export async function uploadReceipt(req: Request, res: Response): Promise<void> {
+  const bookingId = req.params.id;
+  const userId = req.user!.id;
+  const file = req.file;
+
+  if (!file) {
+    res.status(400).json({ error: 'Receipt image is required' });
+    return;
+  }
+
+  // Verify booking ownership and status
+  const { rows: bRows } = await db.query(
+    'SELECT id, status, payment_status FROM bookings WHERE id = $1 AND user_id = $2',
+    [bookingId, userId]
+  );
+
+  if (!bRows[0]) {
+    res.status(404).json({ error: 'Booking not found' });
+    return;
+  }
+
+  if (bRows[0].status !== 'pending') {
+    res.status(400).json({ error: 'Booking is already ' + bRows[0].status });
+    return;
+  }
+
+  // Upload to R2
+  const receiptKey = await uploadReceiptImage(file.buffer, file.mimetype, bookingId);
+
+  // Update DB
+  await db.query(
+    `UPDATE bookings SET 
+       receipt_image_key = $1, 
+       payment_status = 'pending_verification', 
+       updated_at = NOW() 
+     WHERE id = $2`,
+    [receiptKey, bookingId]
+  );
+
+  // Notify Admin via SMS
+  try {
+    const adminMobile = await getSetting('admin_mobile');
+    if (adminMobile) {
+      await sendSMS(
+        adminMobile,
+        `SmartView: New manual payment receipt uploaded for Booking #${bookingId.slice(0, 8)}. Please verify in admin panel.`,
+        'admin_payment_alert',
+        bookingId
+      );
+    }
+  } catch (err: any) {
+    console.warn(`[SMS Alert] Admin notification failed:`, err.message);
+  }
+
+  res.json({ message: 'Receipt uploaded successfully. Admin will verify shortly.' });
 }

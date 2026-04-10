@@ -1,19 +1,20 @@
 import { Request, Response } from 'express';
 import db from '../db';
-import { getNicImageSignedUrl } from '../services/storage.service';
+import { getNicImageSignedUrl, getReceiptImageSignedUrl } from '../services/storage.service';
 import { sendAccountApprovedEmail, sendAccountRejectedEmail, sendBookingConfirmationEmail } from '../services/email.service';
 import { sendSMS, getSetting } from '../services/sms.service';
 import { createSessionPin, revokeSessionPin, irAcOn, irAcOff, irProjectorToggle } from '../services/tuya.service';
 
 // --- Dashboard & Analytics ---
 export async function getDashboardStats(req: Request, res: Response): Promise<void> {
-  const [todayBookings, totalUsers, pendingNic, todayRevenue, weeklyRevenue, monthlyRevenue] = await Promise.all([
+  const [todayBookings, totalUsers, pendingNic, todayRevenue, weeklyRevenue, monthlyRevenue, pendingPayments] = await Promise.all([
     db.query(`SELECT count(*) FROM bookings WHERE status IN ('confirmed', 'completed') AND DATE(start_time AT TIME ZONE 'Asia/Colombo') = current_date`),
     db.query(`SELECT count(*) FROM users WHERE role = 'customer'`),
     db.query(`SELECT count(*) FROM users WHERE status = 'pending_verification' AND nic_image_key IS NOT NULL`),
     db.query(`SELECT coalesce(sum(total_amount), 0) as rev FROM bookings WHERE status IN ('confirmed', 'completed') AND DATE(start_time AT TIME ZONE 'Asia/Colombo') = current_date`),
     db.query(`SELECT coalesce(sum(total_amount), 0) as rev FROM bookings WHERE status IN ('confirmed', 'completed') AND start_time >= date_trunc('week', current_date AT TIME ZONE 'Asia/Colombo')`),
-    db.query(`SELECT coalesce(sum(total_amount), 0) as rev FROM bookings WHERE status IN ('confirmed', 'completed') AND start_time >= date_trunc('month', current_date AT TIME ZONE 'Asia/Colombo')`)
+    db.query(`SELECT coalesce(sum(total_amount), 0) as rev FROM bookings WHERE status IN ('confirmed', 'completed') AND start_time >= date_trunc('month', current_date AT TIME ZONE 'Asia/Colombo')`),
+    db.query(`SELECT count(*) FROM bookings WHERE payment_status = 'pending_verification'`)
   ]);
 
   const { rows: nextBookings } = await db.query(
@@ -30,7 +31,8 @@ export async function getDashboardStats(req: Request, res: Response): Promise<vo
       pending_verifications: parseInt(pendingNic.rows[0].count),
       today_revenue: parseFloat(todayRevenue.rows[0].rev),
       weekly_revenue: parseFloat(weeklyRevenue.rows[0].rev),
-      monthly_revenue: parseFloat(monthlyRevenue.rows[0].rev)
+      monthly_revenue: parseFloat(monthlyRevenue.rows[0].rev),
+      pending_payments: parseInt(pendingPayments.rows[0].count)
     },
     upcoming: nextBookings
   });
@@ -137,7 +139,16 @@ export async function getBookings(req: Request, res: Response): Promise<void> {
     FROM bookings b JOIN users u ON b.user_id = u.id 
     ORDER BY b.start_time DESC
   `);
-  res.json({ bookings: rows });
+
+  const populated = await Promise.all(rows.map(async (b) => {
+    let receipt_url = null;
+    if (b.receipt_image_key) {
+      receipt_url = await getReceiptImageSignedUrl(b.receipt_image_key);
+    }
+    return { ...b, receipt_url };
+  }));
+
+  res.json({ bookings: populated });
 }
 
 export async function manualBooking(req: Request, res: Response): Promise<void> {
@@ -447,4 +458,106 @@ export async function verifyAndRemoveAdminMobile(req: Request, res: Response): P
   );
 
   res.json({ message: 'Admin mobile number removed successfully.' });
+}
+
+export async function verifyPayment(req: Request, res: Response): Promise<void> {
+  const { id } = req.params;
+  const { action, reason } = req.body; // action: 'approve' | 'reject'
+
+  const { rows: bRows } = await db.query(
+    `SELECT b.*, u.full_name, u.email, u.mobile 
+     FROM bookings b 
+     JOIN users u ON b.user_id = u.id 
+     WHERE b.id = $1`,
+    [id]
+  );
+  const booking = bRows[0];
+
+  if (!booking) {
+    res.status(404).json({ error: 'Booking not found' });
+    return;
+  }
+
+  if (action === 'approve') {
+    // 1. Update Booking Status
+    await db.query(
+      `UPDATE bookings SET status = 'confirmed', payment_status = 'verified', updated_at = NOW() WHERE id = $1`,
+      [id]
+    );
+
+    await db.query(`INSERT INTO audit_logs (actor_id, action, target_id, target_type) VALUES ($1, 'payment.approve', $2, 'booking')`, [req.user!.id, id]);
+
+    // 2. Trigger Post-Confirmation logic (PIN generation, SMS, Email)
+    // Borrow logic from manualBooking but adapted for verified payment
+    const start = new Date(booking.start_time);
+    const end = new Date(booking.end_time);
+
+    // Confirmation email
+    sendBookingConfirmationEmail({
+      to: booking.email,
+      name: booking.full_name,
+      bookingId: booking.id,
+      startTime: booking.start_time,
+      endTime: booking.end_time,
+      durationMinutes: booking.duration_minutes,
+      amount: Number(booking.total_amount)
+    }).catch((err: any) => console.error('[Admin/Email] Failed:', err.message));
+
+    // Door PIN — generate immediately if session starts within 2 hours
+    const minutesUntilStart = (start.getTime() - Date.now()) / 60000;
+    const sessionIsActiveOrSoon = minutesUntilStart <= 120 && end > new Date();
+
+    if (sessionIsActiveOrSoon) {
+      try {
+        const { pin, ticketId } = await createSessionPin(booking.id, start, end);
+        await db.query(
+          `UPDATE bookings SET door_pin = $1, tuya_ticket_id = $2, pin_sms_sent = TRUE WHERE id = $3`,
+          [pin, ticketId, booking.id]
+        );
+
+        const startFmt = start.toLocaleString('en-LK', { timeZone: 'Asia/Colombo', dateStyle: 'medium', timeStyle: 'short' });
+        const endFmt   = end.toLocaleString('en-LK',   { timeZone: 'Asia/Colombo', timeStyle: 'short' });
+        const pinMsg = `SmartView Lounge: Payment Verified! Your door PIN is *${pin}#*. Valid: ${startFmt} - ${endFmt}. Do NOT share this PIN.`;
+
+        await sendSMS(booking.mobile, pinMsg, 'door_pin', booking.id);
+      } catch (pinErr: any) {
+        console.error(`[Admin] ❌ PIN generation failed for booking ${booking.id}:`, pinErr.message);
+      }
+    } else {
+        // Just send a general confirmation SMS if session is later
+        const startFmt = start.toLocaleString('en-LK', { timeZone: 'Asia/Colombo', dateStyle: 'medium', timeStyle: 'short' });
+        await sendSMS(
+            booking.mobile,
+            `SmartView Lounge: Payment Verified for your booking on ${startFmt}. You will receive your door PIN 2 hours before the session.`,
+            'booking_confirmed',
+            booking.id
+        );
+    }
+
+    res.json({ message: 'Payment approved and booking confirmed.' });
+  } else if (action === 'reject') {
+    if (!reason) {
+      res.status(400).json({ error: 'Reason is required for rejection' });
+      return;
+    }
+
+    await db.query(
+      `UPDATE bookings SET payment_status = 'rejected', admin_rejection_reason = $1, updated_at = NOW() WHERE id = $2`,
+      [reason, id]
+    );
+
+    await db.query(`INSERT INTO audit_logs (actor_id, action, target_id, target_type, metadata) VALUES ($1, 'payment.reject', $2, 'booking', $3)`, [req.user!.id, id, JSON.stringify({ reason })]);
+
+    // Notify user about rejection
+    await sendSMS(
+      booking.mobile,
+      `SmartView Lounge: Your payment verification failed. Reason: ${reason}. Please re-upload a valid receipt or contact support.`,
+      'payment_rejected',
+      booking.id
+    );
+
+    res.json({ message: 'Payment rejected. User notified.' });
+  } else {
+    res.status(400).json({ error: 'Invalid action' });
+  }
 }

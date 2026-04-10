@@ -65,9 +65,16 @@ export default function AdminOverviewPage() {
         <StatCard
           label="Pending Verifications"
           value={String(stats.pending_verifications || 0)}
-          sub={<Link href="/admin/verifications" style={{ color: "var(--warning)", textDecoration: "none", fontSize: 12 }}>Review now →</Link>}
+          sub={<Link href="/admin/verifications" style={{ color: "var(--warning)", textDecoration: "none", fontSize: 12 }}>Review NICs →</Link>}
           color="var(--warning)"
           icon={<Hourglass size={20} />}
+        />
+        <StatCard
+          label="Pending Payments"
+          value={String(stats.pending_payments || 0)}
+          sub={<Link href="/admin/bookings?filter=pending" style={{ color: "var(--accent)", textDecoration: "none", fontSize: 12 }}>Verify now →</Link>}
+          color="var(--accent)"
+          icon={<Landmark size={20} />}
         />
       </div>
 
@@ -137,7 +144,10 @@ export default function AdminOverviewPage() {
       {/* Quick actions */}
       <div className="quick-actions" style={{ marginTop: 32, display: "flex", gap: 12, flexWrap: "wrap" }}>
         <Link href="/admin/verifications" className="btn btn-primary btn-sm">
-          Review Pending NICs ({stats.pending_verifications || 0})
+          Review NICs ({stats.pending_verifications || 0})
+        </Link>
+        <Link href="/admin/bookings?filter=pending" className="btn btn-primary btn-sm" style={{ background: 'var(--success)', border: 'none', color: '#fff' }}>
+          Verify Payments ({stats.pending_payments || 0})
         </Link>
         <Link href="/admin/bookings" className="btn btn-secondary btn-sm">
           Create Manual Booking
