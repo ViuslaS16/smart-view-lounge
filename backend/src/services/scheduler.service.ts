@@ -188,9 +188,8 @@ async function checkSessionStartPasscode() {
         timeZone: 'Asia/Colombo', timeStyle: 'short'
       });
 
-      // Format PIN with '#' symbol as requested by the lock hardware
       const pinMsg =
-        `SmartView Lounge: Your door PIN is *${pin}#*. ` +
+        `SmartView Lounge: Your door PIN is ${pin}#. ` +
         `Valid: ${startFmt} - ${endFmt}. ` +
         `Do NOT share this PIN.`;
 

@@ -210,7 +210,7 @@ export async function manualBooking(req: Request, res: Response): Promise<void> 
 
         const startFmt = start.toLocaleString('en-LK', { timeZone: 'Asia/Colombo', dateStyle: 'medium', timeStyle: 'short' });
         const endFmt   = end.toLocaleString('en-LK',   { timeZone: 'Asia/Colombo', timeStyle: 'short' });
-        const pinMsg = `SmartView Lounge: Your door PIN is *${pin}#*. Valid: ${startFmt} - ${endFmt}. Do NOT share this PIN.`;
+        const pinMsg = `SmartView Lounge: Your door PIN is ${pin}#. Valid: ${startFmt} - ${endFmt}. Do NOT share this PIN.`;
 
         await sendSMS(user.mobile, pinMsg, 'door_pin', booking.id);
         console.log(`[Admin] ✅ PIN ${pin}# generated & sent for manual booking ${booking.id}`);
@@ -517,7 +517,7 @@ export async function verifyPayment(req: Request, res: Response): Promise<void> 
 
         const startFmt = start.toLocaleString('en-LK', { timeZone: 'Asia/Colombo', dateStyle: 'medium', timeStyle: 'short' });
         const endFmt   = end.toLocaleString('en-LK',   { timeZone: 'Asia/Colombo', timeStyle: 'short' });
-        const pinMsg = `SmartView Lounge: Payment Verified! Your door PIN is *${pin}#*. Valid: ${startFmt} - ${endFmt}. Do NOT share this PIN.`;
+        const pinMsg = `SmartView Lounge: Payment Verified! Your door PIN is ${pin}#. Valid: ${startFmt} - ${endFmt}. Do NOT share this PIN.`;
 
         await sendSMS(booking.mobile, pinMsg, 'door_pin', booking.id);
       } catch (pinErr: any) {
@@ -528,7 +528,7 @@ export async function verifyPayment(req: Request, res: Response): Promise<void> 
         const startFmt = start.toLocaleString('en-LK', { timeZone: 'Asia/Colombo', dateStyle: 'medium', timeStyle: 'short' });
         await sendSMS(
             booking.mobile,
-            `SmartView Lounge: Payment Verified for your booking on ${startFmt}. You will receive your door PIN 2 hours before the session.`,
+            `SmartView Lounge: Payment Verified for your booking on ${startFmt}. You will receive your door PIN 15 minutes before the session.`,
             'booking_confirmed',
             booking.id
         );
