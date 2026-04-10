@@ -25,7 +25,7 @@ export async function createCalendarEvent(params: {
   try {
     const auth     = getAuthClient();
     const calendar = google.calendar({ version: 'v3', auth });
-    const ref      = params.bookingId.slice(0, 8).toUpperCase();
+    const ref      = params.bookingId;
 
     await calendar.events.insert({
       calendarId: 'primary',

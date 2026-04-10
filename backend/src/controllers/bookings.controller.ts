@@ -477,7 +477,7 @@ export async function uploadReceipt(req: Request, res: Response): Promise<void> 
     if (adminMobile) {
       await sendSMS(
         adminMobile,
-        `SmartView: New manual payment receipt uploaded for Booking #${bookingId.slice(0, 8)}. Please verify in admin panel.`,
+        `SmartView: New manual payment receipt uploaded for Booking #${bookingId}. Please verify in admin panel.`,
         'admin_payment_alert',
         bookingId
       );

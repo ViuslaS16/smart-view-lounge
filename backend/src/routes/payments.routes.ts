@@ -7,7 +7,7 @@ import { validate } from '../middleware/validate.middleware';
 const router = Router();
 
 const initiateSchema = z.object({
-  booking_id: z.string().uuid()
+  booking_id: z.string()
 });
 
 router.use(authMiddleware);

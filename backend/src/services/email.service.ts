@@ -98,7 +98,7 @@ export async function sendBookingConfirmationEmail(params: {
   };
   const start = new Date(startTime).toLocaleString('en-LK', fmtOpts);
   const end   = new Date(endTime).toLocaleString('en-LK', { timeZone: 'Asia/Colombo', hour: '2-digit', minute: '2-digit', hour12: true });
-  const ref   = bookingId.slice(0, 8).toUpperCase();
+  const ref   = bookingId;
   const hours = durationMinutes / 60;
   const amountFmt = `LKR ${Number(amount).toLocaleString('en-LK')}`;
 

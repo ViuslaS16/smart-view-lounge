@@ -223,7 +223,7 @@ export async function createSessionPin(
       effective_time: effectiveTime,
       invalid_time:   invalidTime,
       type:           0,    // 0 = multi-use within validity window; 1 = one-time
-      name:           `Booking-${bookingId.slice(0, 8)}`,
+      name:           `Booking-${bookingId}`,
     }
   );
 
@@ -297,7 +297,7 @@ export async function extendPinValidity(
       effective_time: effectiveTime,
       invalid_time:   invalidTime,
       type:           0, // multi-use within validity window
-      name:           `Booking-${bookingId.slice(0, 8)}-ext`,
+      name:           `Booking-${bookingId}-ext`,
     }
   );
 

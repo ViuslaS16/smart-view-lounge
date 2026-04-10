@@ -9,7 +9,7 @@ const router = Router();
 
 const rejectSchema = z.object({ reason: z.string().min(3) });
 const manualBookingSchema = z.object({
-  user_id: z.string().uuid(),
+  user_id: z.string(),
   start_time: z.string().datetime(),
   duration_minutes: z.number().int().min(15),
   notes: z.string().optional()

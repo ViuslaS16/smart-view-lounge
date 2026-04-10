@@ -106,7 +106,7 @@ async function checkTuyaSessionStart() {
       if (adminMobile) {
         sendSMS(
           adminMobile,
-          `⚠️ TUYA: Devices failed to auto-start for booking ${row.id.slice(0, 8)}. Start manually!`,
+          `⚠️ TUYA: Devices failed to auto-start for booking ${row.id}. Start manually!`,
           'tuya_start_fail',
           row.id
         ).catch(console.error);
@@ -144,7 +144,7 @@ async function checkTuyaSessionEnd() {
       if (adminMobile) {
         sendSMS(
           adminMobile,
-          `⚠️ TUYA: Devices failed to auto-stop for booking ${row.id.slice(0, 8)}. Turn off manually!`,
+          `⚠️ TUYA: Devices failed to auto-stop for booking ${row.id}. Turn off manually!`,
           'tuya_stop_fail',
           row.id
         ).catch(console.error);
@@ -204,7 +204,7 @@ async function checkSessionStartPasscode() {
       if (adminMobile) {
         sendSMS(
           adminMobile,
-          `⚠️ TUYA ALERT: Door PIN FAILED for booking ${row.id.slice(0, 8)}. Give manual access!`,
+          `⚠️ TUYA ALERT: Door PIN FAILED for booking ${row.id}. Give manual access!`,
           'tuya_pin_fail',
           row.id
         ).catch(console.error);
