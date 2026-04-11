@@ -44,7 +44,8 @@ router.post('/devices/door-pin', admin.generateAdminDoorPin);
 
 // Admin mobile number management (OTP-verified)
 router.get('/mobile', admin.getAdminMobile);
-router.post('/mobile/send-otp', admin.sendAdminMobileOtp);
+router.post('/mobile/send-otp', admin.sendAdminMobileOtp);          // for adding new number
+router.post('/mobile/send-remove-otp', admin.sendAdminMobileRemoveOtp); // for removing — reads real mobile from DB
 router.post('/mobile/verify-set', admin.verifyAndSetAdminMobile);
 router.post('/mobile/verify-remove', admin.verifyAndRemoveAdminMobile);
 

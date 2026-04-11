@@ -369,7 +369,7 @@ export async function getAdminMobile(req: Request, res: Response): Promise<void>
   res.json({ mobile: mobile ? masked : null, has_mobile: !!mobile });
 }
 
-/** POST /admin/mobile/send-otp — sends OTP to the given mobile */
+/** POST /admin/mobile/send-otp — sends OTP to the given mobile (used when ADDING a new number) */
 export async function sendAdminMobileOtp(req: Request, res: Response): Promise<void> {
   const { mobile } = req.body;
   if (!mobile || typeof mobile !== 'string') {
@@ -389,6 +389,33 @@ export async function sendAdminMobileOtp(req: Request, res: Response): Promise<v
   );
 
   await sendSMS(mobile, `SmartView Admin: Your verification code is ${otpCode}. Valid for 10 minutes.`, 'admin_mobile_otp');
+  res.json({ message: 'OTP sent successfully.' });
+}
+
+/** POST /admin/mobile/send-remove-otp — reads real mobile from DB and sends OTP (used when REMOVING) */
+export async function sendAdminMobileRemoveOtp(req: Request, res: Response): Promise<void> {
+  // Always read the real (unmasked) mobile from the database
+  const { rows } = await db.query(`SELECT value FROM settings WHERE key = 'admin_mobile'`);
+  const currentMobile: string = rows[0]?.value ?? '';
+
+  if (!currentMobile) {
+    res.status(400).json({ error: 'No admin mobile set to remove.' });
+    return;
+  }
+
+  const otpCode   = Math.floor(100000 + Math.random() * 900000).toString();
+  const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+  await db.query(
+    `INSERT INTO otp_verifications (mobile, otp_code, expires_at)
+     VALUES ($1, $2, $3)
+     ON CONFLICT (mobile) DO UPDATE
+     SET otp_code = EXCLUDED.otp_code, expires_at = EXCLUDED.expires_at`,
+    [currentMobile, otpCode, expiresAt]
+  );
+
+  await sendSMS(currentMobile, `SmartView Admin: Your removal verification code is ${otpCode}. Valid for 10 minutes.`, 'admin_mobile_otp');
+  console.log(`[Admin] Removal OTP sent to real mobile (starts ${currentMobile.slice(0, 4)}...)`);
   res.json({ message: 'OTP sent successfully.' });
 }
 

@@ -392,10 +392,19 @@ export default function AdminSettingsPage() {
             </div>
             <button
               id="btn-remove-admin-mobile"
-              onClick={() => {
+              onClick={async () => {
                 setMobileErr(''); setMobileMsg('');
-                handleSendMobileOtp(maskedMobile ?? '');
-                setMobileUiState('removing');
+                setMobileSaving(true);
+                try {
+                  // Use dedicated endpoint that reads the REAL mobile from DB (not the masked display value)
+                  await apiFetch('/admin/mobile/send-remove-otp', { method: 'POST' });
+                  setMobileMsg('OTP sent! Check your phone.');
+                  setMobileUiState('removing');
+                } catch (err: any) {
+                  setMobileErr(err.message || 'Failed to send OTP');
+                } finally {
+                  setMobileSaving(false);
+                }
               }}
               style={{
                 display: "flex", alignItems: "center", gap: 6, fontSize: 12,
@@ -404,7 +413,7 @@ export default function AdminSettingsPage() {
                 padding: "6px 12px", cursor: "pointer",
               }}
             >
-              <Trash2 size={13} /> Remove
+              {mobileSaving ? <span className="spinner" style={{ width: 12, height: 12, borderWidth: 1.5 }} /> : <Trash2 size={13} />} Remove
             </button>
           </div>
         )}
