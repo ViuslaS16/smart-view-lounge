@@ -3,7 +3,7 @@ import db from '../db';
 import { getNicImageSignedUrl, getReceiptImageSignedUrl } from '../services/storage.service';
 import { sendAccountApprovedEmail, sendAccountRejectedEmail, sendBookingConfirmationEmail } from '../services/email.service';
 import { sendSMS, getSetting } from '../services/sms.service';
-import { createSessionPin, revokeSessionPin, irAcOn, irAcOff, irProjectorToggle } from '../services/tuya.service';
+import { createSessionPin, revokeSessionPin, irAcOn, irAcOff, irProjectorToggle, irLightsToggle } from '../services/tuya.service';
 
 // --- Dashboard & Analytics ---
 export async function getDashboardStats(req: Request, res: Response): Promise<void> {
@@ -298,10 +298,15 @@ export async function controlProjector(req: Request, res: Response): Promise<voi
 
 export async function controlLight(req: Request, res: Response): Promise<void> {
   const { action } = req.body as { action: 'on' | 'off' };
-  // Lights remote is not yet configured in Tuya — log and acknowledge
-  console.log(`[Admin] Light control requested: ${action} — IR remote not yet configured`);
-  await db.query(`INSERT INTO audit_logs (actor_id, action, target_type, metadata) VALUES ($1, 'device.light', 'system', $2)`, [req.user!.id, JSON.stringify({ action, note: 'stub - remote not configured' })]);
-  res.json({ message: `Light ${action} command logged. Connect IR remote in Smart Life app to activate.` });
+  if (!['on', 'off'].includes(action)) { res.status(400).json({ error: 'action must be on or off' }); return; }
+  try {
+    await irLightsToggle(action === 'off');
+    await db.query(`INSERT INTO audit_logs (actor_id, action, target_type, metadata) VALUES ($1, 'device.light', 'system', $2)`, [req.user!.id, JSON.stringify({ action })]);
+    res.json({ message: `Lights toggled (${action})` });
+  } catch (err: any) {
+    console.error('[Admin] Light control error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
 }
 
 export async function generateAdminDoorPin(req: Request, res: Response): Promise<void> {

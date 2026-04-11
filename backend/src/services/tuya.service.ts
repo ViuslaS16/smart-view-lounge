@@ -425,7 +425,10 @@ export async function startSessionDevices(): Promise<void> {
     console.log('[Tuya] ✅ Projector started');
   }
 
-  // TODO: add Lights remote commands here when remote is added to IR blaster
+  if (process.env.TUYA_LIGHTS_REMOTE_ID) {
+    await irLightsDiyCommand(process.env.TUYA_IR_DEVICE_ID!, process.env.TUYA_LIGHTS_REMOTE_ID);
+    console.log('[Tuya] ✅ Lights ON');
+  }
 }
 
 /**
@@ -444,7 +447,10 @@ export async function endSessionDevices(): Promise<void> {
     console.log('[Tuya] ✅ Projector powered OFF');
   }
 
-  // TODO: turn off lights when remote added
+  if (process.env.TUYA_LIGHTS_REMOTE_ID) {
+    await irLightsDiyCommand(process.env.TUYA_IR_DEVICE_ID!, process.env.TUYA_LIGHTS_REMOTE_ID);
+    console.log('[Tuya] ✅ Lights OFF');
+  }
 }
 
 /**
@@ -500,6 +506,43 @@ export async function irProjectorToggle(off = false): Promise<void> {
     await irProjectorCommand(remoteId, 'PowerOn');
   }
   console.log(`[Tuya] ✅ Projector ${off ? 'OFF' : 'ON'} (admin manual)`);
+}
+
+/**
+ * Send a DIY learned IR command for the lights remote.
+ * Lights remote is category: infrared_diy (category_id 13).
+ * The remote has a single toggle key — one press ON, next press OFF.
+ * Key values confirmed via live API testing on 2026-04-11.
+ */
+async function irLightsDiyCommand(irId: string, remoteId: string): Promise<void> {
+  const path    = `/v2.0/infrareds/${irId}/remotes/${remoteId}/raw/command`;
+  const bodyObj = {
+    category_id: 13,             // infrared_diy
+    key:         '1775886438221', // learned key string
+    key_id:      1775886438,      // numeric key_id
+  };
+  const body    = JSON.stringify(bodyObj);
+  const token   = await getAccessToken();
+  const headers = buildHeaders('POST', path, body, token);
+
+  const res = await axios.post(`${BASE_URL}${path}`, body, { headers });
+  if (!res.data.success) {
+    throw new Error(`[Tuya] Lights DIY command failed: ${res.data.msg} (${res.data.code})`);
+  }
+}
+
+/**
+ * Toggle the lights via the DIY IR remote.
+ * Single key toggles ON↔OFF, so `off` parameter is only used for logging.
+ */
+export async function irLightsToggle(off = false): Promise<void> {
+  const irId     = process.env.TUYA_IR_DEVICE_ID;
+  const remoteId = process.env.TUYA_LIGHTS_REMOTE_ID;
+  if (!irId)     throw new Error('[Tuya] TUYA_IR_DEVICE_ID is not set');
+  if (!remoteId) throw new Error('[Tuya] TUYA_LIGHTS_REMOTE_ID is not set');
+
+  await irLightsDiyCommand(irId, remoteId);
+  console.log(`[Tuya] ✅ Lights ${off ? 'OFF' : 'ON'} (admin manual)`);
 }
 
 // ── Health / Connectivity Check ───────────────────────────────────────────────

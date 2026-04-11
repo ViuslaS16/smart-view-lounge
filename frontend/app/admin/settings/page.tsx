@@ -622,14 +622,8 @@ export default function AdminSettingsPage() {
 
         {/* Light */}
         <div style={{ marginBottom: 20 }}>
-          <p style={{ fontSize: 13, fontWeight: 600, marginBottom: 4, display: "flex", alignItems: "center", gap: 8 }}>
+          <p style={{ fontSize: 13, fontWeight: 600, marginBottom: 10, display: "flex", alignItems: "center", gap: 8 }}>
             <Lightbulb size={16} style={{ color: "var(--accent)" }} /> Lights
-            <span style={{ fontSize: 11, fontWeight: 500, color: "var(--text-muted)", background: "var(--bg-elevated)", padding: "2px 8px", borderRadius: 999 }}>
-              Setup required
-            </span>
-          </p>
-          <p style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 10 }}>
-            Add the lights remote to the IR blaster in Smart Life to activate this control.
           </p>
           <div style={{ display: "flex", gap: 10, flexWrap: isNarrow ? "wrap" : "nowrap" }}>
             <button id="btn-light-on" style={btnStyle(deviceStatus.light, "var(--success)")}
