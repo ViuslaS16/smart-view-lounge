@@ -308,66 +308,68 @@ export default function AdminBookingsPage() {
       {viewingReceipt && (
         <div style={{
           position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", zIndex: 1000,
-          display: "flex", alignItems: "center", justifyContent: "center", padding: 24,
+          display: "flex", alignItems: "center", justifyContent: "center", padding: "12px",
         }} onClick={() => setViewingReceipt(null)}>
-          <div className="card" style={{ padding: 24, maxWidth: 500, width: "100%", maxHeight: '90vh', overflowY: 'auto' }}
+          <div className="card" style={{ padding: "16px", maxWidth: 500, width: "100%", maxHeight: '90vh', display: 'flex', flexDirection: 'column' }}
             onClick={(e) => e.stopPropagation()}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 20 }}>
-                <h2 style={{ fontFamily: "var(--font-display)", fontSize: 20, fontWeight: 700 }}>
-                Verify Payment Receipt
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16, alignItems: 'center' }}>
+                <h2 style={{ fontFamily: "var(--font-display)", fontSize: 18, fontWeight: 700 }}>
+                Verify Payment
                 </h2>
-                <button onClick={() => setViewingReceipt(null)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>✕</button>
+                <button onClick={() => setViewingReceipt(null)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '4px' }}>✕</button>
             </div>
             
-            <div style={{ marginBottom: 20, textAlign: 'center' }}>
-                <img 
-                    src={viewingReceipt.receipt_url} 
-                    alt="Payment Receipt" 
-                    style={{ maxWidth: '100%', borderRadius: 12, border: '1px solid var(--border)' }} 
-                />
-            </div>
+            <div style={{ overflowY: 'auto', flex: 1, paddingRight: '4px' }}>
+              <div style={{ marginBottom: 16, textAlign: 'center' }}>
+                  <img 
+                      src={viewingReceipt.receipt_url} 
+                      alt="Payment Receipt" 
+                      style={{ maxWidth: '100%', borderRadius: 12, border: '1px solid var(--border)' }} 
+                  />
+              </div>
 
-            <div className="card-elevated" style={{ padding: 16, marginBottom: 20 }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                    <div>
-                        <p className="label">Amount</p>
-                        <p style={{ fontWeight: 700, color: 'var(--accent)' }}>{formatLKR(viewingReceipt.total_amount)}</p>
-                    </div>
-                    <div>
-                        <p className="label">Customer</p>
-                        <p style={{ fontSize: 13 }}>{viewingReceipt.full_name}</p>
-                    </div>
-                </div>
-            </div>
+              <div className="card-elevated" style={{ padding: 12, marginBottom: 16 }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                      <div>
+                          <p className="label">Amount</p>
+                          <p style={{ fontWeight: 700, color: 'var(--accent)', fontSize: 16 }}>{formatLKR(viewingReceipt.total_amount)}</p>
+                      </div>
+                      <div>
+                          <p className="label">Customer</p>
+                          <p style={{ fontSize: 13, wordBreak: 'break-word' }}>{viewingReceipt.full_name}</p>
+                      </div>
+                  </div>
+              </div>
 
-            <div style={{ marginBottom: 20 }}>
-                <label className="label">Rejection Reason (only if rejecting)</label>
-                <textarea 
-                    className="input" 
-                    style={{ minHeight: 80, resize: 'none' }}
-                    placeholder="e.g. Receipt not clear, incorrect amount, not received in bank..."
-                    value={rejectReason}
-                    onChange={e => setRejectReason(e.target.value)}
-                />
-            </div>
+              <div style={{ marginBottom: 16 }}>
+                  <label className="label">Rejection Reason</label>
+                  <textarea 
+                      className="input" 
+                      style={{ minHeight: 60, resize: 'none', fontSize: 13 }}
+                      placeholder="e.g. Invalid receipt (Required to reject)"
+                      value={rejectReason}
+                      onChange={e => setRejectReason(e.target.value)}
+                  />
+              </div>
 
-            <div style={{ display: "flex", gap: 10 }}>
-              <button 
-                className="btn btn-danger btn-sm" 
-                style={{ flex: 1 }} 
-                onClick={() => handleVerifyPayment(viewingReceipt.id, 'reject')}
-                disabled={isVerifying}
-              >
-                Reject & Notify
-              </button>
-              <button 
-                className="btn btn-primary btn-sm" 
-                style={{ flex: 1 }} 
-                onClick={() => handleVerifyPayment(viewingReceipt.id, 'approve')}
-                disabled={isVerifying}
-              >
-                {isVerifying ? <span className="spinner" /> : "Approve & Confirm"}
-              </button>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 'auto' }}>
+                <button 
+                  className="btn btn-danger btn-sm" 
+                  style={{ flex: "1 1 calc(50% - 4px)", minWidth: "120px", padding: "10px 0" }} 
+                  onClick={() => handleVerifyPayment(viewingReceipt.id, 'reject')}
+                  disabled={isVerifying}
+                >
+                  Reject
+                </button>
+                <button 
+                  className="btn btn-primary btn-sm" 
+                  style={{ flex: "1 1 calc(50% - 4px)", minWidth: "120px", padding: "10px 0" }} 
+                  onClick={() => handleVerifyPayment(viewingReceipt.id, 'approve')}
+                  disabled={isVerifying}
+                >
+                  {isVerifying ? <span className="spinner" /> : "Approve"}
+                </button>
+              </div>
             </div>
           </div>
         </div>
