@@ -391,21 +391,22 @@ async function irAcCommand(code: string, value: string): Promise<void> {
 }
 
 /**
- * Send a command to a standard IR remote (like TV/Projector).
- * path: `v2.0/infrareds/${irId}/remotes/${remoteId}/command`
+ * Send a command specifically to a Projector IR remote.
+ * V1 endpoint is required for category 'infrared_projector' (6).
+ * Uses { key } payload format, NOT { code } — confirmed via live API testing.
  */
-async function irStandardCommand(remoteId: string, code: string): Promise<void> {
+async function irProjectorCommand(remoteId: string, key: 'PowerOn' | 'PowerOff'): Promise<void> {
   const irId = process.env.TUYA_IR_DEVICE_ID;
   if (!irId) throw new Error('[Tuya] TUYA_IR_DEVICE_ID is not set in .env');
 
   const token   = await getAccessToken();
-  const path    = `/v2.0/infrareds/${irId}/remotes/${remoteId}/command`;
-  const body    = JSON.stringify({ code });
+  const path    = `/v1.0/infrareds/${irId}/remotes/${remoteId}/command`;
+  const body    = JSON.stringify({ key });
   const headers = buildHeaders('POST', path, body, token);
 
   const res = await axios.post(`${BASE_URL}${path}`, body, { headers });
   if (!res.data.success) {
-    throw new Error(`[Tuya] IR Standard command "${code}" failed: ${res.data.msg} (${res.data.code})`);
+    throw new Error(`[Tuya] Projector command "${key}" failed: ${res.data.msg} (${res.data.code})`);
   }
 }
 
@@ -414,10 +415,13 @@ async function irStandardCommand(remoteId: string, code: string): Promise<void> 
  */
 export async function startSessionDevices(): Promise<void> {
   await irAcCommand('power', '1');  // Turn AC on
-  console.log('[Tuya] ✅ AC powered ON');
+  await new Promise(resolve => setTimeout(resolve, 1500));
+  await irAcCommand('temp', '24'); // Set 24°C
+  await irAcCommand('mode', '0');  // Cool mode
+  console.log('[Tuya] ✅ AC powered ON @ 24°C cool mode');
 
   if (process.env.TUYA_PROJECTOR_REMOTE_ID) {
-    await irStandardCommand(process.env.TUYA_PROJECTOR_REMOTE_ID, 'power');
+    await irProjectorCommand(process.env.TUYA_PROJECTOR_REMOTE_ID, 'PowerOn');
     console.log('[Tuya] ✅ Projector started');
   }
 
@@ -433,9 +437,10 @@ export async function endSessionDevices(): Promise<void> {
 
   if (process.env.TUYA_PROJECTOR_REMOTE_ID) {
     // Projectors typically need power code twice to turn OFF
-    await irStandardCommand(process.env.TUYA_PROJECTOR_REMOTE_ID, 'power');
+    const remoteId = process.env.TUYA_PROJECTOR_REMOTE_ID;
+    await irProjectorCommand(remoteId, 'PowerOff');
     await new Promise(resolve => setTimeout(resolve, 1000));
-    await irStandardCommand(process.env.TUYA_PROJECTOR_REMOTE_ID, 'power');
+    await irProjectorCommand(remoteId, 'PowerOff');
     console.log('[Tuya] ✅ Projector powered OFF');
   }
 
@@ -462,10 +467,14 @@ export async function listScenes(): Promise<Array<{ name: string; id: string }>>
 
 // ── Exported Individual Device Commands (for admin manual control) ───────────
 
-/** Turn the AC on via the IR blaster. */
+/** Turn the AC on via the IR blaster and set to 24°C cool mode. */
 export async function irAcOn(): Promise<void> {
   await irAcCommand('power', '1');
-  console.log('[Tuya] ✅ AC ON (admin manual)');
+  // Small delay to let the AC respond to power on before sending settings
+  await new Promise(resolve => setTimeout(resolve, 1500));
+  await irAcCommand('temp', '24');  // Set temperature to 24°C
+  await irAcCommand('mode', '0');   // mode 0 = cool
+  console.log('[Tuya] ✅ AC ON @ 24°C cool mode (admin manual)');
 }
 
 /** Turn the AC off via the IR blaster. */
@@ -482,10 +491,13 @@ export async function irAcOff(): Promise<void> {
 export async function irProjectorToggle(off = false): Promise<void> {
   const remoteId = process.env.TUYA_PROJECTOR_REMOTE_ID;
   if (!remoteId) throw new Error('[Tuya] TUYA_PROJECTOR_REMOTE_ID is not set');
-  await irStandardCommand(remoteId, 'power');
+  
   if (off) {
+    await irProjectorCommand(remoteId, 'PowerOff');
     await new Promise(resolve => setTimeout(resolve, 1000));
-    await irStandardCommand(remoteId, 'power');
+    await irProjectorCommand(remoteId, 'PowerOff');
+  } else {
+    await irProjectorCommand(remoteId, 'PowerOn');
   }
   console.log(`[Tuya] ✅ Projector ${off ? 'OFF' : 'ON'} (admin manual)`);
 }
