@@ -116,10 +116,15 @@ async function checkTuyaSessionStart() {
 }
 
 /**
- * Turn OFF all devices 2 minutes after the session ends.
- * The 2-min grace lets the customer finish up and exit.
+ * Turn OFF all devices 2 minutes after the session CURRENT end_time.
+ *
+ * Handles time extensions correctly:
+ *   - end_time is checked against its LIVE value (updated when customer adds time)
+ *   - If a session was extended AFTER devices were stopped, reset the flags
+ *     so startSessionDevices fires again (Case 2 below).
  */
 async function checkTuyaSessionEnd() {
+  // ── Case 1: End devices for sessions that have truly ended ─────────────────
   const { rows } = await db.query(`
     SELECT b.id, b.end_time
     FROM bookings b
@@ -127,7 +132,7 @@ async function checkTuyaSessionEnd() {
       AND b.devices_started = TRUE
       AND b.devices_stopped = FALSE
       AND b.end_time <= NOW() - INTERVAL '2 minutes'
-      AND b.end_time > NOW() - INTERVAL '1 day' -- Catch missed sessions up to 1 day old
+      AND b.end_time > NOW() - INTERVAL '1 day'
   `);
 
   for (const row of rows) {
@@ -151,7 +156,19 @@ async function checkTuyaSessionEnd() {
       }
     }
   }
+
+  // ── Case 2: Session was extended AFTER devices were already stopped ─────────
+  // Customer added time → end_time is now in the future again.
+  // Reset both flags so checkTuyaSessionStart turns devices back ON.
+  await db.query(`
+    UPDATE bookings
+    SET devices_stopped = FALSE, devices_started = FALSE
+    WHERE status = 'confirmed'
+      AND devices_stopped = TRUE
+      AND end_time > NOW() + INTERVAL '3 minutes'
+  `);
 }
+
 
 /**
  * Generate Tuya Door PIN 15 minutes before the session starts.
