@@ -13,6 +13,7 @@ export function startScheduler(): void {
       await checkUpcomingEndReminders();
       await checkSessionEndAlerts();
       await markCompletedBookings();
+      await cleanupAbandonedBookings();
 
       // ── Tuya Device Automation ──────────────────────────────────────────
       await checkTuyaSessionStart();
@@ -226,6 +227,23 @@ async function checkSessionStartPasscode() {
         ).catch(console.error);
       }
     }
+    }
+  }
+
+/** 
+ * Auto-cancel bookings left in 'pending' status without a receipt upload 
+ * after 15 minutes of creation to free up the calendar slot.
+ */
+async function cleanupAbandonedBookings() {
+  const { rowCount } = await db.query(`
+    UPDATE bookings 
+    SET status = 'cancelled', updated_at = NOW() 
+    WHERE status = 'pending' 
+      AND payment_status = 'pending' 
+      AND created_at < NOW() - INTERVAL '15 minutes'
+  `);
+  
+  if (rowCount && rowCount > 0) {
+    console.log(`[Scheduler] Auto-cancelled ${rowCount} abandoned booking(s).`);
   }
 }
-

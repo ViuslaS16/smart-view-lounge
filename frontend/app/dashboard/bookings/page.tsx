@@ -5,7 +5,7 @@ import Link from "next/link";
 import { formatLKR, formatDuration, formatDate } from "@/lib/utils";
 import { useApi } from "@/lib/hooks";
 import { apiFetch } from "@/lib/api";
-import { Mailbox, Check, X } from "lucide-react";
+import { Mailbox, Check, X, Clock } from "lucide-react";
 
 type BookingStatus = "pending" | "confirmed" | "completed" | "cancelled";
 type Booking = { id: string; start_time: string; end_time: string; duration_minutes: number; status: BookingStatus; total_amount: number; created_at: string; payhere_order_id?: string; };
@@ -152,7 +152,7 @@ function BookingCard({ booking, onCancel, cancelling }: {
           <div>
             <p style={{ fontSize: 10, color: "var(--text-muted)", fontWeight: 700, letterSpacing: "0.5px", textTransform: "uppercase", marginBottom: 4 }}>Status</p>
             <p style={{ fontWeight: 600, fontSize: 13, display: "flex", alignItems: "center", gap: 4 }}>
-              {booking.status === "confirmed" ? <><Check size={14} /> Paid</> : booking.status === "completed" ? <><Check size={14} /> Done</> : <><X size={14} /> Cancelled</>}
+              {booking.status === "confirmed" ? <><Check size={14} /> Paid</> : booking.status === "completed" ? <><Check size={14} /> Done</> : booking.status === "pending" ? <><Clock size={14} /> Verifying...</> : <><X size={14} /> Cancelled</>}
             </p>
           </div>
         </div>

@@ -444,7 +444,10 @@ export async function uploadReceipt(req: Request, res: Response): Promise<void> 
 
   // Verify booking ownership and status
   const { rows: bRows } = await db.query(
-    'SELECT id, status, payment_status FROM bookings WHERE id = $1 AND user_id = $2',
+    `SELECT b.id, b.status, b.payment_status, u.mobile 
+     FROM bookings b 
+     JOIN users u ON b.user_id = u.id 
+     WHERE b.id = $1 AND b.user_id = $2`,
     [bookingId, userId]
   );
 
@@ -484,6 +487,18 @@ export async function uploadReceipt(req: Request, res: Response): Promise<void> 
     }
   } catch (err: any) {
     console.warn(`[SMS Alert] Admin notification failed:`, err.message);
+  }
+
+  // Notify Customer via SMS
+  try {
+    await sendSMS(
+      bRows[0].mobile,
+      `SmartView Lounge: We have received your payment receipt. Our team will verify it shortly and send your Door PIN upon approval.`,
+      'payment_verifying',
+      bookingId
+    );
+  } catch (err: any) {
+    console.warn(`[SMS Alert] Customer notification failed:`, err.message);
   }
 
   res.json({ message: 'Receipt uploaded successfully. Admin will verify shortly.' });

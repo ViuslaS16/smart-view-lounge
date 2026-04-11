@@ -35,7 +35,7 @@ export default function AdminBookingsPage() {
 
   const filtered = ALL_ADMIN_BOOKINGS
     .filter((b: any) => {
-      if (filter === "all") return true;
+      if (filter === "all") return b.status !== "pending" || b.payment_status === "pending_verification";
       if (filter === "pending") return b.payment_status === "pending_verification";
       return b.status === filter;
     })

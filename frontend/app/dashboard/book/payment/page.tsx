@@ -47,7 +47,7 @@ function PaymentContent() {
         // apiFetch handles binary when body is FormData
       });
 
-      router.push(`/dashboard/bookings?ref=${bookingId}&status=pending_verification`);
+      router.push(`/dashboard/book/success?ref=${bookingId}&status=verifying`);
     } catch (err: any) {
       alert(err.message || 'Failed to upload receipt. Please try again.');
     } finally {
