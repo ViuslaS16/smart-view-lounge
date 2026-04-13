@@ -3,6 +3,8 @@ import db from '../db';
 import { sendSMS, getSetting } from './sms.service';
 import { startSessionDevices, endSessionDevices, createSessionPin } from './tuya.service';
 
+const notifiedFailures = new Set<string>();
+
 export function startScheduler(): void {
   console.log('[Scheduler] Starting SMS + Tuya cron jobs...');
 
@@ -103,14 +105,18 @@ async function checkTuyaSessionStart() {
       console.log(`[Tuya] ✅ Devices started (AC + Projector + Lights) for booking ${row.id}`);
     } catch (err: any) {
       console.error(`[Tuya] ❌ Failed to start devices for booking ${row.id}:`, err.message);
-      const adminMobile = await getSetting('admin_mobile');
-      if (adminMobile) {
-        sendSMS(
-          adminMobile,
-          `⚠️ TUYA: Devices failed to auto-start for booking ${row.id}. Start manually!`,
-          'tuya_start_fail',
-          row.id
-        ).catch(console.error);
+      const cacheKey = `start_fail_${row.id}`;
+      if (!notifiedFailures.has(cacheKey)) {
+        const adminMobile = await getSetting('admin_mobile');
+        if (adminMobile) {
+          sendSMS(
+            adminMobile,
+            `⚠️ TUYA: Devices failed to auto-start for booking ${row.id}. Start manually!`,
+            'tuya_start_fail',
+            row.id
+          ).catch(console.error);
+          notifiedFailures.add(cacheKey);
+        }
       }
     }
   }
@@ -146,14 +152,18 @@ async function checkTuyaSessionEnd() {
       console.log(`[Tuya] ✅ All devices powered OFF for booking ${row.id}`);
     } catch (err: any) {
       console.error(`[Tuya] ❌ Failed to stop devices for booking ${row.id}:`, err.message);
-      const adminMobile = await getSetting('admin_mobile');
-      if (adminMobile) {
-        sendSMS(
-          adminMobile,
-          `⚠️ TUYA: Devices failed to auto-stop for booking ${row.id}. Turn off manually!`,
-          'tuya_stop_fail',
-          row.id
-        ).catch(console.error);
+      const cacheKey = `stop_fail_${row.id}`;
+      if (!notifiedFailures.has(cacheKey)) {
+        const adminMobile = await getSetting('admin_mobile');
+        if (adminMobile) {
+          sendSMS(
+            adminMobile,
+            `⚠️ TUYA: Devices failed to auto-stop for booking ${row.id}. Turn off manually!`,
+            'tuya_stop_fail',
+            row.id
+          ).catch(console.error);
+          notifiedFailures.add(cacheKey);
+        }
       }
     }
   }
@@ -217,14 +227,18 @@ async function checkSessionStartPasscode() {
       console.log(`[Tuya] ✅ PIN ${pin}# sent to ${row.mobile} for session starting now (${row.id})`);
     } catch (err: any) {
       console.error(`[Tuya] ❌ PIN generation failed for booking ${row.id}:`, err.message);
-      const adminMobile = await getSetting('admin_mobile');
-      if (adminMobile) {
-        sendSMS(
-          adminMobile,
-          `⚠️ TUYA ALERT: Door PIN FAILED for booking ${row.id}. Give manual access!`,
-          'tuya_pin_fail',
-          row.id
-        ).catch(console.error);
+      const cacheKey = `pin_fail_${row.id}`;
+      if (!notifiedFailures.has(cacheKey)) {
+        const adminMobile = await getSetting('admin_mobile');
+        if (adminMobile) {
+          sendSMS(
+            adminMobile,
+            `⚠️ TUYA ALERT: Door PIN FAILED for booking ${row.id}. Give manual access!`,
+            'tuya_pin_fail',
+            row.id
+          ).catch(console.error);
+          notifiedFailures.add(cacheKey);
+        }
       }
     }
     }

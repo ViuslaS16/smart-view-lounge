@@ -182,41 +182,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       </aside>
 
       {/* ── Main Content ───────────────────────────────────────────────── */}
-      <main className="admin-main admin-main-with-bottom">
+      <main className="admin-main">
         {children}
       </main>
 
-      {/* ── Mobile Bottom Navigation ───────────────────────────────────── */}
-      <nav className="admin-bottom-nav">
-        {navItems.map(({ href, label, icon, badgeKey }: any) => {
-          const badgeValue = badgeKey === "verifications" ? (dashData?.stats?.pending_verifications || 0) : 0;
-          return (
-            <Link
-              key={href}
-              href={href}
-              className={`admin-nav-tab${isActive(href) ? " active" : ""}`}
-              style={{ position: "relative" }}
-            >
-              <span style={{ display: "flex" }}>{icon}</span>
-              <span>{label}</span>
-              {badgeValue > 0 && (
-                <span style={{
-                  position: "absolute", top: 2, right: 8,
-                  background: "var(--danger)", color: "white",
-                  fontSize: 9, fontWeight: 700, borderRadius: "50%",
-                  width: 14, height: 14, display: "flex", alignItems: "center", justifyContent: "center",
-                }}>{badgeValue}</span>
-              )}
-            </Link>
-          );
-        })}
-        <button onClick={handleLogout} className="admin-nav-tab" style={{ fontFamily: "var(--font-sans)" }}>
-          <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75" />
-          </svg>
-          <span>Logout</span>
-        </button>
-      </nav>
+
 
     </div>
   );
