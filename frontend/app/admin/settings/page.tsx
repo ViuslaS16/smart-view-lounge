@@ -31,6 +31,9 @@ export default function AdminSettingsPage() {
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState("");
   const [dirty, setDirty] = useState(false);
+  const [smsTemplateConfirmed, setSmsTemplateConfirmed] = useState(
+    "SmartView Lounge: Payment Verified! Your door PIN is {{pin}}#. Valid: {{start_time}} - {{end_time}}. Do NOT share this PIN."
+  );
 
   // Admin mobile state
   type MobileUiState = 'idle' | 'entering' | 'otp_sent' | 'removing';
@@ -67,6 +70,11 @@ export default function AdminSettingsPage() {
       setMinDuration(Number(data.settings.min_duration_minutes) || 60);
       setTimeIncrement(Number(data.settings.time_increment_minutes) || 30);
       setIncrementPrice(Number(data.settings.time_increment_price) || 1250);
+      
+      if (data.settings.sms_template_booking_confirmed) {
+        setSmsTemplateConfirmed(data.settings.sms_template_booking_confirmed);
+      }
+      
       setDirty(false);
     }
   }, [data]);
@@ -97,6 +105,7 @@ export default function AdminSettingsPage() {
           min_duration_minutes: String(minDuration),
           time_increment_minutes: String(timeIncrement),
           time_increment_price: String(incrementPrice),
+          sms_template_booking_confirmed: smsTemplateConfirmed,
         }),
       });
       mutate();
@@ -349,6 +358,28 @@ export default function AdminSettingsPage() {
               <AlertTriangle size={15} /> {error}
             </span>
           )}
+        </div>
+      </section>
+
+      {/* SMS Templates */}
+      <section className="card" style={{ padding: isNarrow ? "16px" : "24px", marginBottom: 20 }}>
+        <h2 style={{ fontWeight: 700, fontSize: 17, marginBottom: 6 }}>SMS Configuration</h2>
+        <p style={{ fontSize: 13, color: "var(--text-muted)", marginBottom: 20 }}>
+          Change the message sent to users when their booking is confirmed. 
+          Use <code style={{fontFamily: "var(--font-mono)", fontSize: 12}}>{"{{start_time}}"}</code>, <code style={{fontFamily: "var(--font-mono)", fontSize: 12}}>{"{{end_time}}"}</code>, and <code style={{fontFamily: "var(--font-mono)", fontSize: 12}}>{"{{pin}}"}</code> as variables.
+        </p>
+
+        <div>
+           <label className="label">Booking Confirmed SMS Template</label>
+           <textarea
+              className="input"
+              value={smsTemplateConfirmed}
+              onChange={(e) => { setSmsTemplateConfirmed(e.target.value); setDirty(true); }}
+              style={{ minHeight: "80px", resize: "vertical", fontSize: 14 }}
+           />
+           <p style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 6 }}>
+             When you save configuration, the system will send a test SMS of this template to the admin mobile number.
+           </p>
         </div>
       </section>
 

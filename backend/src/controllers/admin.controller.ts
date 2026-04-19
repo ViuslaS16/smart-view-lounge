@@ -210,7 +210,12 @@ export async function manualBooking(req: Request, res: Response): Promise<void> 
 
         const startFmt = start.toLocaleString('en-LK', { timeZone: 'Asia/Colombo', dateStyle: 'medium', timeStyle: 'short' });
         const endFmt   = end.toLocaleString('en-LK',   { timeZone: 'Asia/Colombo', timeStyle: 'short' });
-        const pinMsg = `SmartView Lounge: Your door PIN is ${pin}#. Valid: ${startFmt} - ${endFmt}. Do NOT share this PIN.`;
+        
+        let pinMsg = `SmartView Lounge: Your door PIN is ${pin}#. Valid: ${startFmt} - ${endFmt}. Do NOT share this PIN.`;
+        const customTemplate = await getSetting('sms_template_booking_confirmed');
+        if (customTemplate) {
+          pinMsg = customTemplate.replace('{{start_time}}', startFmt).replace('{{end_time}}', endFmt).replace('{{pin}}', String(pin));
+        }
 
         await sendSMS(user.mobile, pinMsg, 'door_pin', booking.id);
         console.log(`[Admin] ✅ PIN ${pin}# generated & sent for manual booking ${booking.id}`);
@@ -263,8 +268,19 @@ export async function updateSettings(req: Request, res: Response): Promise<void>
     for (const key of Object.keys(settings)) {
         await db.query(`INSERT INTO settings (key, value) VALUES ($1, $2) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW()`, [key, settings[key]]);
     }
+
+    // Send test SMS if SMS templates were just updated
+    try {
+        const { rows } = await db.query(`SELECT value FROM settings WHERE key = 'admin_mobile'`);
+        const adminMobile = rows[0]?.value;
+        if (adminMobile && settings['sms_template_booking_confirmed']) {
+            const testMsg = settings['sms_template_booking_confirmed'].replace('{{start_time}}', '10:00 AM').replace('{{pin}}', '123456');
+            await sendSMS(adminMobile, `[TEST] ${testMsg}`, 'test_sms');
+        }
+    } catch(err: any) { console.error('Failed to send test SMS', err.message); }
+
     await db.query(`INSERT INTO audit_logs (actor_id, action, target_type) VALUES ($1, 'settings.update', 'system')`, [req.user!.id]);
-    res.json({ message: 'Settings updated' });
+    res.json({ message: 'Settings updated and test SMS sent if template changed' });
 }
 
 // ── Device Controls ──────────────────────────────────────────────────────────
@@ -549,7 +565,12 @@ export async function verifyPayment(req: Request, res: Response): Promise<void> 
 
         const startFmt = start.toLocaleString('en-LK', { timeZone: 'Asia/Colombo', dateStyle: 'medium', timeStyle: 'short' });
         const endFmt   = end.toLocaleString('en-LK',   { timeZone: 'Asia/Colombo', timeStyle: 'short' });
-        const pinMsg = `SmartView Lounge: Payment Verified! Your door PIN is ${pin}#. Valid: ${startFmt} - ${endFmt}. Do NOT share this PIN.`;
+        
+        let pinMsg = `SmartView Lounge: Payment Verified! Your door PIN is ${pin}#. Valid: ${startFmt} - ${endFmt}. Do NOT share this PIN.`;
+        const customTemplate = await getSetting('sms_template_booking_confirmed');
+        if (customTemplate) {
+          pinMsg = customTemplate.replace('{{start_time}}', startFmt).replace('{{end_time}}', endFmt).replace('{{pin}}', String(pin));
+        }
 
         await sendSMS(booking.mobile, pinMsg, 'door_pin', booking.id);
       } catch (pinErr: any) {

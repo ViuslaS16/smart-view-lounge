@@ -161,7 +161,6 @@ export default function AdminBookingsPage() {
               <th>Customer</th>
               <th>Date & Time</th>
               <th>Duration</th>
-              <th>Door PIN</th>
               <th>Amount</th>
               <th>Status</th>
               <th>Actions</th>
@@ -192,17 +191,6 @@ export default function AdminBookingsPage() {
                     </div>
                   </td>
                   <td style={{ fontWeight: 500 }}>{booking.duration_minutes / 60}h</td>
-                  <td>
-                    {booking.door_pin ? (
-                      <span style={{ fontFamily: "var(--font-mono)", fontSize: 13, background: "rgba(201,147,58,0.15)", color: "var(--accent)", padding: "4px 8px", borderRadius: 4, fontWeight: 700 }}>
-                        {booking.door_pin}#
-                      </span>
-                    ) : (
-                      <span style={{ fontSize: 12, color: "var(--text-muted)", fontStyle: "italic" }}>
-                        Pending...
-                      </span>
-                    )}
-                  </td>
                   <td style={{ fontWeight: 700, color: "var(--accent)" }}>{formatLKR(booking.total_amount)}</td>
                   <td>
                     <div style={{ display: "flex", flexWrap: "wrap", gap: 6, alignItems: "center" }}>
