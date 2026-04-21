@@ -72,6 +72,42 @@ function calculateAge(birthDate: Date): number {
   if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) age--;
   return age;
 }
+
+async function compressImage(file: File): Promise<File> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new window.Image();
+      img.onload = () => {
+        const MAX_DIM = 1200;
+        let width = img.width;
+        let height = img.height;
+        if (width > height) {
+          if (width > MAX_DIM) { height *= MAX_DIM / width; width = MAX_DIM; }
+        } else {
+          if (height > MAX_DIM) { width *= MAX_DIM / height; height = MAX_DIM; }
+        }
+        
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return resolve(file);
+        ctx.drawImage(img, 0, 0, width, height);
+        
+        canvas.toBlob((blob) => {
+          if (!blob) return resolve(file);
+          const newFile = new File([blob], file.name.replace(/\.[^/.]+$/, ".jpg"), { type: "image/jpeg" });
+          resolve(newFile);
+        }, "image/jpeg", 0.82);
+      };
+      img.onerror = () => resolve(file); // fallback to original file if parsing fails
+      img.src = e.target?.result as string;
+    };
+    reader.onerror = () => resolve(file); // fallback
+    reader.readAsDataURL(file);
+  });
+}
 // ───────────────────────────────────────────────────────────────────────────────
 
 export default function RegisterPage() {
@@ -219,7 +255,7 @@ export default function RegisterPage() {
     if (errors[field as keyof FormErrors]) setErrors((p) => ({ ...p, [field]: undefined }));
   }
 
-  function handleFile(
+  async function handleFile(
     file: File,
     side: "front" | "back",
     setFile: (f: File | null) => void,
@@ -230,15 +266,22 @@ export default function RegisterPage() {
       setErrors((p) => ({ ...p, [errorKey]: "Please upload an image file (JPG, PNG)." }));
       return;
     }
-    if (file.size > 5 * 1024 * 1024) {
-      setErrors((p) => ({ ...p, [errorKey]: "File size must be under 5MB." }));
-      return;
-    }
-    setFile(file);
+    
     setErrors((p) => ({ ...p, [errorKey]: undefined }));
-    const reader = new FileReader();
-    reader.onload = (ev) => setPreview(ev.target?.result as string);
-    reader.readAsDataURL(file);
+    
+    try {
+      const compressedFile = await compressImage(file);
+      if (compressedFile.size > 5 * 1024 * 1024) {
+        setErrors((p) => ({ ...p, [errorKey]: "File size must be under 5MB." }));
+        return;
+      }
+      setFile(compressedFile);
+      const reader = new FileReader();
+      reader.onload = (ev) => setPreview(ev.target?.result as string);
+      reader.readAsDataURL(compressedFile);
+    } catch (err) {
+      setErrors((p) => ({ ...p, [errorKey]: "Failed to process image. Please try another." }));
+    }
   }
 
   // ── Pending state ───────────────────────────────────────────────────────────
@@ -545,7 +588,7 @@ function NicUploadSlot({
       <input
         ref={inputRef}
         type="file"
-        accept="image/*"
+        accept="image/jpeg, image/png, image/webp"
         style={{ display: "none" }}
         onChange={(e) => e.target.files?.[0] && onChange(e.target.files[0])}
       />

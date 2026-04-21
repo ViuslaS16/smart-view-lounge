@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { formatLKR, formatDate, formatTime } from "@/lib/utils";
 import { format } from "date-fns";
 import { useApi } from "@/lib/hooks";
@@ -29,6 +29,27 @@ export default function AdminBookingsPage() {
 
   const { data, isLoading, revalidate } = useApi<{ bookings: any[] }>("/admin/bookings", 10000);
   const { data: usersData } = useApi<{ users: any[] }>("/admin/users", 10000);
+  const { data: settingsData } = useApi<{ settings: Record<string, string> }>("/admin/settings", 60000);
+
+  const settings = settingsData?.settings || {};
+  const hourlyRate = Number(settings.price_per_hour) || 2500;
+  const timeIncrementMinutes = Number(settings.time_increment_minutes) || 30;
+  const timeIncrementPrice = Number(settings.time_increment_price) || 1250;
+  const minDurationMinutes = Number(settings.min_duration_minutes) || 60;
+
+  const durationOptions = [];
+  for (let i = 0; i < 5; i++) {
+    const mins = minDurationMinutes + (i * timeIncrementMinutes);
+    const price = hourlyRate + (i * timeIncrementPrice);
+    const hoursStr = mins % 60 === 0 ? `${mins/60} hour${mins===60?'':'s'}` : `${mins/60} hours`;
+    durationOptions.push({ value: mins, label: `${hoursStr} — ${formatLKR(price)}` });
+  }
+
+  useEffect(() => {
+    if (minDurationMinutes && formDuration === "60" && minDurationMinutes !== 60) {
+      setFormDuration(String(minDurationMinutes));
+    }
+  }, [minDurationMinutes, formDuration]);
 
   const ALL_ADMIN_BOOKINGS = data?.bookings || [];
   const ALL_CUSTOMERS = usersData?.users || [];
@@ -272,11 +293,9 @@ export default function AdminBookingsPage() {
               <div>
                 <label className="label">Duration (minutes)</label>
                 <select className="input" style={{ background: "var(--bg-elevated)" }} value={formDuration} onChange={e => setFormDuration(e.target.value)}>
-                  <option value={60}>1 hour — LKR 2,500</option>
-                  <option value={90}>1.5 hours — LKR 3,750</option>
-                  <option value={120}>2 hours — LKR 5,000</option>
-                  <option value={150}>2.5 hours — LKR 6,250</option>
-                  <option value={180}>3 hours — LKR 7,500</option>
+                  {durationOptions.map(opt => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  ))}
                 </select>
               </div>
             </div>
