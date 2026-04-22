@@ -157,6 +157,27 @@ const stats = [
   { value: "24/7", label: "Available" },
 ];
 
+const pricingPackages = [
+  {
+    duration: "1 Hour",
+    price: "LKR 1,000",
+    popular: false,
+    features: ["Private 4K Screening", "Dolby 7.1 Surround", "Up to 12 Guests", "Bring Your Own Food"],
+  },
+  {
+    duration: "2 Hours",
+    price: "LKR 2,000",
+    popular: true,
+    features: ["Private 4K Screening", "Dolby 7.1 Surround", "Up to 12 Guests", "Bring Your Own Food", "Perfect for a Feature Film"],
+  },
+  {
+    duration: "3 Hours",
+    price: "LKR 3,000",
+    popular: false,
+    features: ["Private 4K Screening", "Dolby 7.1 Surround", "Up to 12 Guests", "Bring Your Own Food", "Ideal for Extended Director's Cuts"],
+  },
+];
+
 // ─── Film grain canvas overlay ────────────────────────────────────────────────
 function FilmGrain() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -593,6 +614,49 @@ export default function LandingPage() {
           </div>
         </section>
 
+        {/* ─── Pricing ────────────────────────────────────────────────── */}
+        <section className="land-section">
+          <div className="scroll-reveal land-section-header">
+            <p className="land-eyebrow">Pricing</p>
+            <h2 className="land-section-title">
+              Simple, transparent <span style={{ color: "#C9933A" }}>pricing</span>
+            </h2>
+            <p className="land-section-sub">
+              Book the entire theater for your private group. Pay securely via PayHere to instantly confirm your slot.
+            </p>
+          </div>
+
+          <div className="land-pricing-grid">
+            {pricingPackages.map((pkg, i) => (
+              <div key={i} className={`scroll-reveal land-pricing-card ${pkg.popular ? "land-pricing-popular" : ""}`}
+                style={{ transitionDelay: `${i * 0.1}s` }}
+              >
+                {pkg.popular && (
+                  <div className="land-pricing-badge">Most Popular</div>
+                )}
+                <h3 className="land-pricing-duration">{pkg.duration}</h3>
+                <div className="land-pricing-price">{pkg.price}</div>
+                <div className="land-pricing-divider" />
+                <ul className="land-pricing-features">
+                  {pkg.features.map((feat, j) => (
+                    <li key={j}>
+                      <IconCheck color="#C9933A" />
+                      <span>{feat}</span>
+                    </li>
+                  ))}
+                </ul>
+                <Link href="/register" className={`land-pricing-btn ${pkg.popular ? "primary" : "secondary"}`}>
+                  Book {pkg.duration}
+                </Link>
+              </div>
+            ))}
+          </div>
+          
+          <div className="scroll-reveal" style={{ textAlign: "center", marginTop: 32, fontSize: 14, color: "var(--text-secondary)" }}>
+            Need more time? Add extra 30-minute increments for LKR 500.
+          </div>
+        </section>
+
         {/* ─── CTA Section ────────────────────────────────────────────── */}
         <section className="scroll-reveal land-cta-section">
           <div className="land-cta-box">
@@ -629,7 +693,7 @@ export default function LandingPage() {
               { label: "Privacy Policy", href: "/privacy-policy" },
               { label: "Terms & Conditions", href: "/terms-conditions" },
               { label: "Contact", href: "#" },
-              { label: "Built by AviterX", href: "#" },
+              { label: "Built by AviterX", href: "https://aviterx.com" },
             ].map((item, i, arr) => (
               <span key={item.label} style={{ display: "flex", alignItems: "center", gap: 6 }}>
                 <span style={{ fontSize: 12, color: "var(--text-muted)", opacity: 0.4 }}>·</span>
@@ -840,6 +904,116 @@ export default function LandingPage() {
           background: rgba(255,255,255,0.02);
           border: 1px solid rgba(255,255,255,0.05);
           transition: all 0.25s;
+        }
+
+        /* Pricing */
+        .land-pricing-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+          gap: 24px;
+          margin-top: 48px;
+        }
+        .land-pricing-card {
+          background: rgba(255,255,255,0.02);
+          border: 1px solid rgba(255,255,255,0.06);
+          border-radius: 24px;
+          padding: 40px 32px;
+          position: relative;
+          display: flex;
+          flex-direction: column;
+          transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .land-pricing-card:hover {
+          transform: translateY(-8px);
+          box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+        }
+        .land-pricing-popular {
+          background: linear-gradient(180deg, rgba(201,147,58,0.08) 0%, rgba(255,255,255,0.02) 100%);
+          border-color: rgba(201,147,58,0.3);
+        }
+        .land-pricing-badge {
+          position: absolute;
+          top: -14px;
+          left: 50%;
+          transform: translateX(-50%);
+          background: linear-gradient(135deg, #C9933A, #A87828);
+          color: #0A0A0B;
+          font-size: 12px;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: 1px;
+          padding: 6px 16px;
+          border-radius: 999px;
+          box-shadow: 0 4px 12px rgba(201,147,58,0.3);
+        }
+        .land-pricing-duration {
+          font-family: var(--font-display);
+          font-size: 20px;
+          font-weight: 700;
+          color: var(--text-secondary);
+          margin-bottom: 12px;
+        }
+        .land-pricing-price {
+          font-family: var(--font-display);
+          font-size: 40px;
+          font-weight: 800;
+          color: var(--text-primary);
+          margin-bottom: 24px;
+          letter-spacing: -1px;
+        }
+        .land-pricing-divider {
+          height: 1px;
+          background: rgba(255,255,255,0.08);
+          margin-bottom: 24px;
+        }
+        .land-pricing-features {
+          list-style: none;
+          padding: 0;
+          margin: 0 0 32px 0;
+          flex-grow: 1;
+        }
+        .land-pricing-features li {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          margin-bottom: 16px;
+          font-size: 15px;
+          color: var(--text-secondary);
+        }
+        .land-pricing-features li svg {
+          flex-shrink: 0;
+          width: 18px;
+          height: 18px;
+        }
+        .land-pricing-btn {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 100%;
+          padding: 14px 0;
+          border-radius: 12px;
+          font-size: 15px;
+          font-weight: 600;
+          text-decoration: none;
+          transition: all 0.2s;
+        }
+        .land-pricing-btn.primary {
+          background: linear-gradient(135deg, #C9933A, #A87828);
+          color: #0A0A0B;
+          box-shadow: 0 8px 24px rgba(201,147,58,0.25);
+        }
+        .land-pricing-btn.primary:hover {
+          box-shadow: 0 12px 32px rgba(201,147,58,0.4);
+          transform: translateY(-2px);
+        }
+        .land-pricing-btn.secondary {
+          background: rgba(255,255,255,0.04);
+          color: var(--text-primary);
+          border: 1px solid rgba(255,255,255,0.1);
+        }
+        .land-pricing-btn.secondary:hover {
+          background: rgba(255,255,255,0.08);
+          border-color: rgba(255,255,255,0.2);
         }
 
         /* CTA section */
