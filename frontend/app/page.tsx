@@ -160,19 +160,19 @@ const stats = [
 const pricingPackages = [
   {
     duration: "1 Hour",
-    price: "LKR 1,000",
+    price: "LKR 990",
     popular: false,
     features: ["Private 4K Screening", "Dolby 7.1 Surround", "Up to 12 Guests", "Bring Your Own Food"],
   },
   {
     duration: "2 Hours",
-    price: "LKR 2,000",
+    price: "LKR 1990",
     popular: true,
     features: ["Private 4K Screening", "Dolby 7.1 Surround", "Up to 12 Guests", "Bring Your Own Food", "Perfect for a Feature Film"],
   },
   {
     duration: "3 Hours",
-    price: "LKR 3,000",
+    price: "LKR 2990",
     popular: false,
     features: ["Private 4K Screening", "Dolby 7.1 Surround", "Up to 12 Guests", "Bring Your Own Food", "Ideal for Extended Director's Cuts"],
   },
