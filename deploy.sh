@@ -14,6 +14,8 @@ SSH_KEY="~/.ssh/id_ed25519_smartview"
 VPS_APP_DIR="/home/smartviewlounge/smart-view-lounge"
 MODE="${1:-all}"
 
+export COPYFILE_DISABLE=1
+
 echo "🚀 SmartView Deploy — mode: $MODE"
 
 if [[ "$MODE" == "backend" || "$MODE" == "all" ]]; then

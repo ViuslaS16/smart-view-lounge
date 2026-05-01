@@ -412,44 +412,102 @@ async function irProjectorCommand(remoteId: string, key: 'PowerOn' | 'PowerOff')
 
 /**
  * Turn ON all devices 5 minutes before session start.
+ *
+ * Each device runs in its own try/catch — a failure on one device
+ * does NOT prevent the others from receiving their ON command.
+ * All per-device errors are collected and re-thrown as a combined
+ * message so the scheduler can log/retry correctly.
  */
 export async function startSessionDevices(): Promise<void> {
-  await irAcCommand('power', '1');  // Turn AC on
-  await new Promise(resolve => setTimeout(resolve, 1500));
-  await irAcCommand('temp', '24'); // Set 24°C
-  await irAcCommand('mode', '0');  // Cool mode
-  console.log('[Tuya] ✅ AC powered ON @ 24°C cool mode');
+  const errors: string[] = [];
 
-  if (process.env.TUYA_PROJECTOR_REMOTE_ID) {
-    await irProjectorCommand(process.env.TUYA_PROJECTOR_REMOTE_ID, 'PowerOn');
-    console.log('[Tuya] ✅ Projector started');
+  // ── AC ─────────────────────────────────────────────────────────────────────
+  try {
+    await irAcCommand('power', '1');
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    await irAcCommand('temp', '24'); // Set 24°C
+    await irAcCommand('mode', '0');  // Cool mode
+    console.log('[Tuya] ✅ AC powered ON @ 24°C cool mode');
+  } catch (err: any) {
+    console.error('[Tuya] ❌ AC start failed:', err.message);
+    errors.push(`AC: ${err.message}`);
   }
 
+  // ── Projector ───────────────────────────────────────────────────────────────
+  if (process.env.TUYA_PROJECTOR_REMOTE_ID) {
+    try {
+      await irProjectorCommand(process.env.TUYA_PROJECTOR_REMOTE_ID, 'PowerOn');
+      console.log('[Tuya] ✅ Projector started');
+    } catch (err: any) {
+      console.error('[Tuya] ❌ Projector start failed:', err.message);
+      errors.push(`Projector: ${err.message}`);
+    }
+  }
+
+  // ── Lights ──────────────────────────────────────────────────────────────────
   if (process.env.TUYA_LIGHTS_REMOTE_ID) {
-    await irLightsDiyCommand(process.env.TUYA_IR_DEVICE_ID!, process.env.TUYA_LIGHTS_REMOTE_ID);
-    console.log('[Tuya] ✅ Lights ON');
+    try {
+      await irLightsDiyCommand(process.env.TUYA_IR_DEVICE_ID!, process.env.TUYA_LIGHTS_REMOTE_ID);
+      console.log('[Tuya] ✅ Lights ON');
+    } catch (err: any) {
+      console.error('[Tuya] ❌ Lights start failed:', err.message);
+      errors.push(`Lights: ${err.message}`);
+    }
+  }
+
+  if (errors.length > 0) {
+    throw new Error(`[Tuya] startSessionDevices — partial failure: ${errors.join(' | ')}`);
   }
 }
 
 /**
  * Turn OFF all devices after session ends.
+ *
+ * Each device runs in its own try/catch — a failure on AC does NOT
+ * prevent the projector or lights from receiving their OFF command.
+ * All per-device errors are collected and re-thrown as a combined
+ * message so the scheduler knows something still needs attention.
  */
 export async function endSessionDevices(): Promise<void> {
-  await irAcCommand('power', '0');  // Turn AC off
-  console.log('[Tuya] ✅ AC powered OFF');
+  const errors: string[] = [];
 
-  if (process.env.TUYA_PROJECTOR_REMOTE_ID) {
-    // Projectors typically need power code twice to turn OFF
-    const remoteId = process.env.TUYA_PROJECTOR_REMOTE_ID;
-    await irProjectorCommand(remoteId, 'PowerOff');
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    await irProjectorCommand(remoteId, 'PowerOff');
-    console.log('[Tuya] ✅ Projector powered OFF');
+  // ── AC ─────────────────────────────────────────────────────────────────────
+  try {
+    await irAcCommand('power', '0');
+    console.log('[Tuya] ✅ AC powered OFF');
+  } catch (err: any) {
+    console.error('[Tuya] ❌ AC stop failed:', err.message);
+    errors.push(`AC: ${err.message}`);
   }
 
+  // ── Projector ───────────────────────────────────────────────────────────────
+  if (process.env.TUYA_PROJECTOR_REMOTE_ID) {
+    try {
+      // Projectors typically need power code twice to turn OFF
+      const remoteId = process.env.TUYA_PROJECTOR_REMOTE_ID;
+      await irProjectorCommand(remoteId, 'PowerOff');
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      await irProjectorCommand(remoteId, 'PowerOff');
+      console.log('[Tuya] ✅ Projector powered OFF');
+    } catch (err: any) {
+      console.error('[Tuya] ❌ Projector stop failed:', err.message);
+      errors.push(`Projector: ${err.message}`);
+    }
+  }
+
+  // ── Lights ──────────────────────────────────────────────────────────────────
   if (process.env.TUYA_LIGHTS_REMOTE_ID) {
-    await irLightsDiyCommand(process.env.TUYA_IR_DEVICE_ID!, process.env.TUYA_LIGHTS_REMOTE_ID);
-    console.log('[Tuya] ✅ Lights OFF');
+    try {
+      await irLightsDiyCommand(process.env.TUYA_IR_DEVICE_ID!, process.env.TUYA_LIGHTS_REMOTE_ID);
+      console.log('[Tuya] ✅ Lights OFF');
+    } catch (err: any) {
+      console.error('[Tuya] ❌ Lights stop failed:', err.message);
+      errors.push(`Lights: ${err.message}`);
+    }
+  }
+
+  if (errors.length > 0) {
+    throw new Error(`[Tuya] endSessionDevices — partial failure: ${errors.join(' | ')}`);
   }
 }
 

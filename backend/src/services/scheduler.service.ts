@@ -4,6 +4,7 @@ import { sendSMS, getSetting } from './sms.service';
 import { startSessionDevices, endSessionDevices, createSessionPin } from './tuya.service';
 
 const notifiedFailures = new Set<string>();
+const MAX_DEVICE_ATTEMPTS = 5; // Give up after this many consecutive failures
 
 export function startScheduler(): void {
   console.log('[Scheduler] Starting SMS + Tuya cron jobs...');
@@ -91,20 +92,32 @@ async function checkTuyaSessionStart() {
     FROM bookings b
     WHERE b.status = 'confirmed'
       AND b.devices_started = FALSE
+      AND COALESCE(b.devices_start_attempts, 0) < $1
       AND b.start_time <= NOW() + INTERVAL '5 minutes'
       AND b.end_time > NOW() -- Valid anytime during the session if missed
-  `);
+  `, [MAX_DEVICE_ATTEMPTS]);
 
   for (const row of rows) {
     try {
       await startSessionDevices();
       await db.query(
-        'UPDATE bookings SET devices_started = TRUE WHERE id = $1',
+        'UPDATE bookings SET devices_started = TRUE, devices_start_attempts = 0 WHERE id = $1',
         [row.id]
       );
       console.log(`[Tuya] ✅ Devices started (AC + Projector + Lights) for booking ${row.id}`);
     } catch (err: any) {
       console.error(`[Tuya] ❌ Failed to start devices for booking ${row.id}:`, err.message);
+
+      // Increment attempt counter
+      const { rows: attemptRows } = await db.query(
+        `UPDATE bookings
+           SET devices_start_attempts = COALESCE(devices_start_attempts, 0) + 1
+         WHERE id = $1
+         RETURNING devices_start_attempts`,
+        [row.id]
+      );
+      const attempts = attemptRows[0]?.devices_start_attempts ?? 1;
+
       const cacheKey = `start_fail_${row.id}`;
       if (!notifiedFailures.has(cacheKey)) {
         const adminMobile = await getSetting('admin_mobile');
@@ -118,6 +131,10 @@ async function checkTuyaSessionStart() {
           notifiedFailures.add(cacheKey);
         }
       }
+
+      if (attempts >= MAX_DEVICE_ATTEMPTS) {
+        console.error(`[Tuya] ❌ Giving up on starting devices for booking ${row.id} after ${attempts} attempts.`);
+      }
     }
   }
 }
@@ -129,6 +146,10 @@ async function checkTuyaSessionStart() {
  *   - end_time is checked against its LIVE value (updated when customer adds time)
  *   - If a session was extended AFTER devices were stopped, reset the flags
  *     so startSessionDevices fires again (Case 2 below).
+ *
+ * Retry resilience:
+ *   - Tracks devices_stop_attempts. After MAX_DEVICE_ATTEMPTS failures, marks
+ *     devices_stopped = TRUE and stops retrying (admin already notified on attempt 1).
  */
 async function checkTuyaSessionEnd() {
   // ── Case 1: End devices for sessions that have truly ended ─────────────────
@@ -138,20 +159,32 @@ async function checkTuyaSessionEnd() {
     WHERE b.status IN ('confirmed', 'completed')
       AND b.devices_started = TRUE
       AND b.devices_stopped = FALSE
+      AND COALESCE(b.devices_stop_attempts, 0) < $1
       AND b.end_time <= NOW() - INTERVAL '2 minutes'
       AND b.end_time > NOW() - INTERVAL '1 day'
-  `);
+  `, [MAX_DEVICE_ATTEMPTS]);
 
   for (const row of rows) {
     try {
       await endSessionDevices();
       await db.query(
-        'UPDATE bookings SET devices_stopped = TRUE WHERE id = $1',
+        'UPDATE bookings SET devices_stopped = TRUE, devices_stop_attempts = 0 WHERE id = $1',
         [row.id]
       );
       console.log(`[Tuya] ✅ All devices powered OFF for booking ${row.id}`);
     } catch (err: any) {
       console.error(`[Tuya] ❌ Failed to stop devices for booking ${row.id}:`, err.message);
+
+      // Increment attempt counter; if limit reached, mark stopped to prevent infinite loop
+      const { rows: attemptRows } = await db.query(
+        `UPDATE bookings
+           SET devices_stop_attempts = COALESCE(devices_stop_attempts, 0) + 1
+         WHERE id = $1
+         RETURNING devices_stop_attempts`,
+        [row.id]
+      );
+      const attempts = attemptRows[0]?.devices_stop_attempts ?? 1;
+
       const cacheKey = `stop_fail_${row.id}`;
       if (!notifiedFailures.has(cacheKey)) {
         const adminMobile = await getSetting('admin_mobile');
@@ -165,6 +198,15 @@ async function checkTuyaSessionEnd() {
           notifiedFailures.add(cacheKey);
         }
       }
+
+      // Hard stop: give up after MAX_DEVICE_ATTEMPTS to avoid infinite retry
+      if (attempts >= MAX_DEVICE_ATTEMPTS) {
+        await db.query(
+          `UPDATE bookings SET devices_stopped = TRUE WHERE id = $1`,
+          [row.id]
+        );
+        console.error(`[Tuya] ❌ Giving up on stopping devices for booking ${row.id} after ${attempts} attempts. Marked as stopped.`);
+      }
     }
   }
 
@@ -173,7 +215,8 @@ async function checkTuyaSessionEnd() {
   // Reset both flags so checkTuyaSessionStart turns devices back ON.
   await db.query(`
     UPDATE bookings
-    SET devices_stopped = FALSE, devices_started = FALSE
+    SET devices_stopped = FALSE, devices_started = FALSE,
+        devices_stop_attempts = 0, devices_start_attempts = 0
     WHERE status = 'confirmed'
       AND devices_stopped = TRUE
       AND end_time > NOW() + INTERVAL '3 minutes'

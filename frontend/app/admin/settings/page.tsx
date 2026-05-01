@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useApi } from "@/lib/hooks";
 import { apiFetch } from "@/lib/api";
 import { Smartphone, Check, AlertTriangle, Wind, Monitor, Lightbulb, KeyRound, ShieldCheck, Trash2 } from "lucide-react";
@@ -51,7 +51,34 @@ export default function AdminSettingsPage() {
     ac: "idle", projector: "idle", light: "idle", doorPin: "idle",
   });
   const [deviceMsg, setDeviceMsg] = useState<Record<string, string>>({});
+  const [deviceMsgType, setDeviceMsgType] = useState<Record<string, "success" | "error">>({});
   const [generatedPin, setGeneratedPin] = useState<string | null>(null);
+
+  // Terminal log
+  interface TerminalLog {
+    id: number;
+    ts: string;
+    level: "info" | "success" | "error" | "warn";
+    message: string;
+  }
+  const [logs, setLogs] = useState<TerminalLog[]>([]);
+  const logIdRef = useRef(0);
+  const terminalRef = useRef<HTMLDivElement>(null);
+
+  const pushLog = useCallback((level: TerminalLog["level"], message: string) => {
+    const ts = new Date().toLocaleTimeString("en-LK", {
+      hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false,
+    });
+    const entry: TerminalLog = { id: ++logIdRef.current, ts, level, message };
+    setLogs((prev) => [...prev.slice(-199), entry]); // keep last 200 lines
+  }, []);
+
+  // Auto-scroll terminal when new logs arrive
+  useEffect(() => {
+    if (terminalRef.current) {
+      terminalRef.current.scrollTop = terminalRef.current.scrollHeight;
+    }
+  }, [logs]);
 
   // Responsive: detect narrow screen
   const [isNarrow, setIsNarrow] = useState(false);
@@ -174,9 +201,17 @@ export default function AdminSettingsPage() {
     endpoint: string,
     body: object
   ) {
+    const actionLabel = (body as any).action
+      ? `${key.toUpperCase()} → ${(body as any).action.toUpperCase()}`
+      : key.toUpperCase();
+
     setDeviceStatus((s) => ({ ...s, [key]: "loading" }));
     setDeviceMsg((m) => ({ ...m, [key]: "" }));
     if (key === "doorPin") setGeneratedPin(null);
+
+    pushLog("info", `POST ${endpoint}  { ${Object.entries(body).map(([k,v]) => `${k}: "${v}"`).join(", ")} }`);
+    pushLog("warn", `Sending ${actionLabel} command...`);
+
     try {
       const res = await apiFetch(endpoint, {
         method: "POST",
@@ -184,11 +219,16 @@ export default function AdminSettingsPage() {
       }) as any;
       setDeviceStatus((s) => ({ ...s, [key]: "success" }));
       setDeviceMsg((m) => ({ ...m, [key]: res.message || "Done" }));
+      setDeviceMsgType((m) => ({ ...m, [key]: "success" }));
       if (key === "doorPin" && res.door_pin) setGeneratedPin(res.door_pin);
+      pushLog("success", `✓ ${res.message || "Command succeeded"}`);
+      if (res.door_pin) pushLog("success", `  Door PIN: ${res.door_pin}  (valid 30 min)`);
       setTimeout(() => setDeviceStatus((s) => ({ ...s, [key]: "idle" })), 5000);
     } catch (err: any) {
       setDeviceStatus((s) => ({ ...s, [key]: "error" }));
       setDeviceMsg((m) => ({ ...m, [key]: err.message || "Failed" }));
+      setDeviceMsgType((m) => ({ ...m, [key]: "error" }));
+      pushLog("error", `✗ ${err.message || "Command failed"}`);
       setTimeout(() => setDeviceStatus((s) => ({ ...s, [key]: "idle" })), 6000);
     }
   }
@@ -615,7 +655,7 @@ export default function AdminSettingsPage() {
             </button>
           </div>
           {deviceMsg.ac && (
-            <p style={{ fontSize: 12, marginTop: 8, color: deviceStatus.ac === "error" ? "var(--danger)" : "var(--success)" }}>
+            <p style={{ fontSize: 12, marginTop: 8, color: deviceMsgType.ac === "error" ? "var(--danger)" : "var(--success)" }}>
               {deviceMsg.ac}
             </p>
           )}
@@ -643,7 +683,7 @@ export default function AdminSettingsPage() {
             </button>
           </div>
           {deviceMsg.projector && (
-            <p style={{ fontSize: 12, marginTop: 8, color: deviceStatus.projector === "error" ? "var(--danger)" : "var(--success)" }}>
+            <p style={{ fontSize: 12, marginTop: 8, color: deviceMsgType.projector === "error" ? "var(--danger)" : "var(--success)" }}>
               {deviceMsg.projector}
             </p>
           )}
@@ -671,7 +711,7 @@ export default function AdminSettingsPage() {
             </button>
           </div>
           {deviceMsg.light && (
-            <p style={{ fontSize: 12, marginTop: 8, color: "var(--text-muted)" }}>{deviceMsg.light}</p>
+            <p style={{ fontSize: 12, marginTop: 8, color: deviceMsgType.light === "error" ? "var(--danger)" : "var(--success)" }}>{deviceMsg.light}</p>
           )}
         </div>
 
@@ -735,6 +775,71 @@ export default function AdminSettingsPage() {
             </p>
           )}
         </div>
+      </section>
+
+      {/* Terminal Log */}
+      <section className="card" style={{ padding: isNarrow ? "16px" : "24px", marginBottom: 20 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+          <h2 style={{ fontWeight: 700, fontSize: 17, display: "flex", alignItems: "center", gap: 8 }}>
+            <span style={{
+              display: "inline-block", width: 10, height: 10, borderRadius: "50%",
+              background: logs.length > 0 ? "#30d158" : "#636366",
+              boxShadow: logs.length > 0 ? "0 0 6px #30d158" : "none",
+            }} />
+            Device Log
+          </h2>
+          {logs.length > 0 && (
+            <button
+              onClick={() => setLogs([])}
+              style={{
+                fontSize: 11, fontWeight: 600, padding: "4px 10px", borderRadius: 6,
+                border: "1px solid var(--border-subtle)", background: "var(--bg-elevated)",
+                color: "var(--text-muted)", cursor: "pointer",
+              }}
+            >
+              Clear
+            </button>
+          )}
+        </div>
+
+        <div
+          ref={terminalRef}
+          style={{
+            background: "#0d0d0f",
+            borderRadius: 10,
+            border: "1px solid rgba(255,255,255,0.08)",
+            padding: "14px 16px",
+            minHeight: 140,
+            maxHeight: 280,
+            overflowY: "auto",
+            fontFamily: "var(--font-mono, 'JetBrains Mono', 'Fira Code', monospace)",
+            fontSize: 12,
+            lineHeight: "1.7",
+          }}
+        >
+          {logs.length === 0 ? (
+            <span style={{ color: "#4a4a55" }}>No logs yet. Press a device button to see output here.</span>
+          ) : (
+            logs.map((log) => (
+              <div key={log.id} style={{ display: "flex", gap: 10 }}>
+                <span style={{ color: "#4a4a55", flexShrink: 0, userSelect: "none" }}>{log.ts}</span>
+                <span style={{
+                  color:
+                    log.level === "success" ? "#30d158"
+                    : log.level === "error"   ? "#ff453a"
+                    : log.level === "warn"    ? "#ffd60a"
+                    : "#8e8e93",
+                  wordBreak: "break-all",
+                }}>
+                  {log.message}
+                </span>
+              </div>
+            ))
+          )}
+        </div>
+        <p style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 8 }}>
+          Logs are session-only and auto-scroll. Last 200 entries kept.
+        </p>
       </section>
 
     </div>

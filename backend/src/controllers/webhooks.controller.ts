@@ -97,11 +97,12 @@ export async function payhereWebhook(req: Request, res: Response): Promise<void>
     return;
   }
 
+  const client = await db.connect();
   try {
-    await db.query('BEGIN');
+    await client.query('BEGIN');
 
     // Step 3: Mark booking as confirmed
-    const bRows = await db.query(
+    const bRows = await client.query(
       `UPDATE bookings SET status = 'confirmed', payhere_order_id = $1, updated_at = NOW()
        WHERE id = $2 AND status = 'pending'
        RETURNING id, user_id, start_time, end_time, duration_minutes, total_amount`,
@@ -110,35 +111,37 @@ export async function payhereWebhook(req: Request, res: Response): Promise<void>
 
     const booking = bRows.rows[0];
     if (!booking) {
-      await db.query('ROLLBACK');
+      await client.query('ROLLBACK');
       res.status(200).send('Already processed or not found');
       return;
     }
 
     // Step 4: Record the successful payment
-    await db.query(
+    await client.query(
       `UPDATE payments SET status = 'success', payhere_payment_id = $1, payhere_order_id = $2,
        raw_webhook = $3, paid_at = NOW() WHERE booking_id = $4`,
       [payment_id, order_id, req.body, booking.id]
     );
 
     // Step 5: Fetch user details for notifications
-    const uRows = await db.query(
+    const uRows = await client.query(
       'SELECT full_name, email, mobile FROM users WHERE id = $1',
       [booking.user_id]
     );
     const user = uRows.rows[0];
 
-    await db.query('COMMIT');
+    await client.query('COMMIT');
     res.status(200).send('OK'); // Respond to PayHere quickly before async triggers
 
     // Step 6: Run all post-confirmation automation (Tuya PIN, SMS, Email, Calendar)
     await runPostConfirmTriggers(booking, user);
 
   } catch (err: any) {
-    await db.query('ROLLBACK');
+    await client.query('ROLLBACK');
     console.error('[Webhook/PayHere] Transaction error:', err.message);
     res.status(500).send('Internal Server Error');
+  } finally {
+    client.release();
   }
 }
 
@@ -159,11 +162,12 @@ export async function testConfirmBooking(req: Request, res: Response): Promise<v
 
   const { id: bookingId } = req.params;
 
+  const client = await db.connect();
   try {
-    await db.query('BEGIN');
+    await client.query('BEGIN');
 
     // Confirm the booking directly (no payment record needed for testing)
-    const bRows = await db.query(
+    const bRows = await client.query(
       `UPDATE bookings
        SET status = 'confirmed', updated_at = NOW()
        WHERE id = $1 AND status = 'pending'
@@ -173,19 +177,19 @@ export async function testConfirmBooking(req: Request, res: Response): Promise<v
 
     const booking = bRows.rows[0];
     if (!booking) {
-      await db.query('ROLLBACK');
+      await client.query('ROLLBACK');
       res.status(404).json({ error: 'Pending booking not found. Already confirmed or cancelled?' });
       return;
     }
 
     // Fetch the user
-    const uRows = await db.query(
+    const uRows = await client.query(
       'SELECT full_name, email, mobile FROM users WHERE id = $1',
       [booking.user_id]
     );
     const user = uRows.rows[0];
 
-    await db.query('COMMIT');
+    await client.query('COMMIT');
 
     // Respond immediately so the UI doesn't hang while Tuya/SMS run
     res.json({
@@ -198,8 +202,10 @@ export async function testConfirmBooking(req: Request, res: Response): Promise<v
     await runPostConfirmTriggers(booking, user);
 
   } catch (err: any) {
-    await db.query('ROLLBACK');
+    await client.query('ROLLBACK');
     console.error('[Test Confirm] Error:', err.message);
     res.status(500).json({ error: 'Internal server error', details: err.message });
+  } finally {
+    client.release();
   }
 }
