@@ -262,15 +262,37 @@ export default function RegisterPage() {
     setPreview: (s: string | null) => void,
     errorKey: "nic_front" | "nic_back"
   ) {
-    if (!file.type.startsWith("image/")) {
-      setErrors((p) => ({ ...p, [errorKey]: "Please upload an image file (JPG, PNG)." }));
+    const isHeic = file.name.toLowerCase().endsWith(".heic") || file.name.toLowerCase().endsWith(".heif") || file.type === "image/heic";
+    
+    if (!file.type.startsWith("image/") && !isHeic) {
+      setErrors((p) => ({ ...p, [errorKey]: "Please upload an image file (JPG, PNG, HEIC)." }));
       return;
     }
     
     setErrors((p) => ({ ...p, [errorKey]: undefined }));
     
     try {
-      const compressedFile = await compressImage(file);
+      let fileToProcess = file;
+      
+      // Convert HEIC to JPEG
+      if (isHeic) {
+        try {
+          const heic2any = (await import("heic2any")).default;
+          const converted = await heic2any({
+            blob: file,
+            toType: "image/jpeg",
+            quality: 0.8
+          });
+          const blob = Array.isArray(converted) ? converted[0] : converted;
+          fileToProcess = new File([blob], file.name.replace(/\.[^/.]+$/, ".jpg"), { type: "image/jpeg" });
+        } catch (e) {
+          console.error("HEIC conversion failed:", e);
+          setErrors((p) => ({ ...p, [errorKey]: "Failed to convert HEIC image. Please try uploading a JPG or PNG." }));
+          return;
+        }
+      }
+
+      const compressedFile = await compressImage(fileToProcess);
       if (compressedFile.size > 5 * 1024 * 1024) {
         setErrors((p) => ({ ...p, [errorKey]: "File size must be under 5MB." }));
         return;
@@ -522,7 +544,7 @@ export default function RegisterPage() {
               />
             </div>
             <p style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 8 }}>
-              Both sides required · JPG or PNG · Max 5MB each
+              Both sides required · JPG, PNG, or HEIC · Max 5MB each
             </p>
           </div>
 
@@ -588,7 +610,7 @@ function NicUploadSlot({
       <input
         ref={inputRef}
         type="file"
-        accept="image/jpeg, image/png, image/webp"
+        accept="image/jpeg, image/png, image/webp, .heic, .heif"
         style={{ display: "none" }}
         onChange={(e) => e.target.files?.[0] && onChange(e.target.files[0])}
       />

@@ -23,13 +23,33 @@ function PaymentContent() {
     );
   }
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const selected = e.target.files?.[0];
     if (selected) {
-      setFile(selected);
+      let fileToProcess = selected;
+      const isHeic = selected.name.toLowerCase().endsWith(".heic") || selected.name.toLowerCase().endsWith(".heif") || selected.type === "image/heic";
+
+      if (isHeic) {
+        try {
+          const heic2any = (await import("heic2any")).default;
+          const converted = await heic2any({
+            blob: selected,
+            toType: "image/jpeg",
+            quality: 0.8
+          });
+          const blob = Array.isArray(converted) ? converted[0] : converted;
+          fileToProcess = new File([blob], selected.name.replace(/\.[^/.]+$/, ".jpg"), { type: "image/jpeg" });
+        } catch (err) {
+          console.error("HEIC conversion failed:", err);
+          alert("Failed to convert HEIC image. Please try uploading a JPG or PNG.");
+          return;
+        }
+      }
+
+      setFile(fileToProcess);
       const reader = new FileReader();
       reader.onloadend = () => setPreview(reader.result as string);
-      reader.readAsDataURL(selected);
+      reader.readAsDataURL(fileToProcess);
     }
   };
 
@@ -114,13 +134,13 @@ function PaymentContent() {
                   </svg>
                 </div>
                 <p style={{ fontSize: 14, fontWeight: 500 }}>Select or Drop Receipt Image</p>
-                <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 4 }}>JPG, PNG or WebP</p>
+                <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 4 }}>JPG, PNG, WebP or HEIC</p>
               </>
             )}
             <input 
               id="receipt-upload" 
               type="file" 
-              accept="image/*" 
+              accept="image/*, .heic, .heif" 
               onChange={handleFileChange} 
               style={{ display: 'none' }} 
             />

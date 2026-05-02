@@ -42,6 +42,7 @@ async function migrate() {
 
   console.log('[migrate] All migrations applied.');
   await db.end();
+  process.exit(0);
 }
 
 migrate();

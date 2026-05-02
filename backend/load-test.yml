@@ -1,0 +1,31 @@
+config:
+  target: "http://localhost:4000" # Target your backend's local port
+  phases:
+    # Phase 1: Ramp up 
+    # Starts with 2 new users per second for 10 seconds (20 users total)
+    - duration: 10
+      arrivalRate: 2
+      name: "Warm up the API"
+      
+    # Phase 2: Sustained heavy load 
+    # Creates 10 new users per second for 30 seconds (300 users total)
+    # Caps the maximum number of concurrent active users at 100
+    - duration: 30
+      arrivalRate: 10
+      maxVusers: 100
+      name: "Sustained load of 100 concurrent users"
+
+scenarios:
+  - name: "Health Check and Data Fetch Flow"
+    flow:
+      # Step 1: User hits the health check route to ensure server is alive
+      - get:
+          url: "/health"
+      
+      # Step 2: Simulates the user 'thinking' or reading the screen for 2 seconds
+      - think: 2
+
+      # Step 3: User tries to hit a public endpoint (we'll hit health again as a safe default)
+      # You can change this to `/api/bookings` or any other GET request in your app.
+      - get:
+          url: "/health"

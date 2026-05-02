@@ -62,4 +62,9 @@ app.listen(PORT, () => {
   console.log(`[Server] Running on http://localhost:${PORT}`);
   startScheduler();    // Boot up background SMS + Tuya cron jobs
   tuyaHealthCheck();   // Verify Tuya cloud connection at startup
+  
+  // Signal PM2 that we are ready for connections (zero-downtime deploy)
+  if (process.send) {
+    process.send('ready');
+  }
 });
