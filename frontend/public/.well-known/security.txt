@@ -1,0 +1,3 @@
+Contact: mailto:admin@smartviewlounge.com
+Preferred-Languages: en
+Canonical: https://smartviewlounge.com/.well-known/security.txt

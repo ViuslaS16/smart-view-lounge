@@ -37,6 +37,7 @@ router.get('/sms-logs', admin.getSmsLogs);
 router.get('/settings', admin.getSettings);
 router.patch('/settings', admin.updateSettings);
 
+router.get('/devices/logs', admin.getDeviceLogs);
 router.post('/devices/ac', admin.controlAc);
 router.post('/devices/projector', admin.controlProjector);
 router.post('/devices/light', admin.controlLight);

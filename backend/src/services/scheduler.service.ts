@@ -104,6 +104,7 @@ async function checkTuyaSessionStart() {
         'UPDATE bookings SET devices_started = TRUE, devices_start_attempts = 0 WHERE id = $1',
         [row.id]
       );
+      await db.query(`INSERT INTO audit_logs (action, target_type, metadata) VALUES ($1, $2, $3)`, ['device.scheduler.start', 'system', JSON.stringify({ booking_id: row.id })]);
       console.log(`[Tuya] ✅ Devices started (AC + Projector + Lights) for booking ${row.id}`);
     } catch (err: any) {
       console.error(`[Tuya] ❌ Failed to start devices for booking ${row.id}:`, err.message);
@@ -171,6 +172,7 @@ async function checkTuyaSessionEnd() {
         'UPDATE bookings SET devices_stopped = TRUE, devices_stop_attempts = 0 WHERE id = $1',
         [row.id]
       );
+      await db.query(`INSERT INTO audit_logs (action, target_type, metadata) VALUES ($1, $2, $3)`, ['device.scheduler.stop', 'system', JSON.stringify({ booking_id: row.id })]);
       console.log(`[Tuya] ✅ All devices powered OFF for booking ${row.id}`);
     } catch (err: any) {
       console.error(`[Tuya] ❌ Failed to stop devices for booking ${row.id}:`, err.message);

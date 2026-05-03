@@ -21,6 +21,7 @@ interface DoorPinResult {
 
 export default function AdminSettingsPage() {
   const { data, isLoading, mutate } = useApi<{ settings: Record<string, string> }>("/admin/settings");
+  const { data: dbLogs, mutate: mutateDbLogs } = useApi<any[]>("/admin/devices/logs", 5000);
 
   const [hourlyRate, setHourlyRate] = useState(2500);
   const [bufferMins, setBufferMins] = useState(15);
@@ -54,31 +55,13 @@ export default function AdminSettingsPage() {
   const [deviceMsgType, setDeviceMsgType] = useState<Record<string, "success" | "error">>({});
   const [generatedPin, setGeneratedPin] = useState<string | null>(null);
 
-  // Terminal log
-  interface TerminalLog {
-    id: number;
-    ts: string;
-    level: "info" | "success" | "error" | "warn";
-    message: string;
-  }
-  const [logs, setLogs] = useState<TerminalLog[]>([]);
-  const logIdRef = useRef(0);
   const terminalRef = useRef<HTMLDivElement>(null);
 
-  const pushLog = useCallback((level: TerminalLog["level"], message: string) => {
-    const ts = new Date().toLocaleTimeString("en-LK", {
-      hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false,
-    });
-    const entry: TerminalLog = { id: ++logIdRef.current, ts, level, message };
-    setLogs((prev) => [...prev.slice(-199), entry]); // keep last 200 lines
-  }, []);
-
-  // Auto-scroll terminal when new logs arrive
   useEffect(() => {
     if (terminalRef.current) {
       terminalRef.current.scrollTop = terminalRef.current.scrollHeight;
     }
-  }, [logs]);
+  }, [dbLogs]);
 
   // Responsive: detect narrow screen
   const [isNarrow, setIsNarrow] = useState(false);
@@ -209,9 +192,6 @@ export default function AdminSettingsPage() {
     setDeviceMsg((m) => ({ ...m, [key]: "" }));
     if (key === "doorPin") setGeneratedPin(null);
 
-    pushLog("info", `POST ${endpoint}  { ${Object.entries(body).map(([k,v]) => `${k}: "${v}"`).join(", ")} }`);
-    pushLog("warn", `Sending ${actionLabel} command...`);
-
     try {
       const res = await apiFetch(endpoint, {
         method: "POST",
@@ -221,14 +201,13 @@ export default function AdminSettingsPage() {
       setDeviceMsg((m) => ({ ...m, [key]: res.message || "Done" }));
       setDeviceMsgType((m) => ({ ...m, [key]: "success" }));
       if (key === "doorPin" && res.door_pin) setGeneratedPin(res.door_pin);
-      pushLog("success", `✓ ${res.message || "Command succeeded"}`);
-      if (res.door_pin) pushLog("success", `  Door PIN: ${res.door_pin}  (valid 30 min)`);
+      mutateDbLogs(); // Refresh DB logs
       setTimeout(() => setDeviceStatus((s) => ({ ...s, [key]: "idle" })), 5000);
     } catch (err: any) {
       setDeviceStatus((s) => ({ ...s, [key]: "error" }));
       setDeviceMsg((m) => ({ ...m, [key]: err.message || "Failed" }));
       setDeviceMsgType((m) => ({ ...m, [key]: "error" }));
-      pushLog("error", `✗ ${err.message || "Command failed"}`);
+      mutateDbLogs(); // Refresh DB logs
       setTimeout(() => setDeviceStatus((s) => ({ ...s, [key]: "idle" })), 6000);
     }
   }
@@ -783,23 +762,11 @@ export default function AdminSettingsPage() {
           <h2 style={{ fontWeight: 700, fontSize: 17, display: "flex", alignItems: "center", gap: 8 }}>
             <span style={{
               display: "inline-block", width: 10, height: 10, borderRadius: "50%",
-              background: logs.length > 0 ? "#30d158" : "#636366",
-              boxShadow: logs.length > 0 ? "0 0 6px #30d158" : "none",
+              background: dbLogs?.length ? "#30d158" : "#636366",
+              boxShadow: dbLogs?.length ? "0 0 6px #30d158" : "none",
             }} />
-            Device Log
+            Global Device Log
           </h2>
-          {logs.length > 0 && (
-            <button
-              onClick={() => setLogs([])}
-              style={{
-                fontSize: 11, fontWeight: 600, padding: "4px 10px", borderRadius: 6,
-                border: "1px solid var(--border-subtle)", background: "var(--bg-elevated)",
-                color: "var(--text-muted)", cursor: "pointer",
-              }}
-            >
-              Clear
-            </button>
-          )}
         </div>
 
         <div
@@ -817,28 +784,55 @@ export default function AdminSettingsPage() {
             lineHeight: "1.7",
           }}
         >
-          {logs.length === 0 ? (
-            <span style={{ color: "#4a4a55" }}>No logs yet. Press a device button to see output here.</span>
+          {!dbLogs || dbLogs.length === 0 ? (
+            <span style={{ color: "#4a4a55" }}>Loading global logs...</span>
           ) : (
-            logs.map((log) => (
-              <div key={log.id} style={{ display: "flex", gap: 10 }}>
-                <span style={{ color: "#4a4a55", flexShrink: 0, userSelect: "none" }}>{log.ts}</span>
-                <span style={{
-                  color:
-                    log.level === "success" ? "#30d158"
-                    : log.level === "error"   ? "#ff453a"
-                    : log.level === "warn"    ? "#ffd60a"
-                    : "#8e8e93",
-                  wordBreak: "break-all",
-                }}>
-                  {log.message}
-                </span>
-              </div>
-            ))
+            [...dbLogs].reverse().map((log) => {
+              const ts = new Date(log.created_at).toLocaleTimeString("en-LK", {
+                hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false,
+              });
+              let message = "";
+              let level = "info";
+
+              if (log.action === "device.ac") {
+                message = `[Admin: ${log.actor_name || "Unknown"}] AC -> ${log.metadata?.action?.toUpperCase()}`;
+                level = "success";
+              } else if (log.action === "device.projector") {
+                message = `[Admin: ${log.actor_name || "Unknown"}] Projector -> ${log.metadata?.action?.toUpperCase()}`;
+                level = "success";
+              } else if (log.action === "device.light") {
+                message = `[Admin: ${log.actor_name || "Unknown"}] Light -> ${log.metadata?.action?.toUpperCase()}`;
+                level = "success";
+              } else if (log.action === "device.scheduler.start") {
+                message = `[Auto-Scheduler] Auto-Started all devices for booking ${log.metadata?.booking_id?.split('-')[0] || "Unknown"}`;
+                level = "warn";
+              } else if (log.action === "device.scheduler.stop") {
+                message = `[Auto-Scheduler] Auto-Stopped all devices for booking ${log.metadata?.booking_id?.split('-')[0] || "Unknown"}`;
+                level = "warn";
+              } else {
+                message = `${log.action} - ${JSON.stringify(log.metadata)}`;
+              }
+
+              return (
+                <div key={log.id} style={{ display: "flex", gap: 10 }}>
+                  <span style={{ color: "#4a4a55", flexShrink: 0, userSelect: "none" }}>{ts}</span>
+                  <span style={{
+                    color:
+                      level === "success" ? "#30d158"
+                      : level === "error"   ? "#ff453a"
+                      : level === "warn"    ? "#ffd60a"
+                      : "#8e8e93",
+                    wordBreak: "break-all",
+                  }}>
+                    {message}
+                  </span>
+                </div>
+              );
+            })
           )}
         </div>
         <p style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 8 }}>
-          Logs are session-only and auto-scroll. Last 200 entries kept.
+          Live logs fetching from database. Includes admin actions and automated booking sessions.
         </p>
       </section>
 

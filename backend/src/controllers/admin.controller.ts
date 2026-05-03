@@ -614,3 +614,24 @@ export async function verifyPayment(req: Request, res: Response): Promise<void> 
     res.status(400).json({ error: 'Invalid action' });
   }
 }
+export async function getDeviceLogs(req: Request, res: Response, next: NextFunction) {
+  try {
+    const { rows } = await db.query(`
+      SELECT 
+        a.id, 
+        a.action, 
+        a.metadata, 
+        a.created_at,
+        u.full_name as actor_name
+      FROM audit_logs a
+      LEFT JOIN users u ON a.actor_id = u.id
+      WHERE a.action LIKE 'device.%'
+      ORDER BY a.created_at DESC
+      LIMIT 50
+    `);
+
+    res.json(rows);
+  } catch (err) {
+    next(err);
+  }
+}
