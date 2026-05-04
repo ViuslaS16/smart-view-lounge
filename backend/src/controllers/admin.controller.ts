@@ -1,4 +1,4 @@
-import { Request, Response } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import db from '../db';
 import { getNicImageSignedUrl, getReceiptImageSignedUrl } from '../services/storage.service';
 import { sendAccountApprovedEmail, sendAccountRejectedEmail, sendBookingConfirmationEmail } from '../services/email.service';

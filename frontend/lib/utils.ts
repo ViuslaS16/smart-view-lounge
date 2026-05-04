@@ -90,16 +90,16 @@ export function generateTimeSlots(
   timeIncrementMinutes: number = 30
 ) {
   const slots: { time: string; available: boolean; dateObj: Date }[] = [];
-  // 24 Hour Slots: 00:00 to 24:00
-  const startHour = 0;
-  const endHour = 24;
+  // 8:00 AM to 10:00 PM Slots
+  const startHour = 8;
+  const endHour = 22;
 
   let current = new Date(date.getFullYear(), date.getMonth(), date.getDate(), startHour, 0);
   const endOfDay = new Date(date.getFullYear(), date.getMonth(), date.getDate(), endHour, 0);
 
   const now = new Date();
 
-  while (current < endOfDay) {
+  while (current.getTime() + minDurationMinutes * 60000 <= endOfDay.getTime()) {
     const isPast = current <= now;
     
     let isBooked = false;

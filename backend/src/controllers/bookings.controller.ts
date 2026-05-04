@@ -38,7 +38,8 @@ export async function getAvailableSlots(req: Request, res: Response): Promise<vo
   const { rows } = await db.query(
     `SELECT start_time, end_time 
      FROM bookings 
-     WHERE status IN ('confirmed', 'completed', 'pending') 
+     WHERE (status IN ('confirmed', 'completed') 
+        OR (status = 'pending' AND (payment_status = 'pending_verification' OR created_at >= NOW() - INTERVAL '10 minutes')))
        AND start_time >= $1::date - INTERVAL '1 day'
        AND end_time <= $1::date + INTERVAL '2 days'`,
     [targetDate]
@@ -66,6 +67,16 @@ export async function createBooking(req: Request, res: Response): Promise<void> 
   
   if (start < new Date()) {
     res.status(400).json({ error: 'Cannot book in the past' });
+    return;
+  }
+
+  // Enforce 8:00 AM to 10:00 PM (22:00) operating hours
+  const startHour = start.getHours();
+  const endHour = end.getHours() + (end.getMinutes() > 0 ? 1 : 0);
+  const isSameDay = start.getDate() === end.getDate() && start.getMonth() === end.getMonth();
+
+  if (startHour < 8 || endHour > 22 || !isSameDay || (end.getHours() === 22 && end.getMinutes() > 0)) {
+    res.status(400).json({ error: 'Bookings must be between 8:00 AM and 10:00 PM' });
     return;
   }
 
@@ -99,12 +110,10 @@ export async function createBooking(req: Request, res: Response): Promise<void> 
 
   // Overlap check: new booking [start, bufferedEnd) must not overlap any existing
   // booking's occupied window [start_time, end_time + buffer).
-  // This ensures the buffer gap between sessions is enforced on BOTH sides:
-  //   - bufferedEnd protects future bookings from this one
-  //   - end_time + $3 minutes protects this booking from existing ones
+  // Ignore cancelled bookings and pending bookings older than 10 minutes.
   const overlapCheck = await db.query(
     `SELECT id FROM bookings
-     WHERE status NOT IN ('cancelled')
+     WHERE (status IN ('confirmed', 'completed') OR (status = 'pending' AND (payment_status = 'pending_verification' OR created_at >= NOW() - INTERVAL '10 minutes')))
        AND tstzrange($1, $2, '[)') && tstzrange(start_time, end_time + ($3 * interval '1 minute'), '[)')`,
     [start.toISOString(), bufferedEnd.toISOString(), bufferMins]
   );
@@ -168,9 +177,18 @@ export async function checkExtension(req: Request, res: Response): Promise<void>
   const bufferedNewEnd  = new Date(newEnd.getTime() + bufferMins * 60000);
 
   // Check availability — includes buffer on existing bookings
+  // Ensure extension does not go past 10:00 PM
+  if (newEnd.getHours() > 22 || (newEnd.getHours() === 22 && newEnd.getMinutes() > 0)) {
+    res.json({
+      available: false,
+      reason: 'Cannot extend past 10:00 PM closing time.'
+    });
+    return;
+  }
+
   const overlapCheck = await db.query(
     `SELECT id FROM bookings
-     WHERE status NOT IN ('cancelled')
+     WHERE (status IN ('confirmed', 'completed') OR (status = 'pending' AND (payment_status = 'pending_verification' OR created_at >= NOW() - INTERVAL '10 minutes')))
        AND id != $1
        AND tstzrange($2, $3, '[)') && tstzrange(start_time, end_time + ($4 * interval '1 minute'), '[)')`,
     [bookingId, currentEnd.toISOString(), bufferedNewEnd.toISOString(), bufferMins]
@@ -216,9 +234,14 @@ export async function confirmExtension(req: Request, res: Response): Promise<voi
   const bufferedNewEnd  = new Date(newEnd.getTime() + bufferMins * 60000);
 
   // Re-validate availability (race-condition safe)
+  if (newEnd.getHours() > 22 || (newEnd.getHours() === 22 && newEnd.getMinutes() > 0)) {
+    res.status(409).json({ error: 'Cannot extend past 10:00 PM closing time.' });
+    return;
+  }
+
   const overlapCheck = await db.query(
     `SELECT id FROM bookings
-     WHERE status NOT IN ('cancelled')
+     WHERE (status IN ('confirmed', 'completed') OR (status = 'pending' AND (payment_status = 'pending_verification' OR created_at >= NOW() - INTERVAL '10 minutes')))
        AND id != $1
        AND tstzrange($2, $3, '[)') && tstzrange(start_time, end_time + ($4 * interval '1 minute'), '[)')`,
     [bookingId, currentEnd.toISOString(), bufferedNewEnd.toISOString(), bufferMins]
@@ -444,7 +467,7 @@ export async function uploadReceipt(req: Request, res: Response): Promise<void> 
 
   // Verify booking ownership and status
   const { rows: bRows } = await db.query(
-    `SELECT b.id, b.status, b.payment_status, u.mobile 
+    `SELECT b.id, b.status, b.payment_status, b.created_at, u.mobile 
      FROM bookings b 
      JOIN users u ON b.user_id = u.id 
      WHERE b.id = $1 AND b.user_id = $2`,
@@ -458,6 +481,16 @@ export async function uploadReceipt(req: Request, res: Response): Promise<void> 
 
   if (bRows[0].status !== 'pending') {
     res.status(400).json({ error: 'Booking is already ' + bRows[0].status });
+    return;
+  }
+
+  const createdAt = new Date(bRows[0].created_at).getTime();
+  const now = Date.now();
+  if (now - createdAt > 10 * 60 * 1000) {
+    // Over 10 minutes, expire it. Note: status is logically expired, 
+    // it will be ignored in overlap checks anyway. We could update it to cancelled.
+    await db.query(`UPDATE bookings SET status = 'cancelled' WHERE id = $1`, [bookingId]);
+    res.status(400).json({ error: 'Booking payment time has expired. The time slot has been released.' });
     return;
   }
 

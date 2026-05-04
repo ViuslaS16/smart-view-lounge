@@ -299,7 +299,7 @@ async function cleanupAbandonedBookings() {
     SET status = 'cancelled', updated_at = NOW() 
     WHERE status = 'pending' 
       AND payment_status = 'pending' 
-      AND created_at < NOW() - INTERVAL '15 minutes'
+      AND created_at < NOW() - INTERVAL '10 minutes'
   `);
   
   if (rowCount && rowCount > 0) {

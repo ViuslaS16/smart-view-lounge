@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, Suspense } from "react";
+import { useState, Suspense, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { apiFetch } from "@/lib/api";
 import { formatLKR } from "@/lib/utils";
+import { useApi } from "@/lib/hooks";
 
 function PaymentContent() {
   const params = useSearchParams();
@@ -13,8 +14,40 @@ function PaymentContent() {
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [preview, setPreview] = useState<string | null>(null);
+  
+  const { data: bookingData, isLoading: isBookingLoading, error: bookingError } = useApi<{ booking: any }>(bookingId ? `/bookings/${bookingId}` : null);
+  const [timeLeft, setTimeLeft] = useState<number | null>(null);
+  const [isExpired, setIsExpired] = useState(false);
 
-  if (!bookingId) {
+  useEffect(() => {
+    if (!bookingData?.booking?.created_at) return;
+    
+    // Check if the booking is already confirmed, completed, or cancelled
+    if (bookingData.booking.status !== 'pending') {
+      router.replace(`/dashboard/bookings/${bookingId}`);
+      return;
+    }
+
+    const created = new Date(bookingData.booking.created_at).getTime();
+    const expiryTime = created + 10 * 60 * 1000;
+
+    const updateTimer = () => {
+      const now = Date.now();
+      const remaining = expiryTime - now;
+      if (remaining <= 0) {
+        setIsExpired(true);
+        setTimeLeft(0);
+      } else {
+        setTimeLeft(Math.floor(remaining / 1000));
+      }
+    };
+
+    updateTimer();
+    const interval = setInterval(updateTimer, 1000);
+    return () => clearInterval(interval);
+  }, [bookingData, router, bookingId]);
+
+  if (!bookingId || bookingError) {
     return (
       <div className="page-center text-center">
         <p className="text-secondary">Invalid booking ID</p>
@@ -78,12 +111,51 @@ function PaymentContent() {
   return (
     <div className="page" style={{ paddingTop: 80 }}>
       <div className="animate-fade-up">
-        <h1 style={{ fontFamily: "var(--font-display)", fontSize: 26, fontWeight: 700, marginBottom: 8 }}>
-          Complete Your Payment
-        </h1>
-        <p style={{ color: "var(--text-secondary)", fontSize: 14, marginBottom: 32 }}>
-          Please transfer the total amount to the bank account below and upload your receipt.
-        </p>
+        {isExpired ? (
+          <div style={{ textAlign: 'center', padding: '40px 20px', background: 'var(--bg-card)', borderRadius: 16, border: '1px solid var(--error, #e53e3e)' }}>
+            <div style={{ color: '#e53e3e', marginBottom: 16 }}>
+              <svg width="48" height="48" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5} style={{ margin: '0 auto' }}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+            </div>
+            <h1 style={{ fontFamily: "var(--font-display)", fontSize: 24, fontWeight: 700, marginBottom: 8, color: '#e53e3e' }}>
+              Session Expired
+            </h1>
+            <p style={{ color: "var(--text-secondary)", fontSize: 14, marginBottom: 24 }}>
+              The 10-minute hold for this booking has expired. The time slot has been released.
+            </p>
+            <button onClick={() => router.push('/dashboard/book')} className="btn btn-primary">
+              Book a New Slot
+            </button>
+          </div>
+        ) : (
+          <>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+              <h1 style={{ fontFamily: "var(--font-display)", fontSize: 26, fontWeight: 700 }}>
+                Complete Your Payment
+              </h1>
+              {timeLeft !== null && (
+                <div style={{ 
+                  background: timeLeft < 60 ? 'rgba(229, 62, 62, 0.1)' : 'rgba(201, 147, 58, 0.1)', 
+                  color: timeLeft < 60 ? '#e53e3e' : 'var(--accent)', 
+                  padding: '6px 12px', 
+                  borderRadius: 20, 
+                  fontWeight: 600,
+                  fontSize: 14,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6
+                }}>
+                  <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  {Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')}
+                </div>
+              )}
+            </div>
+            <p style={{ color: "var(--text-secondary)", fontSize: 14, marginBottom: 32 }}>
+              Please transfer the total amount to the bank account below and upload your receipt within 10 minutes.
+            </p>
 
         {/* Bank Details Card */}
         <div className="card" style={{ padding: 24, marginBottom: 32, border: '1px solid var(--accent)' }}>
@@ -153,13 +225,15 @@ function PaymentContent() {
           disabled={!file || loading}
         >
           {loading ? <span className="spinner" /> : null}
-          {loading ? 'Verifying Receipt...' : 'Confirm & Send for Verification'}
+          {loading ? 'Uploading & Verifying...' : 'Submit Payment Receipt'}
         </button>
 
         <p style={{ textAlign: 'center', marginTop: 20, fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.5 }}>
           Once you submit, our team will verify the payment within 30 minutes. 
           You will receive your door PIN via SMS upon approval.
         </p>
+          </>
+        )}
       </div>
     </div>
   );
