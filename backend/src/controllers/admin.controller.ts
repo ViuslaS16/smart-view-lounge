@@ -4,6 +4,7 @@ import { getNicImageSignedUrl, getReceiptImageSignedUrl } from '../services/stor
 import { sendAccountApprovedEmail, sendAccountRejectedEmail, sendBookingConfirmationEmail } from '../services/email.service';
 import { sendSMS, getSetting } from '../services/sms.service';
 import { createSessionPin, revokeSessionPin, irAcOn, irAcOff, irProjectorToggle, irLightsToggle } from '../services/tuya.service';
+// NOTE: revokeSessionPin is intentionally imported above — used in cancelBookingAdmin & verifyPayment (reject branch)
 
 // --- Dashboard & Analytics ---
 export async function getDashboardStats(req: Request, res: Response): Promise<void> {
@@ -232,8 +233,27 @@ export async function manualBooking(req: Request, res: Response): Promise<void> 
 
 export async function cancelBookingAdmin(req: Request, res: Response): Promise<void> {
   const bookingId = req.params.id;
+
+  // Fetch Tuya ticket BEFORE cancelling so we can revoke the door PIN
+  const { rows: bRows } = await db.query(
+    `SELECT tuya_ticket_id FROM bookings WHERE id = $1`,
+    [bookingId]
+  );
+  if (!bRows[0]) {
+    res.status(404).json({ error: 'Booking not found' });
+    return;
+  }
+
   await db.query(`UPDATE bookings SET status = 'cancelled', updated_at = NOW() WHERE id = $1`, [bookingId]);
   await db.query(`INSERT INTO audit_logs (actor_id, action, target_id, target_type) VALUES ($1, 'booking.admin_cancel', $2, 'booking')`, [req.user!.id, bookingId]);
+
+  // Revoke Tuya door PIN (fire-and-forget — don't block the HTTP response)
+  if (bRows[0].tuya_ticket_id) {
+    revokeSessionPin(bRows[0].tuya_ticket_id).catch((err: any) =>
+      console.error('[Admin] Failed to revoke PIN for admin-cancelled booking', bookingId, ':', err.message)
+    );
+  }
+
   res.json({ message: 'Booking cancelled' });
 }
 
@@ -594,22 +614,38 @@ export async function verifyPayment(req: Request, res: Response): Promise<void> 
       return;
     }
 
+    // ⚠️  CRITICAL FIX: Set status = 'cancelled' (not just payment_status = 'rejected').
+    // The DB EXCLUDE constraint only exempts rows where status = 'cancelled'.
+    // Leaving status = 'pending' causes the slot to stay physically blocked at the
+    // DB level even though the availability API shows it as free — a silent 409.
     await db.query(
-      `UPDATE bookings SET payment_status = 'rejected', admin_rejection_reason = $1, updated_at = NOW() WHERE id = $2`,
+      `UPDATE bookings
+       SET status                 = 'cancelled',
+           payment_status         = 'rejected',
+           admin_rejection_reason = $1,
+           updated_at             = NOW()
+       WHERE id = $2`,
       [reason, id]
     );
 
     await db.query(`INSERT INTO audit_logs (actor_id, action, target_id, target_type, metadata) VALUES ($1, 'payment.reject', $2, 'booking', $3)`, [req.user!.id, id, JSON.stringify({ reason })]);
 
+    // Revoke Tuya door PIN if one was issued (edge case: fast admin approval race)
+    if (booking.tuya_ticket_id) {
+      revokeSessionPin(booking.tuya_ticket_id).catch((err: any) =>
+        console.error('[Admin] Tuya revoke on payment rejection failed for booking', id, ':', err.message)
+      );
+    }
+
     // Notify user about rejection
     await sendSMS(
       booking.mobile,
-      `SmartView Lounge: Your payment verification failed. Reason: ${reason}. Please re-upload a valid receipt or contact support.`,
+      `SmartView Lounge: Your payment verification failed. Reason: ${reason}. Please re-book and re-upload a valid receipt, or contact support.`,
       'payment_rejected',
       booking.id
     );
 
-    res.json({ message: 'Payment rejected. User notified.' });
+    res.json({ message: 'Payment rejected. Slot released. User notified.' });
   } else {
     res.status(400).json({ error: 'Invalid action' });
   }

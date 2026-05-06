@@ -9,6 +9,7 @@ module.exports = {
       max_memory_restart: "300M",
       env: {
         NODE_ENV: "production",
+        TZ: "Asia/Colombo",
       },
       // Give the process 10 seconds to gracefully shut down before SIGKILL
       kill_timeout: 10000,
@@ -26,6 +27,7 @@ module.exports = {
       max_memory_restart: "300M",
       env: {
         NODE_ENV: "production",
+        TZ: "Asia/Colombo",
       },
       kill_timeout: 5000,
     }

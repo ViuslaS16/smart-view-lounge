@@ -39,7 +39,9 @@ export async function getAvailableSlots(req: Request, res: Response): Promise<vo
     `SELECT start_time, end_time 
      FROM bookings 
      WHERE (status IN ('confirmed', 'completed') 
-        OR (status = 'pending' AND (payment_status = 'pending_verification' OR created_at >= NOW() - INTERVAL '10 minutes')))
+        OR (status = 'pending'
+            AND payment_status != 'rejected'
+            AND (payment_status = 'pending_verification' OR created_at >= NOW() - INTERVAL '10 minutes')))
        AND start_time >= $1::date - INTERVAL '1 day'
        AND end_time <= $1::date + INTERVAL '2 days'`,
     [targetDate]
@@ -70,12 +72,25 @@ export async function createBooking(req: Request, res: Response): Promise<void> 
     return;
   }
 
-  // Enforce 8:00 AM to 10:00 PM (22:00) operating hours
-  const startHour = start.getHours();
-  const endHour = end.getHours() + (end.getMinutes() > 0 ? 1 : 0);
-  const isSameDay = start.getDate() === end.getDate() && start.getMonth() === end.getMonth();
+  // Enforce 8:00 AM to 10:00 PM (22:00) operating hours — in Sri Lanka time (UTC+5:30)
+  const SL_OFFSET_MS = 5.5 * 60 * 60 * 1000; // UTC+5:30
+  const startSL = new Date(start.getTime() + SL_OFFSET_MS);
+  const endSL   = new Date(end.getTime()   + SL_OFFSET_MS);
 
-  if (startHour < 8 || endHour > 22 || !isSameDay || (end.getHours() === 22 && end.getMinutes() > 0)) {
+  const startHour = startSL.getUTCHours();
+  const startMin  = startSL.getUTCMinutes();
+  const endHour   = endSL.getUTCHours();
+  const endMin    = endSL.getUTCMinutes();
+
+  // Same calendar day in SL time
+  const isSameDay = startSL.getUTCDate()  === endSL.getUTCDate()  &&
+                    startSL.getUTCMonth() === endSL.getUTCMonth() &&
+                    startSL.getUTCFullYear() === endSL.getUTCFullYear();
+
+  const beforeOpen  = startHour < 8;
+  const afterClose  = (endHour > 22) || (endHour === 22 && endMin > 0);
+
+  if (beforeOpen || afterClose || !isSameDay) {
     res.status(400).json({ error: 'Bookings must be between 8:00 AM and 10:00 PM' });
     return;
   }
@@ -113,7 +128,10 @@ export async function createBooking(req: Request, res: Response): Promise<void> 
   // Ignore cancelled bookings and pending bookings older than 10 minutes.
   const overlapCheck = await db.query(
     `SELECT id FROM bookings
-     WHERE (status IN ('confirmed', 'completed') OR (status = 'pending' AND (payment_status = 'pending_verification' OR created_at >= NOW() - INTERVAL '10 minutes')))
+     WHERE (status IN ('confirmed', 'completed')
+        OR (status = 'pending'
+            AND payment_status != 'rejected'
+            AND (payment_status = 'pending_verification' OR created_at >= NOW() - INTERVAL '10 minutes')))
        AND tstzrange($1, $2, '[)') && tstzrange(start_time, end_time + ($3 * interval '1 minute'), '[)')`,
     [start.toISOString(), bufferedEnd.toISOString(), bufferMins]
   );
@@ -188,7 +206,10 @@ export async function checkExtension(req: Request, res: Response): Promise<void>
 
   const overlapCheck = await db.query(
     `SELECT id FROM bookings
-     WHERE (status IN ('confirmed', 'completed') OR (status = 'pending' AND (payment_status = 'pending_verification' OR created_at >= NOW() - INTERVAL '10 minutes')))
+     WHERE (status IN ('confirmed', 'completed')
+        OR (status = 'pending'
+            AND payment_status != 'rejected'
+            AND (payment_status = 'pending_verification' OR created_at >= NOW() - INTERVAL '10 minutes')))
        AND id != $1
        AND tstzrange($2, $3, '[)') && tstzrange(start_time, end_time + ($4 * interval '1 minute'), '[)')`,
     [bookingId, currentEnd.toISOString(), bufferedNewEnd.toISOString(), bufferMins]
@@ -241,7 +262,10 @@ export async function confirmExtension(req: Request, res: Response): Promise<voi
 
   const overlapCheck = await db.query(
     `SELECT id FROM bookings
-     WHERE (status IN ('confirmed', 'completed') OR (status = 'pending' AND (payment_status = 'pending_verification' OR created_at >= NOW() - INTERVAL '10 minutes')))
+     WHERE (status IN ('confirmed', 'completed')
+        OR (status = 'pending'
+            AND payment_status != 'rejected'
+            AND (payment_status = 'pending_verification' OR created_at >= NOW() - INTERVAL '10 minutes')))
        AND id != $1
        AND tstzrange($2, $3, '[)') && tstzrange(start_time, end_time + ($4 * interval '1 minute'), '[)')`,
     [bookingId, currentEnd.toISOString(), bufferedNewEnd.toISOString(), bufferMins]
