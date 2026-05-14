@@ -189,72 +189,46 @@ export default function AdminBookingsPage() {
         </div>
       </div>
 
-      {/* Table */}
+      {/* Sort controls */}
+      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16, flexWrap: "wrap" }}>
+        <span style={{ fontSize: 12, fontWeight: 600, color: "var(--text-muted)", letterSpacing: "0.5px", textTransform: "uppercase" }}>
+          Sort by
+        </span>
+        {([
+          { label: "Booking ID", value: "id" },
+          { label: "Date", value: "date" },
+        ] as const).map(({ label, value }) => (
+          <button
+            key={value}
+            onClick={() => toggleSort(value)}
+            style={{
+              padding: "6px 14px", borderRadius: 999, fontSize: 13, fontWeight: 600,
+              cursor: "pointer", transition: "all 0.15s ease",
+              background: sortBy === value ? "linear-gradient(135deg, #C9933A, #A87828)" : "var(--bg-card)",
+              color: sortBy === value ? "#0A0A0B" : "var(--text-secondary)",
+              border: sortBy === value ? "none" : "1px solid var(--border-subtle)",
+              display: "inline-flex", alignItems: "center", gap: 6,
+            }}
+          >
+            {label}
+            <span style={{
+              fontSize: 11, fontWeight: 700,
+              color: sortBy === value ? "#0A0A0B" : "var(--text-muted)",
+            }}>
+              {sortBy === value ? (sortDir === "asc" ? "ASC" : "DESC") : "—"}
+            </span>
+          </button>
+        ))}
+      </div>
+
+
       <div className="table-wrap">
         <table>
           <thead>
             <tr>
-              <th>
-                <button
-                  onClick={() => toggleSort("id")}
-                  style={{
-                    background: "none", border: "none", cursor: "pointer",
-                    color: sortBy === "id" ? "var(--accent)" : "var(--text-secondary)",
-                    fontWeight: 700, fontSize: 11, letterSpacing: "0.8px",
-                    textTransform: "uppercase", display: "inline-flex",
-                    alignItems: "center", gap: 6, padding: 0, whiteSpace: "nowrap",
-                  }}
-                >
-                  Booking ID
-                  <span style={{
-                    display: "inline-flex", flexDirection: "column", gap: 1,
-                    padding: "2px 4px", borderRadius: 4,
-                    background: sortBy === "id" ? "var(--accent)" : "rgba(255,255,255,0.08)",
-                    border: sortBy === "id" ? "none" : "1px solid rgba(255,255,255,0.15)",
-                    lineHeight: 1,
-                  }}>
-                    <svg width="7" height="5" viewBox="0 0 7 5" fill="none">
-                      <path d="M3.5 0L7 5H0L3.5 0Z"
-                        fill={sortBy === "id" && sortDir === "asc" ? "#0A0A0B" : (sortBy === "id" ? "rgba(10,10,11,0.4)" : "rgba(255,255,255,0.5)")} />
-                    </svg>
-                    <svg width="7" height="5" viewBox="0 0 7 5" fill="none">
-                      <path d="M3.5 5L0 0H7L3.5 5Z"
-                        fill={sortBy === "id" && sortDir === "desc" ? "#0A0A0B" : (sortBy === "id" ? "rgba(10,10,11,0.4)" : "rgba(255,255,255,0.5)")} />
-                    </svg>
-                  </span>
-                </button>
-              </th>
+              <th>Booking ID</th>
               <th>Customer</th>
-              <th>
-                <button
-                  onClick={() => toggleSort("date")}
-                  style={{
-                    background: "none", border: "none", cursor: "pointer",
-                    color: sortBy === "date" ? "var(--accent)" : "var(--text-secondary)",
-                    fontWeight: 700, fontSize: 11, letterSpacing: "0.8px",
-                    textTransform: "uppercase", display: "inline-flex",
-                    alignItems: "center", gap: 6, padding: 0, whiteSpace: "nowrap",
-                  }}
-                >
-                  Date & Time
-                  <span style={{
-                    display: "inline-flex", flexDirection: "column", gap: 1,
-                    padding: "2px 4px", borderRadius: 4,
-                    background: sortBy === "date" ? "var(--accent)" : "rgba(255,255,255,0.08)",
-                    border: sortBy === "date" ? "none" : "1px solid rgba(255,255,255,0.15)",
-                    lineHeight: 1,
-                  }}>
-                    <svg width="7" height="5" viewBox="0 0 7 5" fill="none">
-                      <path d="M3.5 0L7 5H0L3.5 0Z"
-                        fill={sortBy === "date" && sortDir === "asc" ? "#0A0A0B" : (sortBy === "date" ? "rgba(10,10,11,0.4)" : "rgba(255,255,255,0.5)")} />
-                    </svg>
-                    <svg width="7" height="5" viewBox="0 0 7 5" fill="none">
-                      <path d="M3.5 5L0 0H7L3.5 5Z"
-                        fill={sortBy === "date" && sortDir === "desc" ? "#0A0A0B" : (sortBy === "date" ? "rgba(10,10,11,0.4)" : "rgba(255,255,255,0.5)")} />
-                    </svg>
-                  </span>
-                </button>
-              </th>
+              <th>Date & Time</th>
               <th>Duration</th>
               <th>Amount</th>
               <th>Status</th>
