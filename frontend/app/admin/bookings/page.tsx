@@ -199,13 +199,18 @@ export default function AdminBookingsPage() {
                   onClick={() => toggleSort("id")}
                   style={{
                     background: "none", border: "none", cursor: "pointer",
-                    color: sortBy === "id" ? "var(--accent)" : "inherit",
-                    fontWeight: 700, fontSize: "inherit", display: "inline-flex",
-                    alignItems: "center", gap: 4, padding: 0,
+                    color: sortBy === "id" ? "var(--accent)" : "var(--text-secondary)",
+                    fontWeight: 700, fontSize: 11, letterSpacing: "0.8px",
+                    textTransform: "uppercase", display: "inline-flex",
+                    alignItems: "center", gap: 5, padding: 0, whiteSpace: "nowrap",
                   }}
                 >
                   Booking ID
-                  <span style={{ fontSize: 10, opacity: sortBy === "id" ? 1 : 0.35 }}>
+                  <span style={{
+                    fontSize: 13,
+                    color: sortBy === "id" ? "var(--accent)" : "var(--text-muted)",
+                    lineHeight: 1,
+                  }}>
                     {sortBy === "id" ? (sortDir === "asc" ? "▲" : "▼") : "⇅"}
                   </span>
                 </button>
@@ -216,13 +221,18 @@ export default function AdminBookingsPage() {
                   onClick={() => toggleSort("date")}
                   style={{
                     background: "none", border: "none", cursor: "pointer",
-                    color: sortBy === "date" ? "var(--accent)" : "inherit",
-                    fontWeight: 700, fontSize: "inherit", display: "inline-flex",
-                    alignItems: "center", gap: 4, padding: 0,
+                    color: sortBy === "date" ? "var(--accent)" : "var(--text-secondary)",
+                    fontWeight: 700, fontSize: 11, letterSpacing: "0.8px",
+                    textTransform: "uppercase", display: "inline-flex",
+                    alignItems: "center", gap: 5, padding: 0, whiteSpace: "nowrap",
                   }}
                 >
                   Date & Time
-                  <span style={{ fontSize: 10, opacity: sortBy === "date" ? 1 : 0.35 }}>
+                  <span style={{
+                    fontSize: 13,
+                    color: sortBy === "date" ? "var(--accent)" : "var(--text-muted)",
+                    lineHeight: 1,
+                  }}>
                     {sortBy === "date" ? (sortDir === "asc" ? "▲" : "▼") : "⇅"}
                   </span>
                 </button>
