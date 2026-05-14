@@ -20,6 +20,8 @@ export default function AdminBookingsPage() {
   const [filter, setFilter] = useState<Filter>("all");
   const [search, setSearch] = useState("");
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [sortBy, setSortBy] = useState<"id" | "date">("date");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
 
   const [formDate, setFormDate] = useState(format(new Date(), "yyyy-MM-dd"));
   const [formTime, setFormTime] = useState("10:00");
@@ -62,9 +64,23 @@ export default function AdminBookingsPage() {
     })
     .filter((b: any) => search === "" || b.id.toLowerCase().includes(search.toLowerCase()) || (b.full_name && b.full_name.toLowerCase().includes(search.toLowerCase())));
 
-  const sortedBookings = [...filtered].sort(
-    (a: any, b: any) => new Date(b.created_at || b.start_time).getTime() - new Date(a.created_at || a.start_time).getTime()
-  );
+  function toggleSort(col: "id" | "date") {
+    if (sortBy === col) {
+      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    } else {
+      setSortBy(col);
+      setSortDir("desc");
+    }
+  }
+
+  const sortedBookings = [...filtered].sort((a: any, b: any) => {
+    const mul = sortDir === "asc" ? 1 : -1;
+    if (sortBy === "id") {
+      return mul * a.id.localeCompare(b.id);
+    }
+    // sort by date
+    return mul * (new Date(a.start_time).getTime() - new Date(b.start_time).getTime());
+  });
 
   const [viewingReceipt, setViewingReceipt] = useState<any>(null);
   const [rejectReason, setRejectReason] = useState("");
@@ -178,9 +194,39 @@ export default function AdminBookingsPage() {
         <table>
           <thead>
             <tr>
-              <th>Booking ID</th>
+              <th>
+                <button
+                  onClick={() => toggleSort("id")}
+                  style={{
+                    background: "none", border: "none", cursor: "pointer",
+                    color: sortBy === "id" ? "var(--accent)" : "inherit",
+                    fontWeight: 700, fontSize: "inherit", display: "inline-flex",
+                    alignItems: "center", gap: 4, padding: 0,
+                  }}
+                >
+                  Booking ID
+                  <span style={{ fontSize: 10, opacity: sortBy === "id" ? 1 : 0.35 }}>
+                    {sortBy === "id" ? (sortDir === "asc" ? "▲" : "▼") : "⇅"}
+                  </span>
+                </button>
+              </th>
               <th>Customer</th>
-              <th>Date & Time</th>
+              <th>
+                <button
+                  onClick={() => toggleSort("date")}
+                  style={{
+                    background: "none", border: "none", cursor: "pointer",
+                    color: sortBy === "date" ? "var(--accent)" : "inherit",
+                    fontWeight: 700, fontSize: "inherit", display: "inline-flex",
+                    alignItems: "center", gap: 4, padding: 0,
+                  }}
+                >
+                  Date & Time
+                  <span style={{ fontSize: 10, opacity: sortBy === "date" ? 1 : 0.35 }}>
+                    {sortBy === "date" ? (sortDir === "asc" ? "▲" : "▼") : "⇅"}
+                  </span>
+                </button>
+              </th>
               <th>Duration</th>
               <th>Amount</th>
               <th>Status</th>
