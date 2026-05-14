@@ -202,16 +202,25 @@ export default function AdminBookingsPage() {
                     color: sortBy === "id" ? "var(--accent)" : "var(--text-secondary)",
                     fontWeight: 700, fontSize: 11, letterSpacing: "0.8px",
                     textTransform: "uppercase", display: "inline-flex",
-                    alignItems: "center", gap: 5, padding: 0, whiteSpace: "nowrap",
+                    alignItems: "center", gap: 6, padding: 0, whiteSpace: "nowrap",
                   }}
                 >
                   Booking ID
                   <span style={{
-                    fontSize: 13,
-                    color: sortBy === "id" ? "var(--accent)" : "var(--text-muted)",
+                    display: "inline-flex", flexDirection: "column", gap: 1,
+                    padding: "2px 4px", borderRadius: 4,
+                    background: sortBy === "id" ? "var(--accent)" : "rgba(255,255,255,0.08)",
+                    border: sortBy === "id" ? "none" : "1px solid rgba(255,255,255,0.15)",
                     lineHeight: 1,
                   }}>
-                    {sortBy === "id" ? (sortDir === "asc" ? "▲" : "▼") : "⇅"}
+                    <svg width="7" height="5" viewBox="0 0 7 5" fill="none">
+                      <path d="M3.5 0L7 5H0L3.5 0Z"
+                        fill={sortBy === "id" && sortDir === "asc" ? "#0A0A0B" : (sortBy === "id" ? "rgba(10,10,11,0.4)" : "rgba(255,255,255,0.5)")} />
+                    </svg>
+                    <svg width="7" height="5" viewBox="0 0 7 5" fill="none">
+                      <path d="M3.5 5L0 0H7L3.5 5Z"
+                        fill={sortBy === "id" && sortDir === "desc" ? "#0A0A0B" : (sortBy === "id" ? "rgba(10,10,11,0.4)" : "rgba(255,255,255,0.5)")} />
+                    </svg>
                   </span>
                 </button>
               </th>
@@ -224,16 +233,25 @@ export default function AdminBookingsPage() {
                     color: sortBy === "date" ? "var(--accent)" : "var(--text-secondary)",
                     fontWeight: 700, fontSize: 11, letterSpacing: "0.8px",
                     textTransform: "uppercase", display: "inline-flex",
-                    alignItems: "center", gap: 5, padding: 0, whiteSpace: "nowrap",
+                    alignItems: "center", gap: 6, padding: 0, whiteSpace: "nowrap",
                   }}
                 >
                   Date & Time
                   <span style={{
-                    fontSize: 13,
-                    color: sortBy === "date" ? "var(--accent)" : "var(--text-muted)",
+                    display: "inline-flex", flexDirection: "column", gap: 1,
+                    padding: "2px 4px", borderRadius: 4,
+                    background: sortBy === "date" ? "var(--accent)" : "rgba(255,255,255,0.08)",
+                    border: sortBy === "date" ? "none" : "1px solid rgba(255,255,255,0.15)",
                     lineHeight: 1,
                   }}>
-                    {sortBy === "date" ? (sortDir === "asc" ? "▲" : "▼") : "⇅"}
+                    <svg width="7" height="5" viewBox="0 0 7 5" fill="none">
+                      <path d="M3.5 0L7 5H0L3.5 0Z"
+                        fill={sortBy === "date" && sortDir === "asc" ? "#0A0A0B" : (sortBy === "date" ? "rgba(10,10,11,0.4)" : "rgba(255,255,255,0.5)")} />
+                    </svg>
+                    <svg width="7" height="5" viewBox="0 0 7 5" fill="none">
+                      <path d="M3.5 5L0 0H7L3.5 5Z"
+                        fill={sortBy === "date" && sortDir === "desc" ? "#0A0A0B" : (sortBy === "date" ? "rgba(10,10,11,0.4)" : "rgba(255,255,255,0.5)")} />
+                    </svg>
                   </span>
                 </button>
               </th>
