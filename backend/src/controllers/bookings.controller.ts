@@ -26,6 +26,22 @@ export async function getAvailableSlots(req: Request, res: Response): Promise<vo
     return;
   }
 
+  if (targetDate === '2026-05-30') {
+    res.json({
+      date: targetDate,
+      buffer_minutes: 15,
+      min_duration_minutes: 60,
+      time_increment_minutes: 30,
+      booked_blocks: [
+        {
+          start_time: '2026-05-29T18:30:00.000Z',
+          end_time: '2026-05-30T18:30:00.000Z'
+        }
+      ]
+    });
+    return;
+  }
+
   // Fetch all relevant session settings from DB
   const [bufferMinutes, minDurationMinutes, timeIncrementMinutes] = await Promise.all([
     getSetting('buffer_minutes').then(v => parseInt(v) || 15),
@@ -92,6 +108,12 @@ export async function createBooking(req: Request, res: Response): Promise<void> 
 
   if (beforeOpen || afterClose || !isSameDay) {
     res.status(400).json({ error: 'Bookings must be between 8:00 AM and 10:00 PM' });
+    return;
+  }
+
+  // Vesak Poya Closure
+  if (startSL.getUTCFullYear() === 2026 && startSL.getUTCMonth() === 4 && startSL.getUTCDate() === 30) {
+    res.status(400).json({ error: 'Bookings are closed on May 30 for Vesak Poya.' });
     return;
   }
 
