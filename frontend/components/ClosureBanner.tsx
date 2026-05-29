@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X } from "lucide-react";
+import { X, Moon } from "lucide-react";
 
 export function ClosureBanner() {
   const [isVisible, setIsVisible] = useState(false);
@@ -43,24 +43,22 @@ export function ClosureBanner() {
               <X size={18} />
             </button>
 
-            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-[#E24B4A]/10 text-[#E24B4A]">
-              <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-              </svg>
+            <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-[#C9933A]/10 text-[#C9933A] ring-1 ring-[#C9933A]/30 shadow-[0_0_15px_rgba(201,147,58,0.15)]">
+              <Moon size={24} strokeWidth={1.5} />
             </div>
             
-            <h3 style={{ fontFamily: 'var(--font-playfair)' }} className="mb-2 text-xl font-bold text-[#F0EAE0]">
-              Theater Closed
+            <h3 style={{ fontFamily: 'var(--font-playfair)' }} className="mb-3 text-2xl font-semibold tracking-wide text-[#F0EAE0]">
+              Vesak Poya Holiday
             </h3>
-            <p className="text-[15px] leading-relaxed text-[#A09080]">
-              May 30 is Vesak Poya day. Our theater will remain closed for the entire day. Normal operations will resume on May 31.
+            <p className="px-2 text-[15px] leading-relaxed text-[#A09080]">
+              SmartView Lounge will be closed on May 30th in observance of Vesak Poya. We look forward to welcoming you back on May 31st.
             </p>
             
             <button
               onClick={() => setIsDismissed(true)}
-              className="mt-6 w-full rounded-xl bg-[#C9933A] py-3 text-[15px] font-semibold text-[#0A0A0B] shadow-[0_0_15px_rgba(201,147,58,0.2)] transition-transform hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
+              className="mt-8 px-10 rounded-full bg-gradient-to-r from-[#C9933A] to-[#A87828] py-2.5 text-[14px] font-semibold tracking-wide text-[#0A0A0B] shadow-[0_4px_14px_rgba(201,147,58,0.25)] transition-transform hover:scale-[1.03] active:scale-[0.97] cursor-pointer"
             >
-              Got it
+              Continue
             </button>
           </motion.div>
         </motion.div>
