@@ -228,6 +228,13 @@ export async function createSessionPin(
     resolvedId = rows[0]?.theater_id;
   }
   const deviceId = getBranchEnv('TUYA_DOOR_DEVICE_ID', resolvedId);
+  
+  if (resolvedId?.startsWith('negombo')) {
+    const pin = generateEightDigitPin();
+    console.log(`[Tuya] 🟢 Generated offline 8-digit PIN for Negombo booking ${bookingId}`);
+    return { pin, ticketId: `offline_${bookingId}` };
+  }
+
   if (!deviceId) throw new Error('[Tuya] TUYA_DOOR_DEVICE_ID is not set in .env');
 
   // Step 1: Get a fresh ticket
@@ -237,7 +244,7 @@ export async function createSessionPin(
   );
 
   // Step 2: Generate & encrypt the PIN
-  const pin        = resolvedId?.startsWith('negombo') ? generateEightDigitPin() : generateSevenDigitPin();
+  const pin        = generateSevenDigitPin();
   const decKey     = decryptTicketKey(ticket_key);
   const encPin     = encryptPin(pin, decKey);
 
@@ -270,6 +277,7 @@ export async function createSessionPin(
  * ticketId here is the Tuya password_id returned by createSessionPin.
  */
 export async function revokeSessionPin(ticketId: string, branchId?: string | null): Promise<void> {
+  if (ticketId?.startsWith('offline_')) return;
   const deviceId = getBranchEnv('TUYA_DOOR_DEVICE_ID', branchId);
   if (!deviceId || !ticketId) return;
   try {
@@ -304,6 +312,9 @@ export async function extendPinValidity(
   newEndTime: Date,
   branchId?: string | null
 ): Promise<{ ticketId: string }> {
+  if (oldTicketId?.startsWith('offline_')) {
+    return { ticketId: oldTicketId };
+  }
   const deviceId = getBranchEnv('TUYA_DOOR_DEVICE_ID', branchId);
   if (!deviceId) throw new Error('[Tuya] TUYA_DOOR_DEVICE_ID is not set in .env');
 
