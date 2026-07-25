@@ -122,7 +122,7 @@ async function getAccessToken(): Promise<string> {
 }
 
 // ── Helper: make authenticated request ───────────────────────────────────────
-async function tuyaRequest<T>(
+export async function tuyaRequest<T>(
   method: 'GET' | 'POST' | 'DELETE',
   path: string,
   bodyObj?: object
@@ -230,9 +230,14 @@ export async function createSessionPin(
   const deviceId = getBranchEnv('TUYA_DOOR_DEVICE_ID', resolvedId);
   
   if (resolvedId?.startsWith('negombo')) {
-    const pin = generateEightDigitPin();
-    console.log(`[Tuya] 🟢 Generated offline 8-digit PIN for Negombo booking ${bookingId}`);
-    return { pin, ticketId: `offline_${bookingId}` };
+    if (!deviceId) throw new Error('[Tuya] TUYA_DOOR_DEVICE_ID_NEGOMBO_JEWEL is not set in .env');
+    const res = await tuyaRequest<{ dynamic_password: string }>(
+      'GET',
+      `/v1.0/devices/${deviceId}/door-lock/dynamic-password`
+    );
+    const pin = res.dynamic_password;
+    console.log(`[Tuya] 🟢 Fetched official Tuya 8-digit dynamic PIN (${pin}) for Negombo booking ${bookingId}`);
+    return { pin, ticketId: `dynamic_${bookingId}` };
   }
 
   if (!deviceId) throw new Error('[Tuya] TUYA_DOOR_DEVICE_ID is not set in .env');
@@ -277,7 +282,7 @@ export async function createSessionPin(
  * ticketId here is the Tuya password_id returned by createSessionPin.
  */
 export async function revokeSessionPin(ticketId: string, branchId?: string | null): Promise<void> {
-  if (ticketId?.startsWith('offline_')) return;
+  if (!ticketId || ticketId.startsWith('offline_') || ticketId.startsWith('dynamic_')) return;
   const deviceId = getBranchEnv('TUYA_DOOR_DEVICE_ID', branchId);
   if (!deviceId || !ticketId) return;
   try {
@@ -312,8 +317,8 @@ export async function extendPinValidity(
   newEndTime: Date,
   branchId?: string | null
 ): Promise<{ ticketId: string }> {
-  if (oldTicketId?.startsWith('offline_')) {
-    return { ticketId: oldTicketId };
+  if (!oldTicketId || oldTicketId.startsWith('offline_') || oldTicketId.startsWith('dynamic_')) {
+    return { ticketId: oldTicketId || `dynamic_${bookingId}` };
   }
   const deviceId = getBranchEnv('TUYA_DOOR_DEVICE_ID', branchId);
   if (!deviceId) throw new Error('[Tuya] TUYA_DOOR_DEVICE_ID is not set in .env');
